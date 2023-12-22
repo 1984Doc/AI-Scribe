@@ -1,7 +1,6 @@
 # Copyright (c) 2023 Braedon Hendy
-# This software is released under the MIT License
+# This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
-
 import tkinter as tk
 from tkinter import scrolledtext, ttk
 import requests
@@ -13,9 +12,32 @@ import base64
 import json
 import pyaudio 
 
-# Constants
-KOBOLDCPP = "IPADDRESS:5001"
-WHISPERAUDIO = "IPADRESS:8000/whisperaudio"
+
+# Function to build the full URL from IP
+def build_url(ip, port):
+    return f"http://{ip}:{port}"
+
+# Function to save settings to a file
+def save_settings_to_file(koboldcpp_ip, whisperaudio_ip):
+    with open('settings.txt', 'w') as file:
+        file.write(f"{koboldcpp_ip}\n{whisperaudio_ip}")
+
+# Function to load settings from a file
+def load_settings_from_file():
+    try:
+        with open('settings.txt', 'r') as file:
+            lines = file.readlines()
+            return lines[0].strip(), lines[1].strip()
+    except FileNotFoundError:
+        # Return default values if file not found
+        return "192.168.1.195", "192.168.1.195"
+
+# Load settings at the start
+KOBOLDCPP_IP, WHISPERAUDIO_IP = load_settings_from_file()
+KOBOLDCPP = build_url(KOBOLDCPP_IP, "5001")
+WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
+
+# Other constants and global variables
 username = "user"
 botname = "Assistant"
 num_lines_to_keep = 20
@@ -198,13 +220,45 @@ def send_and_receive():
     handle_message(formatted_message)
     user_input.delete("1.0", tk.END)
 
+# Modified save_settings function with window close functionality
+def save_settings(koboldcpp_ip, whisperaudio_ip, settings_window):
+    global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP
+    KOBOLDCPP_IP = koboldcpp_ip
+    WHISPERAUDIO_IP = whisperaudio_ip
+    KOBOLDCPP = build_url(KOBOLDCPP_IP, "5001")
+    WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
+    save_settings_to_file(KOBOLDCPP_IP, WHISPERAUDIO_IP)  # Save to file
+    settings_window.destroy()  # Close the settings window
+
+# Function to open the settings window
+def open_settings_window():
+    settings_window = tk.Toplevel(root)
+    settings_window.title("Settings")
+
+    # KOBOLDCPP IP input
+    tk.Label(settings_window, text="KOBOLDCPP IP:").grid(row=0, column=0)
+    koboldcpp_ip_entry = tk.Entry(settings_window, width=50)
+    koboldcpp_ip_entry.insert(0, KOBOLDCPP_IP)
+    koboldcpp_ip_entry.grid(row=0, column=1)
+
+    # WHISPERAUDIO IP input
+    tk.Label(settings_window, text="WHISPERAUDIO IP:").grid(row=1, column=0)
+    whisperaudio_ip_entry = tk.Entry(settings_window, width=50)
+    whisperaudio_ip_entry.insert(0, WHISPERAUDIO_IP)
+    whisperaudio_ip_entry.grid(row=1, column=1)
+
+    # Save button with modified command to include window close
+    save_button = tk.Button(settings_window, text="Save",
+                            command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), settings_window))
+    save_button.grid(row=2, column=0, columnspan=2)
+
 # GUI Setup
 root = tk.Tk()
 root.title("AI Medical Scribe")
 
 # User input textbox
 user_input = scrolledtext.ScrolledText(root, height=15)
-user_input.grid(row=0, column=0, columnspan=4, padx=10, pady=5)
+user_input.grid(row=0, column=0, columnspan=5, padx=10, pady=5)
 
 # Microphone button
 mic_button = tk.Button(root, text="Microphone", command=toggle_recording, height=2, width=20)
@@ -220,6 +274,9 @@ clear_button.grid(row=1, column=2, pady=5)
 toggle_button = tk.Button(root, text="AISCRIBE: ON", command=toggle_aiscribe, height=2, width=20)
 toggle_button.grid(row=1, column=3, pady=5)
 
+settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=20)
+settings_button.grid(row=1, column=4, pady=5)  # Adjust the grid position as needed
+
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: send_and_receive())
 
@@ -228,7 +285,7 @@ root.bind('<Alt-r>', lambda event: mic_button.invoke())
 
 # Response display textbox
 response_display = scrolledtext.ScrolledText(root, height=15, state='disabled')
-response_display.grid(row=2, column=0, columnspan=4, padx=10, pady=5)
+response_display.grid(row=2, column=0, columnspan=5, padx=10, pady=5)
 
 root.mainloop()
 
