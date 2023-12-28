@@ -2,7 +2,7 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 import tkinter as tk
-from tkinter import scrolledtext, ttk
+from tkinter import scrolledtext, ttk, filedialog
 import requests
 import pyperclip
 import wave
@@ -43,6 +43,7 @@ botname = "Assistant"
 num_lines_to_keep = 20
 AISCRIBE = "The following is a real conversation between a patient and their doctor. As a doctor, write this as a SOAP formatted medical note with sections for Subjective, Objective, Assessment, and Plan.  Put a blank line between each section. Be detailed and thorough.  Only use information that is present in the conversation and only present vitals that are stated.\n\n  Desired format:\n\n   Subjective: <List all subjective findings as per a medical SOAP note. Include everything reported by the patient in detail.>\n\n  Objective:  <Objective findings as per a medical SOAP note, including such as any physical exam findings, measurements, and vitals.>\n\n  Assessment: <Detail the assessment of the patient by the doctor.>\n\n  Plan: <Plan for treatment and next steps to be taken by the doctor and patient.>\n\n"
 global conversation_history
+uploaded_file_path = None
 
 # Function to split the text
 def split_text(text):
@@ -183,15 +184,15 @@ def toggle_recording():
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
         save_audio()
-        toggle_mic_button_color()  # Reset the button color
-        
-def send_audio_to_server():
-    with open('recording.wav', 'rb') as f:
-        files = {'audio': f}
-        response = requests.post(WHISPERAUDIO, files=files)
-    if response.status_code == 200:
-        transcribed_text = response.json()['text']
-        audio_gui_with_response(transcribed_text)  # Updated this line
+        toggle_mic_button_color()  # Reset the button color       
+       
+                           
+                                          
+                            
+                                                           
+                                   
+                                                  
+                                                                      
         
 def clear_all_text_fields():
     user_input.configure(state='normal')  # Ensure the widget is editable
@@ -251,6 +252,29 @@ def open_settings_window():
     save_button = tk.Button(settings_window, text="Save",
                             command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), settings_window))
     save_button.grid(row=2, column=0, columnspan=2)
+    
+def upload_file():
+    global uploaded_file_path
+    file_path = filedialog.askopenfilename(filetypes=[("WAV files", "*.wav")])
+    if file_path:
+        uploaded_file_path = file_path
+        send_audio_to_server()  # Add this line to process the file immediately
+
+# Modified send_audio_to_server function
+def send_audio_to_server():
+    global uploaded_file_path
+    if uploaded_file_path:
+        file_to_send = uploaded_file_path
+        uploaded_file_path = None  # Reset after using
+    else:
+        file_to_send = 'recording.wav'
+
+    with open(file_to_send, 'rb') as f:
+        files = {'audio': f}
+        response = requests.post(WHISPERAUDIO, files=files)
+        if response.status_code == 200:
+            transcribed_text = response.json()['text']
+            audio_gui_with_response(transcribed_text)     
 
 # GUI Setup
 root = tk.Tk()
@@ -258,7 +282,7 @@ root.title("AI Medical Scribe")
 
 # User input textbox
 user_input = scrolledtext.ScrolledText(root, height=15)
-user_input.grid(row=0, column=0, columnspan=5, padx=10, pady=5)
+user_input.grid(row=0, column=0, columnspan=6, padx=10, pady=5)
 
 # Microphone button
 mic_button = tk.Button(root, text="Microphone", command=toggle_recording, height=2, width=20)
@@ -277,6 +301,9 @@ toggle_button.grid(row=1, column=3, pady=5)
 settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=20)
 settings_button.grid(row=1, column=4, pady=5)  # Adjust the grid position as needed
 
+upload_button = tk.Button(root, text="Upload WAV", command=upload_file, height=2, width=20)
+upload_button.grid(row=1, column=5, pady=5)  # Adjust the grid position as needed
+
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: send_and_receive())
 
@@ -285,7 +312,7 @@ root.bind('<Alt-r>', lambda event: mic_button.invoke())
 
 # Response display textbox
 response_display = scrolledtext.ScrolledText(root, height=15, state='disabled')
-response_display.grid(row=2, column=0, columnspan=5, padx=10, pady=5)
+response_display.grid(row=2, column=0, columnspan=6, padx=10, pady=5)
 
 root.mainloop()
 
