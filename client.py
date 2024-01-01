@@ -41,7 +41,7 @@ WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
 username = "user"
 botname = "Assistant"
 num_lines_to_keep = 20
-AISCRIBE = "The following is a real conversation between a patient and their doctor. Format the SOAP note as follows:\n\nSubjective:\n[List all subjective findings here. Include everything reported by the patient in detail.]\n\nObjective:\n[List objective findings here, such as physical exam findings, measurements, and vitals.]\n\nAssessment:\n[Detail the assessment of the patient by the doctor here.]\n\nPlan:\n[List the plan for treatment and next steps to be taken by the doctor and patient here.]\n\nUse the information present in the conversation and present vitals that are stated. The conversation that will be processed is the following in quotations "
+AISCRIBE = "The following is a real conversation between a patient and their doctor. Format the SOAP note as follows:\n\nSubjective:\n[List all subjective findings here. Include everything reported by the patient in detail.]\n\nObjective:\n[List objective findings here, such as physical exam findings, measurements, and vitals.  If measurements or vital signs are not included, please write that none are available]\n\nAssessment:\n[Detail the assessment of the patient by the doctor here.]\n\nPlan:\n[List the plan for treatment and next steps to be taken by the doctor and patient here.]\n\nUse the information present in the conversation and present vitals that are stated. The conversation that will be processed is the following in quotations "
 global conversation_history
 uploaded_file_path = None
 # Function to split the text
@@ -102,8 +102,7 @@ def send_and_receive():
 def clear_response_display():
     response_display.configure(state='normal')
     response_display.delete("1.0", tk.END)
-    response_display.configure(state='disabled')
-    
+    response_display.configure(state='disabled')    
 
 def update_gui_with_response(response_text):
     response_display.configure(state='normal')
@@ -114,10 +113,7 @@ def update_gui_with_response(response_text):
 def audio_gui_with_response(response_text):
     user_input.configure(state='normal')
     user_input.insert(tk.END, f"{botname}: {response_text}\n")
-    user_input.configure(state='disabled')
-    pyperclip.copy(response_text)
-    
-    
+    user_input.configure(state='disabled')   
     
 # Function to toggle the background color of the microphone button
 def toggle_mic_button_color():
@@ -174,6 +170,12 @@ def save_audio():
 def toggle_recording():
     global is_recording, recording_thread
     if not is_recording:
+        # Clear the user_input and response_display textboxes
+        # This code runs only when the recording is about to start
+        user_input.delete("1.0", tk.END)
+        response_display.configure(state='normal')
+        response_display.delete("1.0", tk.END)
+        response_display.configure(state='disabled')
         is_recording = True
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
@@ -210,7 +212,6 @@ def send_and_receive():
     else:
         formatted_message = user_message
     handle_message(formatted_message)
-    user_input.delete("1.0", tk.END)
 
 # Modified save_settings function with window close functionality
 def save_settings(koboldcpp_ip, whisperaudio_ip, settings_window):
@@ -265,7 +266,11 @@ def send_audio_to_server():
         response = requests.post(WHISPERAUDIO, files=files)
         if response.status_code == 200:
             transcribed_text = response.json()['text']
-            audio_gui_with_response(transcribed_text)     
+            # Set the transcribed text as user input
+            user_input.delete("1.0", tk.END)
+            user_input.insert(tk.END, transcribed_text)
+            # Call send_and_receive to process this input
+            send_and_receive()
 
 # GUI Setup
 root = tk.Tk()
