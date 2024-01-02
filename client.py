@@ -41,7 +41,7 @@ WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
 username = "user"
 botname = "Assistant"
 num_lines_to_keep = 20
-AISCRIBE = "The following is a real conversation between a patient and their doctor. Format the SOAP note as follows:\n\nSubjective:\n[List all subjective findings here. Include everything reported by the patient in detail.]\n\nObjective:\n[List objective findings here, such as physical exam findings, measurements, and vitals.  If measurements or vital signs are not included, please write that none are available]\n\nAssessment:\n[Detail the assessment of the patient by the doctor here.]\n\nPlan:\n[List the plan for treatment and next steps to be taken by the doctor and patient here.]\n\nUse the information present in the conversation and present vitals that are stated. The conversation that will be processed is the following in quotations "
+AISCRIBE = "Format the SOAP note omitting individual's personal name as follows:\n\nSubjective:\n[List all subjective findings here. Include everything reported by the patient in detail.]\n\nObjective:\n[List objective findings here, such as physical exam findings, measurements, and vitals.  If measurements or vital signs are not included, please write that none are available]\n\nAssessment:\n[Detail the assessment of the patient by the doctor here.]\n\nPlan:\n[List the plan for treatment and next steps to be taken by the doctor and patient here.]\n\nUse the following conversation between a patient and physician:\n\n"
 global conversation_history
 uploaded_file_path = None
 # Function to split the text
@@ -95,7 +95,7 @@ def handle_message(user_message):
 def send_and_receive():
     user_message = user_input.get("1.0", tk.END).strip()
     clear_response_display()
-    formatted_message = f'{AISCRIBE}"{user_message}"'
+    formatted_message = f'{AISCRIBE}{user_message}'
     handle_message(formatted_message)
     user_input.delete("1.0", tk.END)
     
@@ -137,19 +137,32 @@ p = pyaudio.PyAudio()  # Creating an instance of PyAudio
 # Other global variables
 is_recording = False
 frames = []
+is_paused = False
 
 # Toggle switch variable
 use_aiscribe = True  # Default state of the toggle
 
 # Function to record audio
-def record_audio():
-    global frames, is_recording
-    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
-    frames = []
+def toggle_pause():
+    global is_paused
+    is_paused = not is_paused
 
-    while is_recording:  # Keep recording as long as is_recording is True
-        data = stream.read(CHUNK)
-        frames.append(data)
+    if is_paused:
+        pause_button.config(text="Resume", bg="red")
+        # The actual pause functionality will be handled in the record_audio function
+    else:
+        pause_button.config(text="Pause", bg="SystemButtonFace")
+        # The actual resume functionality will also be handled in the record_audio function
+
+# Function to record audio
+def record_audio():
+    global is_paused, frames
+    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+
+    while is_recording:
+        if not is_paused:
+            data = stream.read(CHUNK)
+            frames.append(data)
 
     stream.stop_stream()
     stream.close()
@@ -276,29 +289,30 @@ def send_audio_to_server():
 root = tk.Tk()
 root.title("AI Medical Scribe")
 
-# User input textbox
 user_input = scrolledtext.ScrolledText(root, height=15)
-user_input.grid(row=0, column=0, columnspan=6, padx=10, pady=5)
+user_input.grid(row=0, column=0, columnspan=7, padx=10, pady=5)
 
-# Microphone button
-mic_button = tk.Button(root, text="Microphone", command=toggle_recording, height=2, width=20)
+mic_button = tk.Button(root, text="Microphone", command=toggle_recording, height=2, width=15)
 mic_button.grid(row=1, column=0, pady=5)
 
 # Send button
-send_button = tk.Button(root, text="Send", command=send_and_receive, height=2, width=20)
+send_button = tk.Button(root, text="Send", command=send_and_receive, height=2, width=15)
 send_button.grid(row=1, column=1, pady=5)
 
-clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=20)
-clear_button.grid(row=1, column=2, pady=5)
+pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=15)
+pause_button.grid(row=1, column=2, pady=5)  # Adjust the grid position as needed
 
-toggle_button = tk.Button(root, text="AISCRIBE: ON", command=toggle_aiscribe, height=2, width=20)
-toggle_button.grid(row=1, column=3, pady=5)
+clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=15)
+clear_button.grid(row=1, column=3, pady=5)
 
-settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=20)
-settings_button.grid(row=1, column=4, pady=5)  # Adjust the grid position as needed
+toggle_button = tk.Button(root, text="AISCRIBE: ON", command=toggle_aiscribe, height=2, width=15)
+toggle_button.grid(row=1, column=4, pady=5)
 
-upload_button = tk.Button(root, text="Upload WAV", command=upload_file, height=2, width=20)
-upload_button.grid(row=1, column=5, pady=5)  # Adjust the grid position as needed
+settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=15)
+settings_button.grid(row=1, column=5, pady=5)  # Adjust the grid position as needed
+
+upload_button = tk.Button(root, text="Upload WAV", command=upload_file, height=2, width=15)
+upload_button.grid(row=1, column=6, pady=5)  # Adjust the grid position as needed
 
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: send_and_receive())
@@ -306,9 +320,8 @@ root.bind('<Alt-p>', lambda event: send_and_receive())
 # Bind Alt+R to toggle_recording function
 root.bind('<Alt-r>', lambda event: mic_button.invoke())
 
-# Response display textbox
 response_display = scrolledtext.ScrolledText(root, height=15, state='disabled')
-response_display.grid(row=2, column=0, columnspan=6, padx=10, pady=5)
+response_display.grid(row=2, column=0, columnspan=7, padx=10, pady=5)
 
 root.mainloop()
 
