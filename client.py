@@ -42,62 +42,56 @@ username = "user"
 botname = "Assistant"
 num_lines_to_keep = 20
 AISCRIBE = "Format the SOAP note omitting individual's personal name as follows:\n\nSubjective:\n[List all subjective findings here. Include everything reported by the patient in detail.]\n\nObjective:\n[List objective findings here, such as physical exam findings, measurements, and vitals.  If measurements or vital signs are not included, please write that none are available]\n\nAssessment:\n[Detail the assessment of the patient by the doctor here.]\n\nPlan:\n[List the plan for treatment and next steps to be taken by the doctor and patient here.]\n\nUse the following conversation between a patient and physician:\n\n"
-global conversation_history
 uploaded_file_path = None
-# Function to split the text
-def split_text(text):
-    parts = re.split(r'\n[a-zA-Z]', text)
-    return parts
 
 # Function to get prompt for KoboldAI Generation
-def get_prompt(conversation_history, username, text): # For KoboldAI Generation
+def get_prompt(text): # For KoboldAI Generation
     return {
-        "prompt": conversation_history + f"{username}: {text}\n{botname}:",
-        "use_story": False,
-        "use_memory": False,
-        "use_authors_note": False, 
-        "use_world_info": False,
-        "max_context_length": 2048,  # Large enough to retain relevant context
-        "max_length": 360, 
-        "rep_pen": 1,  
+        "prompt": f"{text}\n",
+        "use_story": False, #Needs to be set in KoboldAI webUI
+        "use_memory": False, #Needs to be set in KoboldAI webUI
+        "use_authors_note": False, #Needs to be set in KoboldAI webUI
+        "use_world_info": False, #Needs to be set in KoboldAI webUI
+        "max_context_length": 2048,
+        "max_length": 360,
+        "rep_pen": 1.0,
         "rep_pen_range": 2048,
         "rep_pen_slope": 0.7,
-        "temperature": 0,  # Lowered for more predictable responses
+        "temperature": 0.7,
         "tfs": 0.97,
         "top_a": 0.8,
-        "top_k": 30,  
-        "top_p": 0.4, 
+        "top_k": 0,
+        "top_p": 0.5,
         "typical": 0.19,
-        "sampler_order": [6, 0, 1, 3, 4, 2, 5],
+        "sampler_order": [6,0,1,3,4,2,5], 
         "singleline": False,
-        "frmttriminc": False,
-        "frmtrmblln": False,
+        "sampler_seed": 69420, # Use specific seed for text generation?
+        "sampler_full_determinism": False, # Always give same output with same settings?
+        "frmttriminc": False, #Trim incomplete sentences
+        "frmtrmblln": False, #Remove blank lines
+        "stop_sequence": ["\n\n\n\n\n"]
     }
-# Load existing conversation history from file
-with open(f'conv_history_{botname}_terminal.txt', 'a+') as file:
-    file.seek(0)
-    conversation_history = file.read()
 
 # Function to handle message
 def handle_message(user_message):
-    global conversation_history
-    # Reset conversation history for each new chat
-    conversation_history = ""
-
-    prompt = get_prompt(conversation_history, username, user_message)
+    prompt = get_prompt(user_message)
     response = requests.post(f"{KOBOLDCPP}/api/v1/generate", json=prompt)
     if response.status_code == 200:
         results = response.json()['results']
         response_text = results[0]['text']
-        response_text = response_text.replace("  ", " ").strip()  # Removing the split_text function
+        response_text = response_text.replace("  ", " ").strip() 
         update_gui_with_response(response_text)
-# GUI Functions
+
+# Modified send_and_receive function
 def send_and_receive():
+    global use_aiscribe
     user_message = user_input.get("1.0", tk.END).strip()
     clear_response_display()
-    formatted_message = f'{AISCRIBE}{user_message}'
+    if use_aiscribe:
+        formatted_message = f'{AISCRIBE}{user_message}'
+    else:
+        formatted_message = user_message
     handle_message(formatted_message)
-    user_input.delete("1.0", tk.END)
     
 def clear_response_display():
     response_display.configure(state='normal')
@@ -106,15 +100,10 @@ def clear_response_display():
 
 def update_gui_with_response(response_text):
     response_display.configure(state='normal')
-    response_display.insert(tk.END, f"{botname}: {response_text}\n")
+    response_display.insert(tk.END, f"{response_text}\n")
     response_display.configure(state='disabled')
     pyperclip.copy(response_text)
-    
-def audio_gui_with_response(response_text):
-    user_input.configure(state='normal')
-    user_input.insert(tk.END, f"{botname}: {response_text}\n")
-    user_input.configure(state='disabled')   
-    
+
 # Function to toggle the background color of the microphone button
 def toggle_mic_button_color():
     current_color = mic_button.cget("bg")
@@ -214,17 +203,6 @@ def toggle_aiscribe():
     global use_aiscribe
     use_aiscribe = not use_aiscribe
     toggle_button.config(text="AISCRIBE: ON" if use_aiscribe else "AISCRIBE: OFF")
-
-# Modified send_and_receive function
-def send_and_receive():
-    global use_aiscribe
-    user_message = user_input.get("1.0", tk.END).strip()
-    clear_response_display()
-    if use_aiscribe:
-        formatted_message = f'{AISCRIBE}{user_message}'
-    else:
-        formatted_message = user_message
-    handle_message(formatted_message)
 
 # Modified save_settings function with window close functionality
 def save_settings(koboldcpp_ip, whisperaudio_ip, settings_window):
