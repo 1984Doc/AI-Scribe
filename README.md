@@ -33,4 +33,4 @@ Double-click the server.py file.  This will download the files to help organize 
 
 Close the window after completing and double-click the server.py file.
 
-Open the AIScribe.exe and click the settings button.  For each category, remove the IP address and type "localhost".  Please do not include quotations and click Save.  Close the program and re-launch.  Please verify that Kobold executable and Server.py script are running with the AI model launched.  Everything should work!  If running the client script/executable on a separate machine, please adjust the IP addresses appropriately.  
+Open the AIScribe.exe (compiled client.py for ease of use) and click the settings button.  For each category, remove the IP address and type "localhost".  Please do not include quotations and click Save.  Close the program and re-launch.  Please verify that Kobold executable and Server.py script are running with the AI model launched.  Everything should work!  If running the client script/executable on a separate machine, please adjust the IP addresses appropriately.  
