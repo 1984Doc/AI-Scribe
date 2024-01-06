@@ -7,7 +7,7 @@ Braedon Hendy
 
 Example instructions for running on a single machine:
 
-I will preface that this will run slowly if you are not using a GPU but will demonstrate the capability.  If you have an NVidia RTX-based card, the below instructions can be modified using Koboldcpp.exe rather than koboldcpp_nocuda.exe and consider a GPTQ rather than a GGUF model if you have sufficient VRAM.
+I will preface that this will run slowly if you are not using a GPU but will demonstrate the capability.  If you have an NVidia RTX-based card, the below instructions can be modified using Koboldcpp.exe rather than koboldcpp_nocuda.exe.
 
 Install Python 3.10.9 HERE.  (if the hyperlink doesn't work https://www.python.org/downloads/release/python-3109/ ).  Make sure you click the checkbox to select "Add Python to Path."
 
