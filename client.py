@@ -11,6 +11,7 @@ import numpy as np
 import base64
 import json
 import pyaudio 
+import threading
 
 
 # Function to build the full URL from IP
@@ -41,7 +42,8 @@ WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
 username = "user"
 botname = "Assistant"
 num_lines_to_keep = 20
-AISCRIBE = "Format the SOAP note omitting individual's personal name as follows:\n\nSubjective:\n[List all subjective findings here. Include everything reported by the patient in detail.]\n\nObjective:\n[List objective findings here, such as physical exam findings, measurements, and vitals.  If measurements or vital signs are not included, please write that none are available]\n\nAssessment:\n[Detail the assessment of the patient by the doctor here.]\n\nPlan:\n[List the plan for treatment and next steps to be taken by the doctor and patient here.]\n\nUse the following conversation between a patient and physician:\n\n"
+AISCRIBE = "AI, please transform the following conversation into a concise SOAP note. Do not invent or assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Here's the conversation:"
+AISCRIBE2 = "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management or follow-up required, strictly based on the dialogue provided"
 uploaded_file_path = None
 
 # Function to get prompt for KoboldAI Generation
@@ -53,11 +55,11 @@ def get_prompt(text): # For KoboldAI Generation
         "use_authors_note": False, #Needs to be set in KoboldAI webUI
         "use_world_info": False, #Needs to be set in KoboldAI webUI
         "max_context_length": 2048,
-        "max_length": 360,
+        "max_length": 320,
         "rep_pen": 1.0,
         "rep_pen_range": 2048,
         "rep_pen_slope": 0.7,
-        "temperature": 0.7,
+        "temperature": 0.1,
         "tfs": 0.97,
         "top_a": 0.8,
         "top_k": 0,
@@ -71,6 +73,14 @@ def get_prompt(text): # For KoboldAI Generation
         "frmtrmblln": False, #Remove blank lines
         "stop_sequence": ["\n\n\n\n\n"]
     }
+
+def threaded_handle_message(user_message):
+    thread = threading.Thread(target=handle_message, args=(user_message,))
+    thread.start()
+
+def threaded_send_audio_to_server():
+    thread = threading.Thread(target=send_audio_to_server)
+    thread.start()
 
 # Function to handle message
 def handle_message(user_message):
@@ -86,23 +96,25 @@ def handle_message(user_message):
 def send_and_receive():
     global use_aiscribe
     user_message = user_input.get("1.0", tk.END).strip()
-    clear_response_display()
+    clear_response_display()    
     if use_aiscribe:
-        formatted_message = f'{AISCRIBE}{user_message}'
+        formatted_message = f'{AISCRIBE} [{user_message}] {AISCRIBE2}'
     else:
         formatted_message = user_message
-    handle_message(formatted_message)
+    threaded_handle_message(formatted_message)
     
 def clear_response_display():
     response_display.configure(state='normal')
     response_display.delete("1.0", tk.END)
-    response_display.configure(state='disabled')    
+    response_display.configure(state='disabled') 
 
 def update_gui_with_response(response_text):
     response_display.configure(state='normal')
     response_display.insert(tk.END, f"{response_text}\n")
     response_display.configure(state='disabled')
     pyperclip.copy(response_text)
+    stop_flashing()    
+
 
 # Function to toggle the background color of the microphone button
 def toggle_mic_button_color():
@@ -166,7 +178,7 @@ def save_audio():
             wf.setframerate(RATE)
             wf.writeframes(b''.join(frames))
         frames = []  # Clear recorded data
-        send_audio_to_server()
+        threaded_send_audio_to_server()
 
 # Function to toggle recording
 def toggle_recording():
@@ -182,6 +194,7 @@ def toggle_recording():
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
         toggle_mic_button_color()  # Change the button color to indicate recording
+        start_flashing()
     else:
         is_recording = False
         if recording_thread.is_alive():
@@ -192,6 +205,7 @@ def toggle_recording():
 def clear_all_text_fields():
     user_input.configure(state='normal')  # Ensure the widget is editable
     user_input.delete("1.0", tk.END)
+    stop_flashing()
     # user_input.configure(state='disabled')  # Comment out or remove this line
 
     response_display.configure(state='normal')
@@ -241,7 +255,7 @@ def upload_file():
     file_path = filedialog.askopenfilename(filetypes=[("WAV files", "*.wav")])
     if file_path:
         uploaded_file_path = file_path
-        send_audio_to_server()  # Add this line to process the file immediately
+        threaded_send_audio_to_server()  # Add this line to process the file immediately
 
 # Modified send_audio_to_server function
 def send_audio_to_server():
@@ -263,12 +277,31 @@ def send_audio_to_server():
             # Call send_and_receive to process this input
             send_and_receive()
 
+is_flashing = False
+
+def start_flashing():
+    global is_flashing
+    is_flashing = True
+    flash_circle()
+
+def stop_flashing():
+    global is_flashing
+    is_flashing = False
+    blinking_circle_canvas.itemconfig(circle, fill='white')  # Reset to default color
+
+def flash_circle():
+    if is_flashing:
+        current_color = blinking_circle_canvas.itemcget(circle, 'fill')
+        new_color = 'blue' if current_color != 'blue' else 'black'
+        blinking_circle_canvas.itemconfig(circle, fill=new_color)
+        root.after(1000, flash_circle)  # Adjust the flashing speed as needed
+
 # GUI Setup
 root = tk.Tk()
 root.title("AI Medical Scribe")
 
 user_input = scrolledtext.ScrolledText(root, height=15)
-user_input.grid(row=0, column=0, columnspan=7, padx=10, pady=5)
+user_input.grid(row=0, column=0, columnspan=8, padx=5, pady=5)
 
 mic_button = tk.Button(root, text="Microphone", command=toggle_recording, height=2, width=15)
 mic_button.grid(row=1, column=0, pady=5)
@@ -292,6 +325,10 @@ settings_button.grid(row=1, column=5, pady=5)  # Adjust the grid position as nee
 upload_button = tk.Button(root, text="Upload WAV", command=upload_file, height=2, width=15)
 upload_button.grid(row=1, column=6, pady=5)  # Adjust the grid position as needed
 
+blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
+blinking_circle_canvas.grid(row=1, column=7, pady=5)
+circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
+
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: send_and_receive())
 
@@ -299,7 +336,7 @@ root.bind('<Alt-p>', lambda event: send_and_receive())
 root.bind('<Alt-r>', lambda event: mic_button.invoke())
 
 response_display = scrolledtext.ScrolledText(root, height=15, state='disabled')
-response_display.grid(row=2, column=0, columnspan=7, padx=10, pady=5)
+response_display.grid(row=2, column=0, columnspan=8, padx=5, pady=5)
 
 root.mainloop()
 
