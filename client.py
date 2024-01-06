@@ -12,7 +12,30 @@ import base64
 import json
 import pyaudio 
 import threading
+import tkinter.messagebox as messagebox
 
+# Add these near the top of your script
+editable_settings = {
+    "use_story": False,
+    "use_memory": False,
+    "use_authors_note": False, 
+    "use_world_info": False,
+    "max_context_length": 2048,
+    "max_length": 360,
+    "rep_pen": 1.1,  
+    "rep_pen_range": 2048,
+    "rep_pen_slope": 0.7,
+    "temperature": 0,
+    "tfs": 0.97,
+    "top_a": 0.8,
+    "top_k": 30,
+    "top_p": 0.4,
+    "typical": 0.19,
+    "sampler_order": [6, 0, 1, 3, 4, 2, 5],
+    "singleline": False,
+    "frmttriminc": False,
+    "frmtrmblln": False
+}
 
 # Function to build the full URL from IP
 def build_url(ip, port):
@@ -20,18 +43,48 @@ def build_url(ip, port):
 
 # Function to save settings to a file
 def save_settings_to_file(koboldcpp_ip, whisperaudio_ip):
+    settings = {
+        "koboldcpp_ip": koboldcpp_ip,
+        "whisperaudio_ip": whisperaudio_ip,
+        "editable_settings": editable_settings
+    }
     with open('settings.txt', 'w') as file:
-        file.write(f"{koboldcpp_ip}\n{whisperaudio_ip}")
-
-# Function to load settings from a file
+        json.dump(settings, file)
+        
 def load_settings_from_file():
     try:
         with open('settings.txt', 'r') as file:
-            lines = file.readlines()
-            return lines[0].strip(), lines[1].strip()
+            try:
+                settings = json.load(file)
+            except json.JSONDecodeError:
+                return "192.168.1.195", "192.168.1.195"  # Default values if JSON is invalid
+
+            koboldcpp_ip = settings.get("koboldcpp_ip", "192.168.1.195")
+            whisperaudio_ip = settings.get("whisperaudio_ip", "192.168.1.195")
+            loaded_editable_settings = settings.get("editable_settings", {})
+            for key, value in loaded_editable_settings.items():
+                if key in editable_settings:
+                    editable_settings[key] = value
+            return koboldcpp_ip, whisperaudio_ip
     except FileNotFoundError:
         # Return default values if file not found
         return "192.168.1.195", "192.168.1.195"
+        
+def load_aiscribe_from_file():
+    try:
+        with open('aiscribe.txt', 'r') as f:
+            content = f.read().strip()
+            return content if content else None
+    except FileNotFoundError:
+        return None
+
+def load_aiscribe2_from_file():
+    try:
+        with open('aiscribe2.txt', 'r') as f:
+            content = f.read().strip()
+            return content if content else None
+    except FileNotFoundError:
+        return None
 
 # Load settings at the start
 KOBOLDCPP_IP, WHISPERAUDIO_IP = load_settings_from_file()
@@ -42,36 +95,39 @@ WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
 username = "user"
 botname = "Assistant"
 num_lines_to_keep = 20
-AISCRIBE = "AI, please transform the following conversation into a concise SOAP note. Do not invent or assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Here's the conversation:"
-AISCRIBE2 = "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management or follow-up required, strictly based on the dialogue provided"
+DEFAULT_AISCRIBE = "AI, please transform the following conversation into a concise SOAP note. Do not invent or assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Here's the conversation:"
+DEFAULT_AISCRIBE2 = "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management or follow-up required, strictly based on the dialogue provided"
+AISCRIBE = load_aiscribe_from_file() or DEFAULT_AISCRIBE
+AISCRIBE2 = load_aiscribe2_from_file() or DEFAULT_AISCRIBE2
 uploaded_file_path = None
 
 # Function to get prompt for KoboldAI Generation
-def get_prompt(text): # For KoboldAI Generation
+def get_prompt(text):
+    # Check and parse 'sampler_order' if it's a string
+    sampler_order = editable_settings["sampler_order"]
+    if isinstance(sampler_order, str):
+        sampler_order = json.loads(sampler_order)
     return {
         "prompt": f"{text}\n",
-        "use_story": False, #Needs to be set in KoboldAI webUI
-        "use_memory": False, #Needs to be set in KoboldAI webUI
-        "use_authors_note": False, #Needs to be set in KoboldAI webUI
-        "use_world_info": False, #Needs to be set in KoboldAI webUI
-        "max_context_length": 2048,
-        "max_length": 320,
-        "rep_pen": 1.0,
-        "rep_pen_range": 2048,
-        "rep_pen_slope": 0.7,
-        "temperature": 0.1,
-        "tfs": 0.97,
-        "top_a": 0.8,
-        "top_k": 0,
-        "top_p": 0.5,
-        "typical": 0.19,
-        "sampler_order": [6,0,1,3,4,2,5], 
-        "singleline": False,
-        "sampler_seed": 69420, # Use specific seed for text generation?
-        "sampler_full_determinism": False, # Always give same output with same settings?
-        "frmttriminc": False, #Trim incomplete sentences
-        "frmtrmblln": False, #Remove blank lines
-        "stop_sequence": ["\n\n\n\n\n"]
+        "use_story": editable_settings["use_story"],
+        "use_memory": editable_settings["use_memory"],
+        "use_authors_note": editable_settings["use_authors_note"],
+        "use_world_info": editable_settings["use_world_info"],
+        "max_context_length": int(editable_settings["max_context_length"]),
+        "max_length": int(editable_settings["max_length"]),
+        "rep_pen": float(editable_settings["rep_pen"]),
+        "rep_pen_range": int(editable_settings["rep_pen_range"]),
+        "rep_pen_slope": float(editable_settings["rep_pen_slope"]),
+        "temperature": float(editable_settings["temperature"]),
+        "tfs": float(editable_settings["tfs"]),
+        "top_a": float(editable_settings["top_a"]),
+        "top_k": int(editable_settings["top_k"]),
+        "top_p": float(editable_settings["top_p"]),
+        "typical": float(editable_settings["typical"]),
+        "sampler_order": sampler_order,
+        "singleline": editable_settings["singleline"],
+        "frmttriminc": editable_settings["frmttriminc"],
+        "frmtrmblln": editable_settings["frmtrmblln"]
     }
 
 def threaded_handle_message(user_message):
@@ -82,7 +138,6 @@ def threaded_send_audio_to_server():
     thread = threading.Thread(target=send_audio_to_server)
     thread.start()
 
-# Function to handle message
 def handle_message(user_message):
     prompt = get_prompt(user_message)
     response = requests.post(f"{KOBOLDCPP}/api/v1/generate", json=prompt)
@@ -92,7 +147,6 @@ def handle_message(user_message):
         response_text = response_text.replace("  ", " ").strip() 
         update_gui_with_response(response_text)
 
-# Modified send_and_receive function
 def send_and_receive():
     global use_aiscribe
     user_message = user_input.get("1.0", tk.END).strip()
@@ -115,8 +169,6 @@ def update_gui_with_response(response_text):
     pyperclip.copy(response_text)
     stop_flashing()    
 
-
-# Function to toggle the background color of the microphone button
 def toggle_mic_button_color():
     current_color = mic_button.cget("bg")
     new_color = "red" if current_color != "red" else "SystemButtonFace"  # Default button color
@@ -125,6 +177,9 @@ def toggle_mic_button_color():
 # Global variable to control recording state
 is_recording = False
 audio_data = []
+frames = []
+is_paused = False
+use_aiscribe = True 
 
 # Global variables for PyAudio
 CHUNK = 1024
@@ -135,27 +190,15 @@ RECORD_SECONDS = 5
 
 p = pyaudio.PyAudio()  # Creating an instance of PyAudio
 
-# Other global variables
-is_recording = False
-frames = []
-is_paused = False
-
-# Toggle switch variable
-use_aiscribe = True  # Default state of the toggle
-
-# Function to record audio
 def toggle_pause():
     global is_paused
     is_paused = not is_paused
 
     if is_paused:
         pause_button.config(text="Resume", bg="red")
-        # The actual pause functionality will be handled in the record_audio function
     else:
         pause_button.config(text="Pause", bg="SystemButtonFace")
-        # The actual resume functionality will also be handled in the record_audio function
 
-# Function to record audio
 def record_audio():
     global is_paused, frames
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
@@ -180,7 +223,6 @@ def save_audio():
         frames = []  # Clear recorded data
         threaded_send_audio_to_server()
 
-# Function to toggle recording
 def toggle_recording():
     global is_recording, recording_thread
     if not is_recording:
@@ -200,14 +242,12 @@ def toggle_recording():
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
         save_audio()
-        toggle_mic_button_color()  # Reset the button color       
+        toggle_mic_button_color()         
        
 def clear_all_text_fields():
-    user_input.configure(state='normal')  # Ensure the widget is editable
+    user_input.configure(state='normal') 
     user_input.delete("1.0", tk.END)
     stop_flashing()
-    # user_input.configure(state='disabled')  # Comment out or remove this line
-
     response_display.configure(state='normal')
     response_display.delete("1.0", tk.END)
     response_display.configure(state='disabled')
@@ -218,17 +258,33 @@ def toggle_aiscribe():
     use_aiscribe = not use_aiscribe
     toggle_button.config(text="AISCRIBE: ON" if use_aiscribe else "AISCRIBE: OFF")
 
-# Modified save_settings function with window close functionality
-def save_settings(koboldcpp_ip, whisperaudio_ip, settings_window):
-    global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP
+def save_settings(koboldcpp_ip, whisperaudio_ip, aiscribe_text, aiscribe2_text, settings_window):
+    global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP, editable_settings, AISCRIBE, AISCRIBE2
     KOBOLDCPP_IP = koboldcpp_ip
     WHISPERAUDIO_IP = whisperaudio_ip
     KOBOLDCPP = build_url(KOBOLDCPP_IP, "5001")
     WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
     save_settings_to_file(KOBOLDCPP_IP, WHISPERAUDIO_IP)  # Save to file
-    settings_window.destroy()  # Close the settings window
+    for setting, entry in editable_settings_entries.items():
+        value = entry.get()
+        # Convert to the appropriate type (e.g., int, float, list)
+        # For example, for integers:
+        if setting in ["max_context_length", "max_length", "rep_pen_range", "top_k"]:
+            value = int(value)
+        # Add similar conditions for other data types
+        editable_settings[setting] = value 
+    AISCRIBE = aiscribe_text
+    AISCRIBE2 = aiscribe2_text
+    with open('aiscribe.txt', 'w') as f:
+        f.write(AISCRIBE)
+    with open('aiscribe2.txt', 'w') as f:
+        f.write(AISCRIBE2)
 
-# Function to open the settings window
+    settings_window.destroy() 
+
+# New dictionary for entry widgets
+editable_settings_entries = {}
+
 def open_settings_window():
     settings_window = tk.Toplevel(root)
     settings_window.title("Settings")
@@ -244,11 +300,37 @@ def open_settings_window():
     whisperaudio_ip_entry = tk.Entry(settings_window, width=50)
     whisperaudio_ip_entry.insert(0, WHISPERAUDIO_IP)
     whisperaudio_ip_entry.grid(row=1, column=1)
+    
+    row_index = 0
+    for setting, value in editable_settings.items():
+        tk.Label(settings_window, text=f"{setting}:").grid(row=row_index, column=0, sticky='nw')
+        entry = tk.Entry(settings_window, width=50)
+        entry.insert(0, str(value))
+        entry.grid(row=row_index, column=1, sticky='nw')
+        editable_settings_entries[setting] = entry
+        row_index += 1
 
-    # Save button with modified command to include window close
-    save_button = tk.Button(settings_window, text="Save",
-                            command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), settings_window))
-    save_button.grid(row=2, column=0, columnspan=2)
+    # AISCRIBE text box
+    tk.Label(settings_window, text="Context Before Conversation").grid(row=0, column=2, sticky='nw', padx=(10,0))
+    aiscribe_textbox = tk.Text(settings_window, width=50, height=15)
+    aiscribe_textbox.insert('1.0', AISCRIBE)
+    aiscribe_textbox.grid(row=1, column=2, rowspan=10, sticky='nw', padx=(10,0))
+
+    # AISCRIBE2 text box
+    tk.Label(settings_window, text="Context After Conversation").grid(row=11, column=2, sticky='nw', padx=(10,0))
+    aiscribe2_textbox = tk.Text(settings_window, width=50, height=15)
+    aiscribe2_textbox.insert('1.0', AISCRIBE2)
+    aiscribe2_textbox.grid(row=12, column=2, rowspan=10, sticky='nw', padx=(10,0))
+
+    # Save, Close, and Default buttons under the left column
+    save_button = tk.Button(settings_window, text="Save", width=15, command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), aiscribe_textbox.get("1.0", tk.END), aiscribe2_textbox.get("1.0", tk.END), settings_window))
+    save_button.grid(row=row_index, column=0, padx=5, pady=5)
+
+    close_button = tk.Button(settings_window, text="Close", width=15, command=settings_window.destroy)
+    close_button.grid(row=row_index + 1, column=0, padx=5, pady=5)
+
+    default_button = tk.Button(settings_window, text="Default", width=15, command=clear_settings_file)
+    default_button.grid(row=row_index + 2, column=0, padx=5, pady=5)
     
 def upload_file():
     global uploaded_file_path
@@ -257,7 +339,6 @@ def upload_file():
         uploaded_file_path = file_path
         threaded_send_audio_to_server()  # Add this line to process the file immediately
 
-# Modified send_audio_to_server function
 def send_audio_to_server():
     global uploaded_file_path
     if uploaded_file_path:
@@ -295,6 +376,16 @@ def flash_circle():
         new_color = 'blue' if current_color != 'blue' else 'black'
         blinking_circle_canvas.itemconfig(circle, fill=new_color)
         root.after(1000, flash_circle)  # Adjust the flashing speed as needed
+        
+def clear_settings_file():
+    try:
+        open('settings.txt', 'w').close()  # This opens the files and immediately closes it, clearing its contents.
+        open('aiscribe.txt', 'w').close()
+        open('aiscribe2.txt', 'w').close()
+        messagebox.showinfo("Settings Reset", "Settings have been reset. Please restart.")
+        print("Settings file cleared.")
+    except Exception as e:
+        print(f"Error clearing settings files: {e}")
 
 # GUI Setup
 root = tk.Tk()
@@ -306,7 +397,6 @@ user_input.grid(row=0, column=0, columnspan=8, padx=5, pady=5)
 mic_button = tk.Button(root, text="Microphone", command=toggle_recording, height=2, width=15)
 mic_button.grid(row=1, column=0, pady=5)
 
-# Send button
 send_button = tk.Button(root, text="Send", command=send_and_receive, height=2, width=15)
 send_button.grid(row=1, column=1, pady=5)
 
