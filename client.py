@@ -301,7 +301,7 @@ def open_settings_window():
     whisperaudio_ip_entry.insert(0, WHISPERAUDIO_IP)
     whisperaudio_ip_entry.grid(row=1, column=1)
     
-    row_index = 0
+    row_index = 2
     for setting, value in editable_settings.items():
         tk.Label(settings_window, text=f"{setting}:").grid(row=row_index, column=0, sticky='nw')
         entry = tk.Entry(settings_window, width=50)
