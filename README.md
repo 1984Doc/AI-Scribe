@@ -17,8 +17,11 @@ pip install openai-whisper
 Next, you need to install software to convert the audio file to be processed.  Press Windows key + R, you can run the command line by typing "powershell".  Copy/type the following:
 
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
 Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+
 scoop install ffmpeg
+
 Now you need to download the AI model (it is large) from the following site.  I will link you directly to the one I trialed with my laptop HERE.  Click the download button once the window opens (if the hyperlink doesn't work https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/blob/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf).
 
 You now need to launch the AI model with the following software that you can download HERE.  It will download automatically and you will need to open it (if hyperlink doesn't workhttps://github.com/LostRuins/koboldcpp/releases). 
