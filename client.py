@@ -13,6 +13,8 @@ import json
 import pyaudio 
 import threading
 import tkinter.messagebox as messagebox
+import datetime
+import functools
 
 # Add these near the top of your script
 editable_settings = {
@@ -90,6 +92,7 @@ def load_aiscribe2_from_file():
 KOBOLDCPP_IP, WHISPERAUDIO_IP = load_settings_from_file()
 KOBOLDCPP = build_url(KOBOLDCPP_IP, "5001")
 WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
+response_history = []
 
 # Other constants and global variables
 username = "user"
@@ -155,7 +158,7 @@ def send_and_receive():
         formatted_message = f'{AISCRIBE} [{user_message}] {AISCRIBE2}'
     else:
         formatted_message = user_message
-    threaded_handle_message(formatted_message)
+    threaded_handle_message(formatted_message)  
     
 def clear_response_display():
     response_display.configure(state='normal')
@@ -163,11 +166,31 @@ def clear_response_display():
     response_display.configure(state='disabled') 
 
 def update_gui_with_response(response_text):
+    global response_history
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    response_history.insert(0, (timestamp, response_text))
+
+    # Update the timestamp listbox
+    timestamp_listbox.delete(0, tk.END)
+    for time, _ in response_history:
+        timestamp_listbox.insert(tk.END, time)
+
     response_display.configure(state='normal')
     response_display.insert(tk.END, f"{response_text}\n")
     response_display.configure(state='disabled')
     pyperclip.copy(response_text)
     stop_flashing()    
+
+def show_response(event):
+    selection = event.widget.curselection()
+    if selection:
+        index = selection[0]
+        response_text = response_history[index][1]
+        response_display.configure(state='normal')
+        response_display.delete('1.0', tk.END)
+        response_display.insert('1.0', response_text)
+        response_display.configure(state='disabled')
+        pyperclip.copy(response_text)    
 
 def toggle_mic_button_color():
     current_color = mic_button.cget("bg")
@@ -185,7 +208,7 @@ use_aiscribe = True
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
-RATE = 44100
+RATE = 16000
 RECORD_SECONDS = 5
 
 p = pyaudio.PyAudio()  # Creating an instance of PyAudio
@@ -338,7 +361,8 @@ def upload_file():
     if file_path:
         uploaded_file_path = file_path
         threaded_send_audio_to_server()  # Add this line to process the file immediately
-
+    start_flashing()    
+    
 def send_audio_to_server():
     global uploaded_file_path
     if uploaded_file_path:
@@ -377,6 +401,10 @@ def flash_circle():
         blinking_circle_canvas.itemconfig(circle, fill=new_color)
         root.after(1000, flash_circle)  # Adjust the flashing speed as needed
         
+def send_and_flash():
+    start_flashing()  
+    send_and_receive()  
+        
 def clear_settings_file():
     try:
         open('settings.txt', 'w').close()  # This opens the files and immediately closes it, clearing its contents.
@@ -397,11 +425,11 @@ user_input.grid(row=0, column=0, columnspan=8, padx=5, pady=5)
 mic_button = tk.Button(root, text="Microphone", command=toggle_recording, height=2, width=15)
 mic_button.grid(row=1, column=0, pady=5)
 
-send_button = tk.Button(root, text="Send", command=send_and_receive, height=2, width=15)
+send_button = tk.Button(root, text="Send", command=send_and_flash, height=2, width=15)
 send_button.grid(row=1, column=1, pady=5)
 
 pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=15)
-pause_button.grid(row=1, column=2, pady=5)  # Adjust the grid position as needed
+pause_button.grid(row=1, column=2, pady=5)   
 
 clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=15)
 clear_button.grid(row=1, column=3, pady=5)
@@ -410,23 +438,27 @@ toggle_button = tk.Button(root, text="AISCRIBE: ON", command=toggle_aiscribe, he
 toggle_button.grid(row=1, column=4, pady=5)
 
 settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=15)
-settings_button.grid(row=1, column=5, pady=5)  # Adjust the grid position as needed
+settings_button.grid(row=1, column=5, pady=5)   
 
 upload_button = tk.Button(root, text="Upload WAV", command=upload_file, height=2, width=15)
-upload_button.grid(row=1, column=6, pady=5)  # Adjust the grid position as needed
+upload_button.grid(row=1, column=6, pady=5)   
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
 blinking_circle_canvas.grid(row=1, column=7, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
+
+response_display = scrolledtext.ScrolledText(root, height=15, state='disabled')
+response_display.grid(row=2, column=0, columnspan=8, padx=5, pady=5)
+
+timestamp_listbox = tk.Listbox(root, height=30)
+timestamp_listbox.grid(row=0, column=8, rowspan=3, padx=5, pady=5)
+timestamp_listbox.bind('<<ListboxSelect>>', show_response)
 
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: send_and_receive())
 
 # Bind Alt+R to toggle_recording function
 root.bind('<Alt-r>', lambda event: mic_button.invoke())
-
-response_display = scrolledtext.ScrolledText(root, height=15, state='disabled')
-response_display.grid(row=2, column=0, columnspan=8, padx=5, pady=5)
 
 root.mainloop()
 
