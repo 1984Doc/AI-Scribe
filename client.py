@@ -11,10 +11,11 @@ import numpy as np
 import base64
 import json
 import pyaudio 
-import threading
 import tkinter.messagebox as messagebox
 import datetime
 import functools
+import os
+from openai import OpenAI
 
 # Add these near the top of your script
 editable_settings = {
@@ -44,11 +45,12 @@ def build_url(ip, port):
     return f"http://{ip}:{port}"
 
 # Function to save settings to a file
-def save_settings_to_file(koboldcpp_ip, whisperaudio_ip):
+def save_settings_to_file(koboldcpp_ip, whisperaudio_ip, openai_api_key):
     settings = {
         "koboldcpp_ip": koboldcpp_ip,
         "whisperaudio_ip": whisperaudio_ip,
-        "editable_settings": editable_settings
+        "openai_api_key": openai_api_key,        
+        "editable_settings": editable_settings        
     }
     with open('settings.txt', 'w') as file:
         json.dump(settings, file)
@@ -59,18 +61,19 @@ def load_settings_from_file():
             try:
                 settings = json.load(file)
             except json.JSONDecodeError:
-                return "192.168.1.195", "192.168.1.195"  # Default values if JSON is invalid
-
+                return "192.168.1.195", "192.168.1.195", "None"
+            
             koboldcpp_ip = settings.get("koboldcpp_ip", "192.168.1.195")
-            whisperaudio_ip = settings.get("whisperaudio_ip", "192.168.1.195")
+            whisperaudio_ip = settings.get("whisperaudio_ip", "192.168.1.195") 
+            openai_api_key = settings.get("openai_api_key", "NONE")
             loaded_editable_settings = settings.get("editable_settings", {})
             for key, value in loaded_editable_settings.items():
                 if key in editable_settings:
                     editable_settings[key] = value
-            return koboldcpp_ip, whisperaudio_ip
+            return koboldcpp_ip, whisperaudio_ip, openai_api_key
     except FileNotFoundError:
         # Return default values if file not found
-        return "192.168.1.195", "192.168.1.195"
+        return "192.168.1.195", "192.168.1.195", "None"
         
 def load_aiscribe_from_file():
     try:
@@ -89,10 +92,11 @@ def load_aiscribe2_from_file():
         return None
 
 # Load settings at the start
-KOBOLDCPP_IP, WHISPERAUDIO_IP = load_settings_from_file()
+KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY = load_settings_from_file()
 KOBOLDCPP = build_url(KOBOLDCPP_IP, "5001")
 WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
 response_history = []
+
 
 # Other constants and global variables
 username = "user"
@@ -105,13 +109,13 @@ AISCRIBE2 = load_aiscribe2_from_file() or DEFAULT_AISCRIBE2
 uploaded_file_path = None
 
 # Function to get prompt for KoboldAI Generation
-def get_prompt(text):
+def get_prompt(formatted_message):
     # Check and parse 'sampler_order' if it's a string
     sampler_order = editable_settings["sampler_order"]
     if isinstance(sampler_order, str):
         sampler_order = json.loads(sampler_order)
     return {
-        "prompt": f"{text}\n",
+        "prompt": f"{formatted_message}\n",
         "use_story": editable_settings["use_story"],
         "use_memory": editable_settings["use_memory"],
         "use_authors_note": editable_settings["use_authors_note"],
@@ -133,22 +137,25 @@ def get_prompt(text):
         "frmtrmblln": editable_settings["frmtrmblln"]
     }
 
-def threaded_handle_message(user_message):
-    thread = threading.Thread(target=handle_message, args=(user_message,))
+def threaded_handle_message(formatted_message):
+    thread = threading.Thread(target=handle_message, args=(formatted_message,))
     thread.start()
 
 def threaded_send_audio_to_server():
     thread = threading.Thread(target=send_audio_to_server)
     thread.start()
 
-def handle_message(user_message):
-    prompt = get_prompt(user_message)
-    response = requests.post(f"{KOBOLDCPP}/api/v1/generate", json=prompt)
-    if response.status_code == 200:
-        results = response.json()['results']
-        response_text = results[0]['text']
-        response_text = response_text.replace("  ", " ").strip() 
-        update_gui_with_response(response_text)
+def handle_message(formatted_message):
+    if gpt_button.cget("bg") == "red":
+        show_edit_transcription_popup(formatted_message)
+    else:
+        prompt = get_prompt(formatted_message)
+        response = requests.post(f"{KOBOLDCPP}/api/v1/generate", json=prompt)
+        if response.status_code == 200:
+            results = response.json()['results']
+            response_text = results[0]['text']
+            response_text = response_text.replace("  ", " ").strip() 
+            update_gui_with_response(response_text)
 
 def send_and_receive():
     global use_aiscribe
@@ -190,7 +197,47 @@ def show_response(event):
         response_display.delete('1.0', tk.END)
         response_display.insert('1.0', response_text)
         response_display.configure(state='disabled')
-        pyperclip.copy(response_text)    
+        pyperclip.copy(response_text)
+
+def send_text_to_chatgpt(edited_text):
+    api_key = OPENAI_API_KEY
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": "gpt-4",
+        "messages": [
+            {"role": "user", "content": edited_text}
+        ],
+    }
+
+    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, data=json.dumps(payload))
+    
+    if response.status_code == 200:
+            response_data = response.json()
+            response_text = (response_data['choices'][0]['message']['content'])
+            update_gui_with_response(response_text)
+            
+
+def show_edit_transcription_popup(formatted_message):
+    popup = tk.Toplevel(root)
+    popup.title("Scrub PHI Prior to GPT")
+    text_area = scrolledtext.ScrolledText(popup, height=20, width=80)
+    text_area.pack(padx=10, pady=10)
+    text_area.insert(tk.END, formatted_message)
+
+    def on_proceed():
+        edited_text = text_area.get("1.0", tk.END).strip()
+        popup.destroy()
+        send_text_to_chatgpt(edited_text)
+    
+    proceed_button = tk.Button(popup, text="Proceed", command=on_proceed)
+    proceed_button.pack(side=tk.RIGHT, padx=10, pady=10)
+
+    # Cancel button
+    cancel_button = tk.Button(popup, text="Cancel", command=popup.destroy)
+    cancel_button.pack(side=tk.LEFT, padx=10, pady=10)
 
 def toggle_mic_button_color():
     current_color = mic_button.cget("bg")
@@ -203,6 +250,7 @@ audio_data = []
 frames = []
 is_paused = False
 use_aiscribe = True 
+is_gpt_button_active = False
 
 # Global variables for PyAudio
 CHUNK = 1024
@@ -275,27 +323,34 @@ def clear_all_text_fields():
     response_display.delete("1.0", tk.END)
     response_display.configure(state='disabled')
 
-# Toggle AISCRIBE constant function
+def toggle_gpt_button():
+    global is_gpt_button_active
+    if is_gpt_button_active:
+        gpt_button.config(bg="SystemButtonFace")
+        is_gpt_button_active = False
+    else:
+        gpt_button.config(bg="red")
+        is_gpt_button_active = True
+
 def toggle_aiscribe():
     global use_aiscribe
     use_aiscribe = not use_aiscribe
     toggle_button.config(text="AISCRIBE: ON" if use_aiscribe else "AISCRIBE: OFF")
 
-def save_settings(koboldcpp_ip, whisperaudio_ip, aiscribe_text, aiscribe2_text, settings_window):
-    global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP, editable_settings, AISCRIBE, AISCRIBE2
+def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window):
+    global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, editable_settings, AISCRIBE, AISCRIBE2
     KOBOLDCPP_IP = koboldcpp_ip
     WHISPERAUDIO_IP = whisperaudio_ip
+    OPENAI_API_KEY = openai_api_key
     KOBOLDCPP = build_url(KOBOLDCPP_IP, "5001")
     WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
-    save_settings_to_file(KOBOLDCPP_IP, WHISPERAUDIO_IP)  # Save to file
     for setting, entry in editable_settings_entries.items():
         value = entry.get()
-        # Convert to the appropriate type (e.g., int, float, list)
-        # For example, for integers:
         if setting in ["max_context_length", "max_length", "rep_pen_range", "top_k"]:
             value = int(value)
         # Add similar conditions for other data types
         editable_settings[setting] = value 
+    save_settings_to_file(KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY)  # Save to file
     AISCRIBE = aiscribe_text
     AISCRIBE2 = aiscribe2_text
     with open('aiscribe.txt', 'w') as f:
@@ -324,7 +379,12 @@ def open_settings_window():
     whisperaudio_ip_entry.insert(0, WHISPERAUDIO_IP)
     whisperaudio_ip_entry.grid(row=1, column=1)
     
-    row_index = 2
+    tk.Label(settings_window, text="OpenAI API Key:").grid(row=2, column=0)
+    openai_api_key_entry = tk.Entry(settings_window, width=50)
+    openai_api_key_entry.insert(0, OPENAI_API_KEY)
+    openai_api_key_entry.grid(row=2, column=1)
+    
+    row_index = 3
     for setting, value in editable_settings.items():
         tk.Label(settings_window, text=f"{setting}:").grid(row=row_index, column=0, sticky='nw')
         entry = tk.Entry(settings_window, width=50)
@@ -346,7 +406,7 @@ def open_settings_window():
     aiscribe2_textbox.grid(row=12, column=2, rowspan=10, sticky='nw', padx=(10,0))
 
     # Save, Close, and Default buttons under the left column
-    save_button = tk.Button(settings_window, text="Save", width=15, command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), aiscribe_textbox.get("1.0", tk.END), aiscribe2_textbox.get("1.0", tk.END), settings_window))
+    save_button = tk.Button(settings_window, text="Save", width=15, command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), openai_api_key_entry.get(), aiscribe_textbox.get("1.0", tk.END), aiscribe2_textbox.get("1.0", tk.END), settings_window))
     save_button.grid(row=row_index, column=0, padx=5, pady=5)
 
     close_button = tk.Button(settings_window, text="Close", width=15, command=settings_window.destroy)
@@ -420,7 +480,7 @@ root = tk.Tk()
 root.title("AI Medical Scribe")
 
 user_input = scrolledtext.ScrolledText(root, height=15)
-user_input.grid(row=0, column=0, columnspan=8, padx=5, pady=5)
+user_input.grid(row=0, column=0, columnspan=9, padx=5, pady=5)
 
 mic_button = tk.Button(root, text="Microphone", command=toggle_recording, height=2, width=15)
 mic_button.grid(row=1, column=0, pady=5)
@@ -437,21 +497,24 @@ clear_button.grid(row=1, column=3, pady=5)
 toggle_button = tk.Button(root, text="AISCRIBE: ON", command=toggle_aiscribe, height=2, width=15)
 toggle_button.grid(row=1, column=4, pady=5)
 
+gpt_button = tk.Button(root, text="GPT", command=toggle_gpt_button, height=2, width=15)
+gpt_button.grid(row=1, column=5, pady=5)   
+
 settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=15)
-settings_button.grid(row=1, column=5, pady=5)   
+settings_button.grid(row=1, column=6, pady=5)   
 
 upload_button = tk.Button(root, text="Upload WAV", command=upload_file, height=2, width=15)
-upload_button.grid(row=1, column=6, pady=5)   
+upload_button.grid(row=1, column=7, pady=5)   
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
-blinking_circle_canvas.grid(row=1, column=7, pady=5)
+blinking_circle_canvas.grid(row=1, column=8, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 
 response_display = scrolledtext.ScrolledText(root, height=15, state='disabled')
-response_display.grid(row=2, column=0, columnspan=8, padx=5, pady=5)
+response_display.grid(row=2, column=0, columnspan=9, padx=5, pady=5)
 
 timestamp_listbox = tk.Listbox(root, height=30)
-timestamp_listbox.grid(row=0, column=8, rowspan=3, padx=5, pady=5)
+timestamp_listbox.grid(row=0, column=9, rowspan=3, padx=5, pady=5)
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
 
 # Bind Alt+P to send_and_receive function
