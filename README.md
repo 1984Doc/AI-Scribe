@@ -1,11 +1,11 @@
 # AI-Scribe
-This is a script that I worked on to help empower physicians to alleviate the burden of documentation by utilizing a medical scribe to create SOAP notes.  Expensive solutions could potentially share personal health information with their cloud-based operations.  It utilizes Koboldcpp and Whisper on a local server that is concurrently running the Server.py script.  The Client.py script or executable can then be used by physicians on their device to record patient-physician conversations after a signed consent is obtained and process the result into a SOAP note.
+This is a script that I worked on to help empower physicians to alleviate the burden of documentation by utilizing a medical scribe to create SOAP notes.  Expensive solutions could potentially share personal health information with their cloud-based operations.  It utilizes Koboldcpp and Whisper on a local server that is concurrently running the Server.py script.  The Client.py script can then be used by physicians on their device to record patient-physician conversations after a signed consent is obtained and process the result into a SOAP note.
 
 Regards,
 
 Braedon Hendy
 
-2024-03-17 - updated client.py and client.exe to allow for OpenAI token access when GPT button is selected.  A prompt will show to allow for scrubbing of any personal health information.  
+2024-03-17 - updated client.py to allow for OpenAI token access when GPT button is selected.  A prompt will show to allow for scrubbing of any personal health information.  
 
 Example instructions for running on a single machine:
 
@@ -24,7 +24,7 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 
 scoop install ffmpeg
 
-Now you need to download the AI model (it is large) from the following site.  I will link you directly to the one I trialed with my laptop HERE.  Click the download button once the window opens (if the hyperlink doesn't work https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/blob/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf).
+Now you need to download the AI model (it is large) from the following site.  I will link you directly to the one I trialed with my laptop HERE.  I recommend the Mistral 7B v0.2.
 
 You now need to launch the AI model with the following software that you can download HERE.  It will download automatically and you will need to open it (if hyperlink doesn't workhttps://github.com/LostRuins/koboldcpp/releases). 
 
@@ -38,4 +38,4 @@ Double-click the server.py file.  This will download the files to help organize 
 
 Close the window after completing and double-click the server.py file.
 
-Open the AIScribe.exe (compiled client.py for ease of use) and click the settings button.  For each category, remove the IP address and type "localhost".  Please do not include quotations and click Save.  Close the program and re-launch.  Please verify that Kobold executable and Server.py script are running with the AI model launched.  Everything should work!  If running the client script/executable on a separate machine, please adjust the IP addresses appropriately.  
+Run the client.py (it may prompt for installation of various dependencies via pip) and click the settings button.  For each category, remove the IP address and type "localhost".  Please do not include quotations and click Save.  Close the program and re-launch.  Please verify that Kobold executable and Server.py script are running with the AI model launched.  Everything should work!  If running the client script/executable on a separate machine, please adjust the IP addresses appropriately.  
