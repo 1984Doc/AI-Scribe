@@ -7,6 +7,8 @@ Braedon Hendy
 
 2024-03-17 - updated client.py to allow for OpenAI token access when GPT button is selected.  A prompt will show to allow for scrubbing of any personal health information.  
 
+2024-03-28 - updated client.py to allow for Whisper to run locally when set to True in the settings.  
+
 Example instructions for running on a single machine:
 
 I will preface that this will run slowly if you are not using a GPU but will demonstrate the capability.  If you have an NVidia RTX-based card, the below instructions can be modified using Koboldcpp.exe rather than koboldcpp_nocuda.exe.
