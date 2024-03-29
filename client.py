@@ -15,6 +15,7 @@ import tkinter.messagebox as messagebox
 import datetime
 import functools
 import os
+import whisper
 from openai import OpenAI
 
 # Add these near the top of your script
@@ -37,7 +38,9 @@ editable_settings = {
     "sampler_order": [6, 0, 1, 3, 4, 2, 5],
     "singleline": False,
     "frmttriminc": False,
-    "frmtrmblln": False
+    "frmtrmblln": False,
+    "Local Whisper": False,
+    "Whisper Model": "small.en"
 }
 
 # Function to build the full URL from IP
@@ -421,26 +424,36 @@ def upload_file():
     if file_path:
         uploaded_file_path = file_path
         threaded_send_audio_to_server()  # Add this line to process the file immediately
-    start_flashing()    
-    
+    start_flashing()
+
 def send_audio_to_server():
     global uploaded_file_path
-    if uploaded_file_path:
-        file_to_send = uploaded_file_path
-        uploaded_file_path = None  # Reset after using
+    if editable_settings["Local Whisper"] == "True":
+        print("Using Local Whisper for transcription.")
+        model_name = editable_settings["Whisper Model"].strip()
+        model = whisper.load_model(model_name)
+        file_to_send = uploaded_file_path if uploaded_file_path else 'recording.wav'
+        uploaded_file_path = None
+        result = model.transcribe(file_to_send)
+        transcribed_text = result["text"]
+        user_input.delete("1.0", tk.END)
+        user_input.insert(tk.END, transcribed_text)
+        send_and_receive()
     else:
-        file_to_send = 'recording.wav'
-
-    with open(file_to_send, 'rb') as f:
-        files = {'audio': f}
-        response = requests.post(WHISPERAUDIO, files=files)
-        if response.status_code == 200:
-            transcribed_text = response.json()['text']
-            # Set the transcribed text as user input
-            user_input.delete("1.0", tk.END)
-            user_input.insert(tk.END, transcribed_text)
-            # Call send_and_receive to process this input
-            send_and_receive()
+        print("Using Remote Whisper for transcription.")
+        if uploaded_file_path:
+            file_to_send = uploaded_file_path
+            uploaded_file_path = None  
+        else:
+            file_to_send = 'recording.wav'
+        with open(file_to_send, 'rb') as f:
+            files = {'audio': f}
+            response = requests.post(WHISPERAUDIO, files=files)
+            if response.status_code == 200:
+                transcribed_text = response.json()['text']
+                user_input.delete("1.0", tk.END)
+                user_input.insert(tk.END, transcribed_text)           
+                send_and_receive()
 
 is_flashing = False
 
