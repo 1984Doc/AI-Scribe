@@ -422,7 +422,7 @@ def open_settings_window():
     
 def upload_file():
     global uploaded_file_path
-    file_path = filedialog.askopenfilename(filetypes=[("WAV files", "*.wav")])
+    file_path = filedialog.askopenfilename(filetypes=[("Audio files", "*.wav;*.mp3")])
     if file_path:
         uploaded_file_path = file_path
         threaded_send_audio_to_server()  # Add this line to process the file immediately
@@ -518,7 +518,7 @@ gpt_button.grid(row=1, column=5, pady=5)
 settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=15)
 settings_button.grid(row=1, column=6, pady=5)   
 
-upload_button = tk.Button(root, text="Upload WAV", command=upload_file, height=2, width=15)
+upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=15)
 upload_button.grid(row=1, column=7, pady=5)   
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
