@@ -17,6 +17,7 @@ import functools
 import os
 import whisper
 from openai import OpenAI
+import scrubadub
 
 # Add these near the top of your script
 editable_settings = {
@@ -228,7 +229,8 @@ def show_edit_transcription_popup(formatted_message):
     popup.title("Scrub PHI Prior to GPT")
     text_area = scrolledtext.ScrolledText(popup, height=20, width=80)
     text_area.pack(padx=10, pady=10)
-    text_area.insert(tk.END, formatted_message)
+    cleaned_message = scrubadub.clean(formatted_message)
+    text_area.insert(tk.END, cleaned_message)
 
     def on_proceed():
         edited_text = text_area.get("1.0", tk.END).strip()
