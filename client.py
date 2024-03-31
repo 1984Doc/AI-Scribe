@@ -100,6 +100,7 @@ KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY = load_settings_from_file()
 KOBOLDCPP = build_url(KOBOLDCPP_IP, "5001")
 WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
 response_history = []
+current_view = "full"
 
 
 # Other constants and global variables
@@ -489,13 +490,54 @@ def clear_settings_file():
         print("Settings file cleared.")
     except Exception as e:
         print(f"Error clearing settings files: {e}")
+        
+def toggle_view():
+    global current_view
+    if current_view == "full":
+        user_input.grid_remove()
+        send_button.grid_remove()
+        clear_button.grid_remove()
+        toggle_button.grid_remove()
+        gpt_button.grid_remove()
+        settings_button.grid_remove()
+        upload_button.grid_remove()
+        response_display.grid_remove()
+        timestamp_listbox.grid_remove()
+        mic_button.config(text="Microphone", width=10, height=1)
+        pause_button.config(text="Pause", width=10, height=1)
+        switch_view_button.config(text="Switch", width=10, height=1)
+        mic_button.grid(row=0, column=0, pady=5)
+        pause_button.grid(row=0, column=1, pady=5)
+        switch_view_button.grid(row=0, column=2, pady=5) 
+        blinking_circle_canvas.grid(row=0, column=3, pady=5)
+        root.attributes('-topmost', True)        
+        current_view = "minimal"
+    else:
+        mic_button.config(text="Microphone", width=15, height=2)
+        pause_button.config(text="Pause", width=15, height=2)
+        switch_view_button.config(text="Switch View", width=15, height=2)
+        user_input.grid()
+        send_button.grid()
+        clear_button.grid()
+        toggle_button.grid()
+        gpt_button.grid()
+        settings_button.grid()
+        upload_button.grid()
+        response_display.grid()
+        timestamp_listbox.grid()
+        mic_button.grid(row=1, column=0, pady=5)
+        pause_button.grid(row=1, column=2, pady=5)
+        switch_view_button.grid(row=1, column=8, pady=5)
+        blinking_circle_canvas.grid(row=1, column=9, pady=5)
+        root.attributes('-topmost', False)
+        current_view = "full"
 
 # GUI Setup
 root = tk.Tk()
 root.title("AI Medical Scribe")
 
 user_input = scrolledtext.ScrolledText(root, height=15)
-user_input.grid(row=0, column=0, columnspan=9, padx=5, pady=5)
+user_input.grid(row=0, column=0, columnspan=10, padx=5, pady=5)
 
 mic_button = tk.Button(root, text="Microphone", command=toggle_recording, height=2, width=15)
 mic_button.grid(row=1, column=0, pady=5)
@@ -521,19 +563,22 @@ settings_button.grid(row=1, column=6, pady=5)
 upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=15)
 upload_button.grid(row=1, column=7, pady=5)   
 
+switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=15)
+switch_view_button.grid(row=1, column=8, pady=5)   
+
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
-blinking_circle_canvas.grid(row=1, column=8, pady=5)
+blinking_circle_canvas.grid(row=1, column=9, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 
 response_display = scrolledtext.ScrolledText(root, height=15, state='disabled')
-response_display.grid(row=2, column=0, columnspan=9, padx=5, pady=5)
+response_display.grid(row=2, column=0, columnspan=10, padx=5, pady=5)
 
 timestamp_listbox = tk.Listbox(root, height=30)
-timestamp_listbox.grid(row=0, column=9, rowspan=3, padx=5, pady=5)
+timestamp_listbox.grid(row=0, column=10, rowspan=3, padx=5, pady=5)
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
 
 # Bind Alt+P to send_and_receive function
-root.bind('<Alt-p>', lambda event: send_and_receive())
+root.bind('<Alt-p>', lambda event: pause_button.invoke())
 
 # Bind Alt+R to toggle_recording function
 root.bind('<Alt-r>', lambda event: mic_button.invoke())
