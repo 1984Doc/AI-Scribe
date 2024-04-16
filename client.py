@@ -245,11 +245,6 @@ def show_edit_transcription_popup(formatted_message):
     cancel_button = tk.Button(popup, text="Cancel", command=popup.destroy)
     cancel_button.pack(side=tk.LEFT, padx=10, pady=10)
 
-def toggle_mic_button_color():
-    current_color = mic_button.cget("bg")
-    new_color = "red" if current_color != "red" else "SystemButtonFace"  # Default button color
-    mic_button.config(bg=new_color)
-    
 # Global variable to control recording state
 is_recording = False
 audio_data = []
@@ -312,14 +307,14 @@ def toggle_recording():
         is_recording = True
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
-        toggle_mic_button_color()  # Change the button color to indicate recording
+        mic_button.config(bg="red", text="Microphone ON")
         start_flashing()
     else:
         is_recording = False
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
         save_audio()
-        toggle_mic_button_color()         
+        mic_button.config(bg="SystemButtonFace", text="Microphone OFF")         
        
 def clear_all_text_fields():
     user_input.configure(state='normal') 
@@ -332,16 +327,16 @@ def clear_all_text_fields():
 def toggle_gpt_button():
     global is_gpt_button_active
     if is_gpt_button_active:
-        gpt_button.config(bg="SystemButtonFace")
+        gpt_button.config(bg="SystemButtonFace", text="GPT OFF")
         is_gpt_button_active = False
     else:
-        gpt_button.config(bg="red")
+        gpt_button.config(bg="red", text="GPT ON")
         is_gpt_button_active = True
 
 def toggle_aiscribe():
     global use_aiscribe
     use_aiscribe = not use_aiscribe
-    toggle_button.config(text="AISCRIBE: ON" if use_aiscribe else "AISCRIBE: OFF")
+    toggle_button.config(text="AISCRIBE ON" if use_aiscribe else "AISCRIBE OFF")
 
 def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window):
     global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, editable_settings, AISCRIBE, AISCRIBE2
@@ -423,7 +418,7 @@ def open_settings_window():
     
 def upload_file():
     global uploaded_file_path
-    file_path = filedialog.askopenfilename(filetypes=[("Audio files", "*.wav;*.mp3")])
+    file_path = filedialog.askopenfilename(filetypes=(("Audio files", "*.wav *.mp3"),))
     if file_path:
         uploaded_file_path = file_path
         threaded_send_audio_to_server()  # Add this line to process the file immediately
@@ -503,9 +498,9 @@ def toggle_view():
         upload_button.grid_remove()
         response_display.grid_remove()
         timestamp_listbox.grid_remove()
-        mic_button.config(text="Microphone", width=10, height=1)
-        pause_button.config(text="Pause", width=10, height=1)
-        switch_view_button.config(text="Switch", width=10, height=1)
+        mic_button.config(width=10, height=1)
+        pause_button.config(width=10, height=1)
+        switch_view_button.config(width=10, height=1)
         mic_button.grid(row=0, column=0, pady=5)
         pause_button.grid(row=0, column=1, pady=5)
         switch_view_button.grid(row=0, column=2, pady=5) 
@@ -513,9 +508,9 @@ def toggle_view():
         root.attributes('-topmost', True)        
         current_view = "minimal"
     else:
-        mic_button.config(text="Microphone", width=15, height=2)
-        pause_button.config(text="Pause", width=15, height=2)
-        switch_view_button.config(text="Switch View", width=15, height=2)
+        mic_button.config(width=15, height=2)
+        pause_button.config(width=15, height=2)
+        switch_view_button.config(width=15, height=2)
         user_input.grid()
         send_button.grid()
         clear_button.grid()
@@ -539,7 +534,7 @@ root.title("AI Medical Scribe")
 user_input = scrolledtext.ScrolledText(root, height=15)
 user_input.grid(row=0, column=0, columnspan=10, padx=5, pady=5)
 
-mic_button = tk.Button(root, text="Microphone", command=toggle_recording, height=2, width=15)
+mic_button = tk.Button(root, text="Microphone OFF", command=toggle_recording, height=2, width=15)
 mic_button.grid(row=1, column=0, pady=5)
 
 send_button = tk.Button(root, text="Send", command=send_and_flash, height=2, width=15)
@@ -551,10 +546,10 @@ pause_button.grid(row=1, column=2, pady=5)
 clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=15)
 clear_button.grid(row=1, column=3, pady=5)
 
-toggle_button = tk.Button(root, text="AISCRIBE: ON", command=toggle_aiscribe, height=2, width=15)
+toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=15)
 toggle_button.grid(row=1, column=4, pady=5)
 
-gpt_button = tk.Button(root, text="GPT", command=toggle_gpt_button, height=2, width=15)
+gpt_button = tk.Button(root, text="GPT OFF", command=toggle_gpt_button, height=2, width=15)
 gpt_button.grid(row=1, column=5, pady=5)   
 
 settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=15)
