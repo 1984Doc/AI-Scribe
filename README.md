@@ -12,17 +12,17 @@
 
 - 2024-03-17 - updated `client.py` to allow for `OpenAI` token access when `GPT` button is selected.  A prompt will show to allow for scrubbing of any personal health information.
 
-- 2024-03-28 - updated `client.py` to allow for `Whisper` to run locally when set to True in the settings.
+- 2024-03-28 - updated `client.py` to allow for `Whisper` to run locally when set to `True` in the settings.
 
-- 2024-03-29 - added `Scrubadub` to be used to remove personal information prior to OpenAI token access.
+- 2024-03-29 - added `Scrubadub` to be used to remove personal information prior to `OpenAI` token access.
 
 ## Setup
 
 Example instructions for running on a single machine:
 
-I will preface that this will run slowly if you are not using a GPU but will demonstrate the capability.  If you have an NVidia RTX-based card, the below instructions can be modified using `Koboldcpp.exe` rather than `koboldcpp_nocuda.exe`.
+I will preface that this will run slowly if you are not using a GPU but will demonstrate the capability.  If you have an **NVidia RTX**-based card, the below instructions can be modified using `Koboldcpp.exe` rather than `koboldcpp_nocuda.exe`.
 
-Install `Python` `3.10.9` [HERE](https://www.python.org/downloads/release/python-3109/).  (if the hyperlink doesn't work  https://www.python.org/downloads/release/python-3109/).  Make sure you click the checkbox to select "Add Python to Path."
+Install `Python` `3.10.9` [HERE](https://www.python.org/downloads/release/python-3109/).  (if the hyperlink doesn't work https://www.python.org/downloads/release/python-3109/).  Make sure you click the checkbox to select "`Add Python to Path`".
 
 Press `Windows key` + `R`, you can run the command line by typing `cmd`.  Copy/type the following, running each line by pressing `Enter`: 
 
