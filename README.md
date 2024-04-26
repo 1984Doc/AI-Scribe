@@ -10,11 +10,11 @@
 
 ## Changelog
 
-- 2024-03-17 - updated `client.py` to allow for `OpenAI` token access when `GPT` button is selected.  A prompt will show to allow for scrubbing of any personal health information.
+- **2024-03-17** - updated `client.py` to allow for `OpenAI` token access when `GPT` button is selected.  A prompt will show to allow for scrubbing of any personal health information.
 
-- 2024-03-28 - updated `client.py` to allow for `Whisper` to run locally when set to `True` in the settings.
+- **2024-03-28** - updated `client.py` to allow for `Whisper` to run locally when set to `True` in the settings.
 
-- 2024-03-29 - added `Scrubadub` to be used to remove personal information prior to `OpenAI` token access.
+- **2024-03-29** - added `Scrubadub` to be used to remove personal information prior to `OpenAI` token access.
 
 ## Setup
 
