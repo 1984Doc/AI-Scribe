@@ -38,7 +38,13 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 scoop install ffmpeg
 ```
 
-Now you need to download the AI model (it is large) from the following site.  I will link you directly to the one I trialed with my laptop HERE.  I recommend the `Mistral 7B v0.2`.
+Now you need to download the AI model (it is large).  I recommend the `Mistral 7B v0.2`.
+
+- Direct link to download file: https://models.mistralcdn.com/mistral-7b-v0-2/mistral-7B-v0.2.tar 
+- If that does not work, alternative places to look:
+  - hugging face repo https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2
+  - blog post accompanying release: https://mistral.ai/news/announcing-mistral-7b
+  - if you have `wget` available in your terminal: `wget https://models.mistralcdn.com/mistral-7b-v0-2/mistral-7B-v0.2.tar` 
 
 You now need to launch the AI model with the following software that you can download [HERE](https://github.com/LostRuins/koboldcpp/releases).  It will download automatically and you will need to open it (if hyperlink doesn't work https://github.com/LostRuins/koboldcpp/releases). 
 
