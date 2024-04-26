@@ -15,6 +15,7 @@
 - **2024-03-28** - updated `client.py` to allow for `Whisper` to run locally when set to `True` in the settings.
 
 - **2024-03-29** - added `Scrubadub` to be used to remove personal information prior to `OpenAI` token access.
+- **2024-04-25** - added info about how to download `Mistral`
 
 ## Setup
 
