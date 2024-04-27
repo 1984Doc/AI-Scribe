@@ -34,14 +34,13 @@ class RequestHandler(BaseHTTPRequestHandler):
                     # model = WhisperModel(model_size, device="cpu", compute_type="int8")
                     segments, info = model.transcribe(temp_file_path, beam_size=5)
                     print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
-                    for segment in segments:
-                        print(segment.text)
+                    transcription = "".join(segment.text for segment in segments)
 
                     # Send response
                     self.send_response(200)
                     self.send_header('Content-type', 'application/json')
                     self.end_headers()
-                    response_data = json.dumps({"text": segment.text})
+                    response_data = json.dumps({"text": transcription})
                     self.wfile.write(response_data.encode())
                 finally:
                     # Clean up the temporary file
