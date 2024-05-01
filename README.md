@@ -19,6 +19,8 @@
 
 ## Setup
 
+2024-04-26 - added alternative server file to use Faster-Whisper
+
 Example instructions for running on a single machine:
 
 I will preface that this will run slowly if you are not using a GPU but will demonstrate the capability.  If you have an **NVidia RTX**-based card, the below instructions can be modified using `Koboldcpp.exe` rather than `koboldcpp_nocuda.exe`.
