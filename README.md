@@ -1,47 +1,66 @@
 # AI-Scribe
-This is a script that I worked on to help empower physicians to alleviate the burden of documentation by utilizing a medical scribe to create SOAP notes.  Expensive solutions could potentially share personal health information with their cloud-based operations.  It utilizes Koboldcpp and Whisper on a local server that is concurrently running the Server.py script.  The Client.py script can then be used by physicians on their device to record patient-physician conversations after a signed consent is obtained and process the result into a SOAP note.
 
-Regards,
+## Introduction
 
-Braedon Hendy
+> This is a script that I worked on to help empower physicians to alleviate the burden of documentation by utilizing a medical scribe to create SOAP notes.  Expensive solutions could potentially share personal health information with their cloud-based operations.  It utilizes `Koboldcpp` and `Whisper` on a local server that is concurrently running the `Server.py` script.  The `Client.py` script can then be used by physicians on their device to record patient-physician conversations after a signed consent is obtained and process the result into a SOAP note.
+> 
+> Regards,
+> 
+> Braedon Hendy
 
-2024-03-17 - updated client.py to allow for OpenAI token access when GPT button is selected.  A prompt will show to allow for scrubbing of any personal health information.  
+## Changelog
 
-2024-03-28 - updated client.py to allow for Whisper to run locally when set to True in the settings.  
+- **2024-03-17** - updated `client.py` to allow for `OpenAI` token access when `GPT` button is selected.  A prompt will show to allow for scrubbing of any personal health information.
 
-2024-03-29 - added Scrubadub to be used to remove personal information prior to OpenAI token access.
+- **2024-03-28** - updated `client.py` to allow for `Whisper` to run locally when set to `True` in the settings.
 
-2024-04-26 - added alternative server file to use Faster-Whisper
+- **2024-03-29** - added `Scrubadub` to be used to remove personal information prior to `OpenAI` token access.
+- **2024-04-25** - added info about how to download `Mistral`
+
+- **2024-04-26** - added alternative server file to use `Faster-Whisper`
+
+## Setup
 
 Example instructions for running on a single machine:
 
-I will preface that this will run slowly if you are not using a GPU but will demonstrate the capability.  If you have an NVidia RTX-based card, the below instructions can be modified using Koboldcpp.exe rather than koboldcpp_nocuda.exe.
+I will preface that this will run slowly if you are not using a GPU but will demonstrate the capability.  If you have an **NVidia RTX**-based card, the below instructions can be modified using `Koboldcpp.exe` rather than `koboldcpp_nocuda.exe`.
 
-Install Python 3.10.9 HERE.  (if the hyperlink doesn't work https://www.python.org/downloads/release/python-3109/ ).  Make sure you click the checkbox to select "Add Python to Path."
+Install `Python` `3.10.9` [HERE](https://www.python.org/downloads/release/python-3109/).  (if the hyperlink doesn't work https://www.python.org/downloads/release/python-3109/).  Make sure you click the checkbox to select "`Add Python to Path`".
 
-Press Windows key + R, you can run the command line by typing "cmd".  Copy/type the following, running each line by pressing Enter:  
+Press `Windows key` + `R`, you can run the command line by typing `cmd`.  Copy/type the following, running each line by pressing `Enter`: 
 
+```sh
 pip install openai-whisper
-Next, you need to install software to convert the audio file to be processed.  Press Windows key + R, you can run the command line by typing "powershell".  Copy/type the following:
+```
 
+Next, you need to install software to convert the audio file to be processed.  Press `Windows key` + `R`, you can run the command line by typing `powershell`.  Copy/type the following:
+
+```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
 Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
-
 scoop install ffmpeg
+```
 
-Now you need to download the AI model (it is large) from the following site.  I will link you directly to the one I trialed with my laptop HERE.  I recommend the Mistral 7B v0.2.
+Now you need to download the AI model (it is large).  I recommend the `Mistral 7B v0.2`.
 
-You now need to launch the AI model with the following software that you can download HERE.  It will download automatically and you will need to open it (if hyperlink doesn't workhttps://github.com/LostRuins/koboldcpp/releases). 
+- Direct link to download file: https://models.mistralcdn.com/mistral-7b-v0-2/mistral-7B-v0.2.tar 
+- If that does not work, alternative places to look:
+  - hugging face repo https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2
+  - blog post accompanying release: https://mistral.ai/news/announcing-mistral-7b
+  - if you have `wget` available in your terminal: `wget https://models.mistralcdn.com/mistral-7b-v0-2/mistral-7B-v0.2.tar` 
 
-Once the koboldcpp_nocuda.exe is opened, click the Browse button and select the model downloaded.  Now click the Launch button.  
+You now need to launch the AI model with the following software that you can download [HERE](https://github.com/LostRuins/koboldcpp/releases).  It will download automatically and you will need to open it (if hyperlink doesn't work https://github.com/LostRuins/koboldcpp/releases). 
+
+Once the `koboldcpp_nocuda.exe` is opened, click the `Browse` button and select the model downloaded.  Now click the `Launch` button.
 
 You should see a window open and can ask it questions to test!
 
-If this was successful, you need to download the files that I wrote HERE.  Unzip the files (if the hyperlink doesn't work https://github.com/1984Doc/AI-Scribe).
+If this was successful, you need to download the files that I wrote [HERE](https://github.com/1984Doc/AI-Scribe).  Unzip the files (if the hyperlink doesn't work https://github.com/1984Doc/AI-Scribe).
 
-Double-click the server.py file.  This will download the files to help organize the text after converting from audio.  
+Double-click the `server.py` file.  This will download the files to help organize the text after converting from audio.
 
-Close the window after completing and double-click the server.py file.
+Close the window after completing and double-click the `server.py` file.
 
-Run the client.py (it may prompt for installation of various dependencies via pip) and click the settings button.  For each category, remove the IP address and type "localhost".  Please do not include quotations and click Save.  Close the program and re-launch.  Please verify that Kobold executable and Server.py script are running with the AI model launched.  Everything should work!  If running the client script/executable on a separate machine, please adjust the IP addresses appropriately.  
+## Usage
+
+Run the `client.py` (it may prompt for installation of various dependencies via `pip`) and click the settings button.  For each category, remove the IP address and type "`localhost`".  Please do not include quotations and click `Save`.  Close the program and re-launch.  Please verify that `Kobold` executable and `Server.py` script are running with the AI model launched.  Everything should work!  If running the client script/executable on a separate machine, please adjust the IP addresses appropriately. 
