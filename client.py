@@ -30,7 +30,7 @@ editable_settings = {
     "rep_pen": 1.1,  
     "rep_pen_range": 2048,
     "rep_pen_slope": 0.7,
-    "temperature": 0,
+    "temperature": 0.1,
     "tfs": 0.97,
     "top_a": 0.8,
     "top_k": 30,
