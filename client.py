@@ -26,7 +26,7 @@ editable_settings = {
     "use_authors_note": False, 
     "use_world_info": False,
     "max_context_length": 2048,
-    "max_length": 360,
+    "max_length": 400,
     "rep_pen": 1.1,  
     "rep_pen_range": 2048,
     "rep_pen_slope": 0.7,
