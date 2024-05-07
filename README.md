@@ -16,7 +16,7 @@
 - **2024-04-25** - added info about how to download `Mistral`
 - **2024-04-26** - added alternative server file to use `Faster-Whisper`
 - **2024-05-03** - added alternative server file to use `WhisperX`
-- **2024-05-06** - added real-time Whisper processing 
+- **2024-05-06** - added real-time `Whisper` processing 
 
 ## Setup
 
