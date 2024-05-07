@@ -18,6 +18,9 @@ import os
 import whisper
 from openai import OpenAI
 import scrubadub
+import speech_recognition as sr
+import time
+import queue
 
 # Add these near the top of your script
 editable_settings = {
@@ -41,7 +44,8 @@ editable_settings = {
     "frmttriminc": False,
     "frmtrmblln": False,
     "Local Whisper": False,
-    "Whisper Model": "small.en"
+    "Whisper Model": "small.en",
+    "Real Time": False
 }
 
 # Function to build the full URL from IP
@@ -99,11 +103,9 @@ def load_aiscribe2_from_file():
 KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY = load_settings_from_file()
 KOBOLDCPP = build_url(KOBOLDCPP_IP, "5001")
 WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
+user_message = []
 response_history = []
 current_view = "full"
-
-
-# Other constants and global variables
 username = "user"
 botname = "Assistant"
 num_lines_to_keep = 20
@@ -112,6 +114,17 @@ DEFAULT_AISCRIBE2 = "Remember, the Subjective section should reflect the patient
 AISCRIBE = load_aiscribe_from_file() or DEFAULT_AISCRIBE
 AISCRIBE2 = load_aiscribe2_from_file() or DEFAULT_AISCRIBE2
 uploaded_file_path = None
+is_recording = False
+audio_data = []
+frames = []
+is_paused = False
+use_aiscribe = True 
+is_gpt_button_active = False
+audio_queue = queue.Queue()
+CHUNK = 1024
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 16000
 
 # Function to get prompt for KoboldAI Generation
 def get_prompt(formatted_message):
@@ -141,6 +154,9 @@ def get_prompt(formatted_message):
         "frmttriminc": editable_settings["frmttriminc"],
         "frmtrmblln": editable_settings["frmtrmblln"]
     }
+def threaded_toggle_recording():
+    thread = threading.Thread(target=toggle_recording)
+    thread.start()
 
 def threaded_handle_message(formatted_message):
     thread = threading.Thread(target=handle_message, args=(formatted_message,))
@@ -149,6 +165,184 @@ def threaded_handle_message(formatted_message):
 def threaded_send_audio_to_server():
     thread = threading.Thread(target=send_audio_to_server)
     thread.start()
+    
+p = pyaudio.PyAudio()  # Creating an instance of PyAudio
+
+def toggle_pause():
+    global is_paused
+    is_paused = not is_paused
+
+    if is_paused:
+        pause_button.config(text="Resume", bg="red")
+    else:
+        pause_button.config(text="Pause", bg="SystemButtonFace")
+
+def record_audio():
+    global is_paused, frames
+    p = pyaudio.PyAudio()
+    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)    
+    current_chunk = []
+    last_chunk_time = time.time()
+    while is_recording:
+        if not is_paused:
+            data = stream.read(CHUNK, exception_on_overflow=False)
+            frames.append(data)
+            current_chunk.append(data)
+            if (time.time() - last_chunk_time) >= 10 or len(current_chunk) >= 10 * RATE // CHUNK:
+                if editable_settings["Real Time"]:
+                    audio_queue.put(b''.join(current_chunk))
+                current_chunk = []
+                last_chunk_time = time.time()
+    stream.stop_stream()
+    stream.close()
+    audio_queue.put(None) 
+
+def realtime_text():
+    model_name = editable_settings["Whisper Model"].strip()
+    model = whisper.load_model(model_name)    
+    while True:
+        audio_data = audio_queue.get()
+        if audio_data is None:
+            break        
+        if editable_settings["Real Time"]:
+            audio_buffer = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
+            result = model.transcribe(audio_buffer, fp16=False)
+            update_gui(result['text'])
+        audio_queue.task_done()
+        
+if editable_settings["Real Time"]:
+    threading.Thread(target=realtime_text, daemon=True).start()
+    
+def update_gui(text):
+    user_input.insert(tk.END, text + '\n')
+    user_input.see(tk.END)
+    
+def save_audio():
+    global frames
+    if frames:
+        with wave.open('recording.wav', 'wb') as wf:
+            wf.setnchannels(CHANNELS)
+            wf.setsampwidth(p.get_sample_size(FORMAT))
+            wf.setframerate(RATE)
+            wf.writeframes(b''.join(frames))
+        frames = []  # Clear recorded data
+        if editable_settings["Real Time"] == "True":
+            send_and_receive()
+        else:
+            threaded_send_audio_to_server()
+
+def toggle_recording():
+    global is_recording, recording_thread
+    if not is_recording:
+        user_input.configure(state='normal')
+        user_input.delete("1.0", tk.END)
+        if not editable_settings["Real Time"]:
+            user_input.insert(tk.END, "Recording")
+        response_display.configure(state='normal')
+        response_display.delete("1.0", tk.END)
+        response_display.configure(state='disabled')
+        is_recording = True
+        recording_thread = threading.Thread(target=record_audio)
+        recording_thread.start()
+        mic_button.config(bg="red", text="Mic ON")
+        start_flashing()
+    else:
+        is_recording = False
+        if recording_thread.is_alive():
+            recording_thread.join()  # Ensure the recording thread is terminated
+        save_audio()        
+        mic_button.config(bg="SystemButtonFace", text="Mic OFF")         
+       
+def clear_all_text_fields():
+    user_input.configure(state='normal') 
+    user_input.delete("1.0", tk.END)
+    stop_flashing()
+    response_display.configure(state='normal')
+    response_display.delete("1.0", tk.END)
+    response_display.configure(state='disabled')
+
+def toggle_gpt_button():
+    global is_gpt_button_active
+    if is_gpt_button_active:
+        gpt_button.config(bg="SystemButtonFace", text="GPT OFF")
+        is_gpt_button_active = False
+    else:
+        gpt_button.config(bg="red", text="GPT ON")
+        is_gpt_button_active = True
+
+def toggle_aiscribe():
+    global use_aiscribe
+    use_aiscribe = not use_aiscribe
+    toggle_button.config(text="AISCRIBE ON" if use_aiscribe else "AISCRIBE OFF")
+
+def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window):
+    global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, editable_settings, AISCRIBE, AISCRIBE2
+    KOBOLDCPP_IP = koboldcpp_ip
+    WHISPERAUDIO_IP = whisperaudio_ip
+    OPENAI_API_KEY = openai_api_key
+    KOBOLDCPP = build_url(KOBOLDCPP_IP, "5001")
+    WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
+    for setting, entry in editable_settings_entries.items():
+        value = entry.get()
+        if setting in ["max_context_length", "max_length", "rep_pen_range", "top_k"]:
+            value = int(value)
+        # Add similar conditions for other data types
+        editable_settings[setting] = value 
+    save_settings_to_file(KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY)  # Save to file
+    AISCRIBE = aiscribe_text
+    AISCRIBE2 = aiscribe2_text
+    with open('aiscribe.txt', 'w') as f:
+        f.write(AISCRIBE)
+    with open('aiscribe2.txt', 'w') as f:
+        f.write(AISCRIBE2)
+    settings_window.destroy() 
+
+def send_audio_to_server():
+    global uploaded_file_path
+    if editable_settings["Local Whisper"] == "True":
+        print("Using Local Whisper for transcription.")
+        user_input.configure(state='normal')
+        user_input.delete("1.0", tk.END)
+        user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
+        model_name = editable_settings["Whisper Model"].strip()
+        model = whisper.load_model(model_name)
+        file_to_send = uploaded_file_path if uploaded_file_path else 'recording.wav'
+        uploaded_file_path = None
+        result = model.transcribe(file_to_send)
+        transcribed_text = result["text"]        
+        user_input.configure(state='normal') 
+        user_input.delete("1.0", tk.END)
+        user_input.insert(tk.END, transcribed_text)
+        send_and_receive()
+    else:
+        print("Using Remote Whisper for transcription.")
+        user_input.configure(state='normal')
+        user_input.delete("1.0", tk.END)
+        user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
+        if uploaded_file_path:
+            file_to_send = uploaded_file_path
+            uploaded_file_path = None  
+        else:
+            file_to_send = 'recording.wav'
+        with open(file_to_send, 'rb') as f:
+            files = {'audio': f}
+            response = requests.post(WHISPERAUDIO, files=files)
+            if response.status_code == 200:
+                transcribed_text = response.json()['text']
+                user_input.configure(state='normal')
+                user_input.delete("1.0", tk.END)
+                user_input.insert(tk.END, transcribed_text)             
+                send_and_receive()
+
+def send_and_receive():
+    global use_aiscribe, user_message
+    user_message = user_input.get("1.0", tk.END).strip()
+    clear_response_display()    
+    if use_aiscribe:
+        formatted_message = f'{AISCRIBE} [{user_message}] {AISCRIBE2}'
+    else:
+        formatted_message = user_message
+    threaded_handle_message(formatted_message)  
 
 def handle_message(formatted_message):
     if gpt_button.cget("bg") == "red":
@@ -162,32 +356,24 @@ def handle_message(formatted_message):
             response_text = response_text.replace("  ", " ").strip() 
             update_gui_with_response(response_text)
 
-def send_and_receive():
-    global use_aiscribe
-    user_message = user_input.get("1.0", tk.END).strip()
-    clear_response_display()    
-    if use_aiscribe:
-        formatted_message = f'{AISCRIBE} [{user_message}] {AISCRIBE2}'
-    else:
-        formatted_message = user_message
-    threaded_handle_message(formatted_message)  
-    
 def clear_response_display():
     response_display.configure(state='normal')
     response_display.delete("1.0", tk.END)
-    response_display.configure(state='disabled') 
+    response_display.insert(tk.END, "Note Creation...Please Wait")
+    response_display.configure(state='disabled')
 
 def update_gui_with_response(response_text):
-    global response_history
+    global response_history, user_message
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    response_history.insert(0, (timestamp, response_text))
+    response_history.insert(0, (timestamp, user_message, response_text))
 
     # Update the timestamp listbox
     timestamp_listbox.delete(0, tk.END)
-    for time, _ in response_history:
+    for time, _, _ in response_history:
         timestamp_listbox.insert(tk.END, time)
 
     response_display.configure(state='normal')
+    response_display.delete('1.0', tk.END)
     response_display.insert(tk.END, f"{response_text}\n")
     response_display.configure(state='disabled')
     pyperclip.copy(response_text)
@@ -197,7 +383,11 @@ def show_response(event):
     selection = event.widget.curselection()
     if selection:
         index = selection[0]
-        response_text = response_history[index][1]
+        transcript_text = response_history[index][1]        
+        response_text = response_history[index][2]
+        user_input.configure(state='normal')
+        user_input.delete("1.0", tk.END)
+        user_input.insert(tk.END, transcript_text)
         response_display.configure(state='normal')
         response_display.delete('1.0', tk.END)
         response_display.insert('1.0', response_text)
@@ -244,122 +434,6 @@ def show_edit_transcription_popup(formatted_message):
     # Cancel button
     cancel_button = tk.Button(popup, text="Cancel", command=popup.destroy)
     cancel_button.pack(side=tk.LEFT, padx=10, pady=10)
-
-# Global variable to control recording state
-is_recording = False
-audio_data = []
-frames = []
-is_paused = False
-use_aiscribe = True 
-is_gpt_button_active = False
-
-# Global variables for PyAudio
-CHUNK = 1024
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 16000
-RECORD_SECONDS = 5
-
-p = pyaudio.PyAudio()  # Creating an instance of PyAudio
-
-def toggle_pause():
-    global is_paused
-    is_paused = not is_paused
-
-    if is_paused:
-        pause_button.config(text="Resume", bg="red")
-    else:
-        pause_button.config(text="Pause", bg="SystemButtonFace")
-
-def record_audio():
-    global is_paused, frames
-    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
-
-    while is_recording:
-        if not is_paused:
-            data = stream.read(CHUNK)
-            frames.append(data)
-
-    stream.stop_stream()
-    stream.close()
-
-# Function to save audio and send to server
-def save_audio():
-    global frames
-    if frames:
-        with wave.open('recording.wav', 'wb') as wf:
-            wf.setnchannels(CHANNELS)
-            wf.setsampwidth(p.get_sample_size(FORMAT))
-            wf.setframerate(RATE)
-            wf.writeframes(b''.join(frames))
-        frames = []  # Clear recorded data
-        threaded_send_audio_to_server()
-
-def toggle_recording():
-    global is_recording, recording_thread
-    if not is_recording:
-        # Clear the user_input and response_display textboxes
-        # This code runs only when the recording is about to start
-        user_input.delete("1.0", tk.END)
-        response_display.configure(state='normal')
-        response_display.delete("1.0", tk.END)
-        response_display.configure(state='disabled')
-        is_recording = True
-        recording_thread = threading.Thread(target=record_audio)
-        recording_thread.start()
-        mic_button.config(bg="red", text="Microphone ON")
-        start_flashing()
-    else:
-        is_recording = False
-        if recording_thread.is_alive():
-            recording_thread.join()  # Ensure the recording thread is terminated
-        save_audio()
-        mic_button.config(bg="SystemButtonFace", text="Microphone OFF")         
-       
-def clear_all_text_fields():
-    user_input.configure(state='normal') 
-    user_input.delete("1.0", tk.END)
-    stop_flashing()
-    response_display.configure(state='normal')
-    response_display.delete("1.0", tk.END)
-    response_display.configure(state='disabled')
-
-def toggle_gpt_button():
-    global is_gpt_button_active
-    if is_gpt_button_active:
-        gpt_button.config(bg="SystemButtonFace", text="GPT OFF")
-        is_gpt_button_active = False
-    else:
-        gpt_button.config(bg="red", text="GPT ON")
-        is_gpt_button_active = True
-
-def toggle_aiscribe():
-    global use_aiscribe
-    use_aiscribe = not use_aiscribe
-    toggle_button.config(text="AISCRIBE ON" if use_aiscribe else "AISCRIBE OFF")
-
-def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window):
-    global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, editable_settings, AISCRIBE, AISCRIBE2
-    KOBOLDCPP_IP = koboldcpp_ip
-    WHISPERAUDIO_IP = whisperaudio_ip
-    OPENAI_API_KEY = openai_api_key
-    KOBOLDCPP = build_url(KOBOLDCPP_IP, "5001")
-    WHISPERAUDIO = build_url(WHISPERAUDIO_IP, "8000/whisperaudio")
-    for setting, entry in editable_settings_entries.items():
-        value = entry.get()
-        if setting in ["max_context_length", "max_length", "rep_pen_range", "top_k"]:
-            value = int(value)
-        # Add similar conditions for other data types
-        editable_settings[setting] = value 
-    save_settings_to_file(KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY)  # Save to file
-    AISCRIBE = aiscribe_text
-    AISCRIBE2 = aiscribe2_text
-    with open('aiscribe.txt', 'w') as f:
-        f.write(AISCRIBE)
-    with open('aiscribe2.txt', 'w') as f:
-        f.write(AISCRIBE2)
-
-    settings_window.destroy() 
 
 # New dictionary for entry widgets
 editable_settings_entries = {}
@@ -424,35 +498,6 @@ def upload_file():
         threaded_send_audio_to_server()  # Add this line to process the file immediately
     start_flashing()
 
-def send_audio_to_server():
-    global uploaded_file_path
-    if editable_settings["Local Whisper"] == "True":
-        print("Using Local Whisper for transcription.")
-        model_name = editable_settings["Whisper Model"].strip()
-        model = whisper.load_model(model_name)
-        file_to_send = uploaded_file_path if uploaded_file_path else 'recording.wav'
-        uploaded_file_path = None
-        result = model.transcribe(file_to_send)
-        transcribed_text = result["text"]
-        user_input.delete("1.0", tk.END)
-        user_input.insert(tk.END, transcribed_text)
-        send_and_receive()
-    else:
-        print("Using Remote Whisper for transcription.")
-        if uploaded_file_path:
-            file_to_send = uploaded_file_path
-            uploaded_file_path = None  
-        else:
-            file_to_send = 'recording.wav'
-        with open(file_to_send, 'rb') as f:
-            files = {'audio': f}
-            response = requests.post(WHISPERAUDIO, files=files)
-            if response.status_code == 200:
-                transcribed_text = response.json()['text']
-                user_input.delete("1.0", tk.END)
-                user_input.insert(tk.END, transcribed_text)           
-                send_and_receive()
-
 is_flashing = False
 
 def start_flashing():
@@ -485,7 +530,7 @@ def clear_settings_file():
         print("Settings file cleared.")
     except Exception as e:
         print(f"Error clearing settings files: {e}")
-        
+
 def toggle_view():
     global current_view
     if current_view == "full":
@@ -498,6 +543,8 @@ def toggle_view():
         upload_button.grid_remove()
         response_display.grid_remove()
         timestamp_listbox.grid_remove()
+        copy_user_input_button.grid_remove()
+        copy_response_display_button.grid_remove()
         mic_button.config(width=10, height=1)
         pause_button.config(width=10, height=1)
         switch_view_button.config(width=10, height=1)
@@ -505,6 +552,7 @@ def toggle_view():
         pause_button.grid(row=0, column=1, pady=5)
         switch_view_button.grid(row=0, column=2, pady=5) 
         blinking_circle_canvas.grid(row=0, column=3, pady=5)
+        combobox.grid(row=1, column=0, columnspan=3, pady=5)
         root.attributes('-topmost', True)        
         current_view = "minimal"
     else:
@@ -520,57 +568,105 @@ def toggle_view():
         upload_button.grid()
         response_display.grid()
         timestamp_listbox.grid()
+        copy_user_input_button.grid()
+        copy_response_display_button.grid()
         mic_button.grid(row=1, column=0, pady=5)
         pause_button.grid(row=1, column=2, pady=5)
         switch_view_button.grid(row=1, column=8, pady=5)
         blinking_circle_canvas.grid(row=1, column=9, pady=5)
+        combobox.grid(row=3, column=3, columnspan=3, pady=10, padx=10)
         root.attributes('-topmost', False)
         current_view = "full"
+        
+def copy_text(widget):
+    text = widget.get("1.0", tk.END)
+    pyperclip.copy(text)
+
+def get_dropdown_values_and_mapping():
+    options = []
+    mapping = {}
+    try:
+        with open('options.txt', 'r') as file:
+            content = file.read().strip()
+        templates = content.split('\n\n')
+        for template in templates:
+            lines = template.split('\n')
+            if len(lines) == 3:
+                title, aiscribe, aiscribe2 = lines
+                options.append(title)
+                mapping[title] = (aiscribe, aiscribe2)
+    except FileNotFoundError:
+        print("options.txt not found, using default values.")
+        # Fallback default options if file not found
+        options = ["Settings Template"]
+        mapping["Settings Template"] = (AISCRIBE, AISCRIBE2)
+    return options, mapping
+
+dropdown_values, option_mapping = get_dropdown_values_and_mapping()
+
+def update_aiscribe_texts(event):
+    global AISCRIBE, AISCRIBE2
+    selected_option = combobox.get()
+    if selected_option in option_mapping:
+        AISCRIBE, AISCRIBE2 = option_mapping[selected_option]
 
 # GUI Setup
 root = tk.Tk()
 root.title("AI Medical Scribe")
 
-user_input = scrolledtext.ScrolledText(root, height=15)
+user_input = scrolledtext.ScrolledText(root, height=12)
 user_input.grid(row=0, column=0, columnspan=10, padx=5, pady=5)
 
-mic_button = tk.Button(root, text="Microphone OFF", command=toggle_recording, height=2, width=15)
+mic_button = tk.Button(root, text="Mic OFF", command=threaded_toggle_recording, height=2, width=10)
 mic_button.grid(row=1, column=0, pady=5)
 
-send_button = tk.Button(root, text="Send", command=send_and_flash, height=2, width=15)
+send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=10)
 send_button.grid(row=1, column=1, pady=5)
 
-pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=15)
+pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=10)
 pause_button.grid(row=1, column=2, pady=5)   
 
-clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=15)
+clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=10)
 clear_button.grid(row=1, column=3, pady=5)
 
-toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=15)
+toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=10)
 toggle_button.grid(row=1, column=4, pady=5)
 
-gpt_button = tk.Button(root, text="GPT OFF", command=toggle_gpt_button, height=2, width=15)
+gpt_button = tk.Button(root, text="GPT OFF", command=toggle_gpt_button, height=2, width=10)
 gpt_button.grid(row=1, column=5, pady=5)   
 
-settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=15)
+settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=10)
 settings_button.grid(row=1, column=6, pady=5)   
 
-upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=15)
+upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=10)
 upload_button.grid(row=1, column=7, pady=5)   
 
-switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=15)
+switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=10)
 switch_view_button.grid(row=1, column=8, pady=5)   
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
 blinking_circle_canvas.grid(row=1, column=9, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 
-response_display = scrolledtext.ScrolledText(root, height=15, state='disabled')
+response_display = scrolledtext.ScrolledText(root, height=12, state='disabled')
 response_display.grid(row=2, column=0, columnspan=10, padx=5, pady=5)
 
+copy_user_input_button = tk.Button(root, text="Copy", command=lambda: copy_text(user_input), height=2, width=10)
+copy_user_input_button.grid(row=0, column=9, pady=5)
+
+copy_response_display_button = tk.Button(root, text="Copy", command=lambda: copy_text(response_display), height=2, width=10)
+copy_response_display_button.grid(row=2, column=9, pady=5)
+
 timestamp_listbox = tk.Listbox(root, height=30)
-timestamp_listbox.grid(row=0, column=10, rowspan=3, padx=5, pady=5)
+timestamp_listbox.grid(row=0, column=10, columnspan=2, rowspan=3, padx=5, pady=5)
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
+
+combobox = ttk.Combobox(root, values=dropdown_values, width=35, state="readonly")
+combobox.current(0)
+combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
+combobox.grid(row=3, column=3, columnspan=4, pady=10, padx=10) 
+
+update_aiscribe_texts(None)
 
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: pause_button.invoke())
