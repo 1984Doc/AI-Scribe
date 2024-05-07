@@ -40,7 +40,7 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 scoop install ffmpeg
 ```
 
-Now you need to download the AI model (it is large).  I recommend the `Mistral 7B v0.2`.
+Now you need to download the AI model (it is large).  I recommend the `Mistral 7B v0.2` or `Meta Llama 3` models.
 
 - Direct link to download file: https://models.mistralcdn.com/mistral-7b-v0-2/mistral-7B-v0.2.tar 
 - If that does not work, alternative places to look:
