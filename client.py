@@ -18,7 +18,7 @@ import os
 import whisper
 from openai import OpenAI
 import scrubadub
-import speech_recognition as sr
+import speech_recognition as sr # python package is named speechrecognition
 import time
 import queue
 
