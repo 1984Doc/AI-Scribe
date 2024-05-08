@@ -13,7 +13,6 @@
 - **2024-03-17** - updated `client.py` to allow for `OpenAI` token access when `GPT` button is selected.  A prompt will show to allow for scrubbing of any personal health information.
 - **2024-03-28** - updated `client.py` to allow for `Whisper` to run locally when set to `True` in the settings.
 - **2024-03-29** - added `Scrubadub` to be used to remove personal information prior to `OpenAI` token access.
-- **2024-04-25** - added info about how to download `Mistral`
 - **2024-04-26** - added alternative server file to use `Faster-Whisper`
 - **2024-05-03** - added alternative server file to use `WhisperX`
 - **2024-05-06** - added real-time `Whisper` processing 
@@ -40,13 +39,7 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 scoop install ffmpeg
 ```
 
-Now you need to download the AI model (it is large).  I recommend the `Mistral 7B v0.2` or `Meta Llama 3` models.
-
-- Direct link to download file: https://models.mistralcdn.com/mistral-7b-v0-2/mistral-7B-v0.2.tar 
-- If that does not work, alternative places to look:
-  - hugging face repo https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2
-  - blog post accompanying release: https://mistral.ai/news/announcing-mistral-7b
-  - if you have `wget` available in your terminal: `wget https://models.mistralcdn.com/mistral-7b-v0-2/mistral-7B-v0.2.tar` 
+Now you need to download the AI model (it is large).  I recommend the `Mistral 7B v0.2` or `Meta Llama 3` models.  These can be found on [HuggingFace.](https://huggingface.co/)
 
 You now need to launch the AI model with the following software that you can download [HERE](https://github.com/LostRuins/koboldcpp/releases).  It will download automatically and you will need to open it (if hyperlink doesn't work https://github.com/LostRuins/koboldcpp/releases). 
 
