@@ -456,7 +456,10 @@ def show_edit_transcription_popup(formatted_message):
     # Default scrubber scrubs PHONES, credit cards, EMAILS, postal codes, credentials:
     scrubber = scrubadub.Scrubber()
     # Scrub message
-    cleaned_message = scrubadub.clean(formatted_message)
+    scrubbed_message = scrubadub.clean(formatted_message)
+    # Regex scrub OHIP
+    pattern = r'\b\d{10}\b'     # Any 10 digit number, looks like OHIP
+    cleaned_message = re.sub(pattern,'{{OHIP}}',scrubbed_message)
     text_area.insert(tk.END, cleaned_message)
 
     def on_proceed():
