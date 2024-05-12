@@ -48,11 +48,9 @@ editable_settings = {
     "Real Time": False
 }
 
-# Function to build the full URL from IP
 def build_url(ip, port):
     return f"http://{ip}:{port}"
 
-# Function to save settings to a file
 def save_settings_to_file(koboldcpp_ip, whisperaudio_ip, openai_api_key):
     settings = {
         "koboldcpp_ip": koboldcpp_ip,
@@ -115,20 +113,22 @@ AISCRIBE = load_aiscribe_from_file() or DEFAULT_AISCRIBE
 AISCRIBE2 = load_aiscribe2_from_file() or DEFAULT_AISCRIBE2
 uploaded_file_path = None
 is_recording = False
+is_realtimeactive = False
 audio_data = []
 frames = []
 is_paused = False
+is_flashing = False
 use_aiscribe = True 
 is_gpt_button_active = False
+p = pyaudio.PyAudio()
 audio_queue = queue.Queue()
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
+editable_settings_entries = {}
 
-# Function to get prompt for KoboldAI Generation
 def get_prompt(formatted_message):
-    # Check and parse 'sampler_order' if it's a string
     sampler_order = editable_settings["sampler_order"]
     if isinstance(sampler_order, str):
         sampler_order = json.loads(sampler_order)
@@ -154,8 +154,13 @@ def get_prompt(formatted_message):
         "frmttriminc": editable_settings["frmttriminc"],
         "frmtrmblln": editable_settings["frmtrmblln"]
     }
+    
 def threaded_toggle_recording():
     thread = threading.Thread(target=toggle_recording)
+    thread.start()
+
+def threaded_realtime_text():
+    thread = threading.Thread(target=realtime_text)
     thread.start()
 
 def threaded_handle_message(formatted_message):
@@ -165,8 +170,6 @@ def threaded_handle_message(formatted_message):
 def threaded_send_audio_to_server():
     thread = threading.Thread(target=send_audio_to_server)
     thread.start()
-    
-p = pyaudio.PyAudio()  # Creating an instance of PyAudio
 
 def toggle_pause():
     global is_paused
@@ -179,7 +182,6 @@ def toggle_pause():
 
 def record_audio():
     global is_paused, frames
-    p = pyaudio.PyAudio()
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)    
     current_chunk = []
     last_chunk_time = time.time()
@@ -198,21 +200,42 @@ def record_audio():
     audio_queue.put(None) 
 
 def realtime_text():
-    model_name = editable_settings["Whisper Model"].strip()
-    model = whisper.load_model(model_name)    
-    while True:
-        audio_data = audio_queue.get()
-        if audio_data is None:
-            break        
-        if editable_settings["Real Time"]:
-            audio_buffer = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
-            result = model.transcribe(audio_buffer, fp16=False)
-            update_gui(result['text'])
-        audio_queue.task_done()
-        
-if editable_settings["Real Time"]:
-    threading.Thread(target=realtime_text, daemon=True).start()
-    
+    global frames, is_realtimeactive
+    if not is_realtimeactive:
+        is_realtimeactive = True
+        model_name = editable_settings["Whisper Model"].strip()
+        model = whisper.load_model(model_name)    
+        while True:
+            audio_data = audio_queue.get()
+            if audio_data is None:
+                break        
+            if editable_settings["Real Time"]:
+                print("Real Time Audio to Text")
+                audio_buffer = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
+                if editable_settings["Local Whisper"] == "True":
+                    print("Local Real Time Whisper")
+                    result = model.transcribe(audio_buffer, fp16=False)
+                    update_gui(result['text'])
+                else:
+                    print("Remote Real Time Whisper")
+                    if frames:
+                        with wave.open('realtime.wav', 'wb') as wf:
+                            wf.setnchannels(CHANNELS)
+                            wf.setsampwidth(p.get_sample_size(FORMAT))
+                            wf.setframerate(RATE)
+                            wf.writeframes(b''.join(frames))
+                        frames = []
+                    file_to_send = 'realtime.wav'
+                    with open(file_to_send, 'rb') as f:
+                        files = {'audio': f}
+                        response = requests.post(WHISPERAUDIO, files=files)                
+                        if response.status_code == 200:
+                            text = response.json()['text']
+                            update_gui(text)
+                audio_queue.task_done()
+    else:
+        is_realtimeactive = False
+
 def update_gui(text):
     user_input.insert(tk.END, text + '\n')
     user_input.see(tk.END)
@@ -413,7 +436,6 @@ def send_text_to_chatgpt(edited_text):
             response_data = response.json()
             response_text = (response_data['choices'][0]['message']['content'])
             update_gui_with_response(response_text)
-            
 
 def show_edit_transcription_popup(formatted_message):
     popup = tk.Toplevel(root)
@@ -434,9 +456,6 @@ def show_edit_transcription_popup(formatted_message):
     # Cancel button
     cancel_button = tk.Button(popup, text="Cancel", command=popup.destroy)
     cancel_button.pack(side=tk.LEFT, padx=10, pady=10)
-
-# New dictionary for entry widgets
-editable_settings_entries = {}
 
 def open_settings_window():
     settings_window = tk.Toplevel(root)
@@ -497,8 +516,6 @@ def upload_file():
         uploaded_file_path = file_path
         threaded_send_audio_to_server()  # Add this line to process the file immediately
     start_flashing()
-
-is_flashing = False
 
 def start_flashing():
     global is_flashing
@@ -617,7 +634,7 @@ root.title("AI Medical Scribe")
 user_input = scrolledtext.ScrolledText(root, height=12)
 user_input.grid(row=0, column=0, columnspan=10, padx=5, pady=5)
 
-mic_button = tk.Button(root, text="Mic OFF", command=threaded_toggle_recording, height=2, width=10)
+mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=10)
 mic_button.grid(row=1, column=0, pady=5)
 
 send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=10)
