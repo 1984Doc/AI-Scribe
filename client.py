@@ -256,7 +256,10 @@ def realtime_text():
                     file_to_send = 'realtime.wav'
                     with open(file_to_send, 'rb') as f:
                         files = {'audio': f}
-                        response = requests.post(WHISPERAUDIO, files=files)                
+                        if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
+                                response = requests.post(WHISPERAUDIO, files=files, verify=False)
+                        else:
+                                response = requests.post(WHISPERAUDIO, files=files)                
                         if response.status_code == 200:
                             text = response.json()['text']
                             update_gui(text)

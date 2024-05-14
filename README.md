@@ -17,6 +17,7 @@
 - **2024-05-03** - added alternative server file to use `WhisperX`
 - **2024-05-06** - added real-time `Whisper` processing
 - **2024-05-13** - added `SSL` and OHIP scrubbing
+- **2024-05-14** - added 'SSL' for realtime
 
 ## Setup
 
