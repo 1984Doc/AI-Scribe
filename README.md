@@ -15,7 +15,9 @@
 - **2024-03-29** - added `Scrubadub` to be used to remove personal information prior to `OpenAI` token access.
 - **2024-04-26** - added alternative server file to use `Faster-Whisper`
 - **2024-05-03** - added alternative server file to use `WhisperX`
-- **2024-05-06** - added real-time `Whisper` processing 
+- **2024-05-06** - added real-time `Whisper` processing
+- **2024-05-13** - added `SSL` and OHIP scrubbing
+- **2024-05-14** - added 'SSL' for realtime
 
 ## Setup
 
