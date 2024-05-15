@@ -41,7 +41,8 @@ Run the `client.py` (it may prompt for installation of various dependencies via 
 
 I would recommend using the `GPT` option using an `API key`.  The cost for running each model may determine the overall choice and can be selected in the `Settings` menu of the program.
 
-
+>
+> 
 
 Example instructions for running on a server with a GPU:
 
