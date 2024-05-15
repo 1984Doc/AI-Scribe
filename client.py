@@ -47,6 +47,7 @@ editable_settings = {
     "frmtrmblln": False,
     "Local Whisper": False,
     "Whisper Model": "small.en",
+    "GPT Model": "gpt-4",
     "Real Time": False
 }
 
@@ -467,7 +468,7 @@ def send_text_to_chatgpt(edited_text):
         "Content-Type": "application/json",
     }
     payload = {
-        "model": "gpt-4",
+        "model": editable_settings["GPT Model"].strip(),
         "messages": [
             {"role": "user", "content": edited_text}
         ],
