@@ -19,7 +19,7 @@
 - **2024-05-13** - added `SSL` and OHIP scrubbing
 - **2024-05-14** - `GPT` model selection
 
-## Setup
+## Setup on a Local Machine
 
 Example instructions for running on a single machine:
 
@@ -40,10 +40,9 @@ If this was successful, you need to download the files that I wrote [HERE](https
 Run the `client.py` (it may prompt for installation of various dependencies via `pip`)
 
 I would recommend using the `GPT` option using an `API key`.  The cost for running each model may determine the overall choice and can be selected in the `Settings` menu of the program.
-.
-.
-.
-.
+
+## Setup on a Server
+
 Example instructions for running on a server with a GPU:
 
 If you have an **NVidia RTX**-based card, the below instructions can be modified using `Koboldcpp.exe` rather than `koboldcpp_nocuda.exe`.
@@ -65,3 +64,5 @@ You should see a window open and can ask it questions to test!
 If this was successful, you need to download the files that I wrote [HERE](https://github.com/1984Doc/AI-Scribe).  Unzip the files (if the hyperlink doesn't work https://github.com/1984Doc/AI-Scribe).
 
 Run the `server.py` file.  This will download the files to help organize the text after converting from audio. 
+
+Run the `client.py` file and edit the IP addresses in the `Settings` menu.   
