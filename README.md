@@ -45,7 +45,7 @@ I would recommend using the `GPT` option using an `API key`.  The cost for runni
 
 Example instructions for running on a server with a GPU:
 
-If you have an **NVidia RTX**-based card, the below instructions can be modified using `Koboldcpp.exe` rather than `koboldcpp_nocuda.exe`.
+Install `Python` `3.10.9` [HERE](https://www.python.org/downloads/release/python-3109/).  (if the hyperlink doesn't work https://www.python.org/downloads/release/python-3109/).  Make sure you click the checkbox to select "`Add Python to Path`".
 
 Press `Windows key` + `R`, you can run the command line by typing `cmd`.  Copy/type the following, running each line by pressing `Enter`: 
 
@@ -55,7 +55,7 @@ pip install openai-whisper
 
 Now you need to download the AI model (it is large).  I recommend the `Mistral 7B v0.2` or `Meta Llama 3` models.  These can be found on [HuggingFace.](https://huggingface.co/)
 
-You now need to launch the AI model with the following software that you can download [HERE](https://github.com/LostRuins/koboldcpp/releases).  It will download automatically and you will need to open it (if hyperlink doesn't work https://github.com/LostRuins/koboldcpp/releases). 
+You now need to launch the AI model with the following software that you can download [HERE](https://github.com/LostRuins/koboldcpp/releases).  It will download automatically and you will need to open it (if hyperlink doesn't work https://github.com/LostRuins/koboldcpp/releases).  If you have an **NVidia RTX**-based card, the below instructions can be modified using `Koboldcpp.exe` rather than `koboldcpp_nocuda.exe`. 
 
 Once the `Koboldcpp.exe` is opened, click the `Browse` button and select the model downloaded.  Now click the `Launch` button.
 
