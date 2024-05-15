@@ -237,7 +237,7 @@ def realtime_text():
             audio_data = audio_queue.get()
             if audio_data is None:
                 break        
-            if editable_settings["Real Time"]:
+            if editable_settings["Real Time"] == "True":
                 print("Real Time Audio to Text")
                 audio_buffer = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
                 if editable_settings["Local Whisper"] == "True":
