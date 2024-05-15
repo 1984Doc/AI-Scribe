@@ -40,10 +40,10 @@ If this was successful, you need to download the files that I wrote [HERE](https
 Run the `client.py` (it may prompt for installation of various dependencies via `pip`)
 
 I would recommend using the `GPT` option using an `API key`.  The cost for running each model may determine the overall choice and can be selected in the `Settings` menu of the program.
-
->
-> 
-
+.
+.
+.
+.
 Example instructions for running on a server with a GPU:
 
 If you have an **NVidia RTX**-based card, the below instructions can be modified using `Koboldcpp.exe` rather than `koboldcpp_nocuda.exe`.
