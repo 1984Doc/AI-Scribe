@@ -16,7 +16,7 @@ import tkinter.messagebox as messagebox
 import datetime
 import functools
 import os
-import whisper
+import whisper # python package is named openai-whisper
 from openai import OpenAI
 import scrubadub
 import re
