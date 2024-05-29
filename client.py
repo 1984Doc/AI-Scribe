@@ -219,7 +219,7 @@ def record_audio():
             data = stream.read(CHUNK, exception_on_overflow=False)
             frames.append(data)
             current_chunk.append(data)
-            if (time.time() - last_chunk_time) >= 10 or len(current_chunk) >= 10 * RATE // CHUNK:
+            if (time.time() - last_chunk_time) >= 5 or len(current_chunk) >= 5 * RATE // CHUNK:
                 if editable_settings["Real Time"]:
                     audio_queue.put(b''.join(current_chunk))
                 current_chunk = []
