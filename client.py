@@ -48,7 +48,10 @@ editable_settings = {
     "Local Whisper": False,
     "Whisper Model": "small.en",
     "GPT Model": "gpt-4",
-    "Real Time": False
+    "Real Time": False,
+    "Real Time Audio Length": 5,
+    "Real Time Silence Length": 1,
+    "Silence cut-off": 0.01
 }
 
                                         
@@ -180,7 +183,7 @@ def get_prompt(formatted_message):
         "frmttriminc": editable_settings["frmttriminc"],
         "frmtrmblln": editable_settings["frmtrmblln"]
     }
-    
+
 def threaded_toggle_recording():
     thread = threading.Thread(target=toggle_recording)
     thread.start()
@@ -209,24 +212,42 @@ def toggle_pause():
         pause_button.config(text="Pause", bg="SystemButtonFace")
 
 def record_audio():
-    global is_paused, frames
-                         
-    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)    
+    global is_paused, frames, audio_queue
+    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
     current_chunk = []
-    last_chunk_time = time.time()
+    silent_duration = 0
+    minimum_silent_duration = int(editable_settings["Real Time Silence Length"])
+    minimum_audio_duration = int(editable_settings["Real Time Audio Length"])
     while is_recording:
         if not is_paused:
             data = stream.read(CHUNK, exception_on_overflow=False)
             frames.append(data)
             current_chunk.append(data)
-            if (time.time() - last_chunk_time) >= 5 or len(current_chunk) >= 5 * RATE // CHUNK:
-                if editable_settings["Real Time"]:
-                    audio_queue.put(b''.join(current_chunk))
-                current_chunk = []
-                last_chunk_time = time.time()
+            # Check for silence
+            audio_buffer = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768
+            if is_silent(audio_buffer):
+                silent_duration += CHUNK / RATE
+            else:
+                silent_duration = 0
+            # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
+            if len(current_chunk) >= minimum_audio_duration * RATE // CHUNK:
+                # Check if the last 1 second of the current_chunk is silent
+                last_second_data = b''.join(current_chunk[-RATE // CHUNK:])
+                last_second_buffer = np.frombuffer(last_second_data, dtype=np.int16).astype(np.float32) / 32768
+                if is_silent(last_second_buffer) and silent_duration >= minimum_silent_duration:
+                    if editable_settings["Real Time"]:
+                        audio_queue.put(b''.join(current_chunk))
+                    current_chunk = []
+                    silent_duration = 0
     stream.stop_stream()
     stream.close()
-    audio_queue.put(None) 
+    audio_queue.put(None)
+
+    
+def is_silent(data, threshold=float(editable_settings["Silence cut-off"])):
+    max_value = max(data)
+    #print(f"Max audio value: {max_value}")
+    return max_value < threshold															 									  								  
 
 def realtime_text():
     global frames, is_realtimeactive
@@ -241,29 +262,30 @@ def realtime_text():
             if editable_settings["Real Time"] == "True":
                 print("Real Time Audio to Text")
                 audio_buffer = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
-                if editable_settings["Local Whisper"] == "True":
-                    print("Local Real Time Whisper")
-                    result = model.transcribe(audio_buffer, fp16=False)
-                    update_gui(result['text'])
-                else:
-                    print("Remote Real Time Whisper")
-                    if frames:
-                        with wave.open('realtime.wav', 'wb') as wf:
-                            wf.setnchannels(CHANNELS)
-                            wf.setsampwidth(p.get_sample_size(FORMAT))
-                            wf.setframerate(RATE)
-                            wf.writeframes(b''.join(frames))
-                        frames = []
-                    file_to_send = 'realtime.wav'
-                    with open(file_to_send, 'rb') as f:
-                        files = {'audio': f}
-                        if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
+                if not is_silent(audio_buffer):							   
+                    if editable_settings["Local Whisper"] == "True":
+                        print("Local Real Time Whisper")
+                        result = model.transcribe(audio_buffer, fp16=False)
+                        update_gui(result['text'])
+                    else:
+                        print("Remote Real Time Whisper")
+                        if frames:
+                            with wave.open('realtime.wav', 'wb') as wf:
+                                wf.setnchannels(CHANNELS)
+                                wf.setsampwidth(p.get_sample_size(FORMAT))
+                                wf.setframerate(RATE)
+                                wf.writeframes(b''.join(frames))
+                            frames = []
+                        file_to_send = 'realtime.wav'
+                        with open(file_to_send, 'rb') as f:
+                            files = {'audio': f}
+                            if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
                                 response = requests.post(WHISPERAUDIO, files=files, verify=False)
-                        else:
+                            else:
                                 response = requests.post(WHISPERAUDIO, files=files)                
-                        if response.status_code == 200:
-                            text = response.json()['text']
-                            update_gui(text)
+                            if response.status_code == 200:
+                                text = response.json()['text']
+                                update_gui(text)
                 audio_queue.task_done()
     else:
         is_realtimeactive = False
