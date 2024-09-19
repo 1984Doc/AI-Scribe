@@ -76,8 +76,8 @@ def save_settings_to_file(koboldcpp_ip, whisperaudio_ip, openai_api_key, koboldc
         "editable_settings": editable_settings,
         "koboldcpp_port": koboldcpp_port,
         "whisperaudio_port": whisperaudio_port,
-        "ssl_enable": ssl_enable,
-        "ssl_selfcert": ssl_selfcert
+        "ssl_enable": str(ssl_enable),
+        "ssl_selfcert": str(ssl_selfcert)
     }
     with open('settings.txt', 'w') as file:
         json.dump(settings, file)
@@ -365,6 +365,9 @@ def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, 
 
     WHISPERAUDIO = build_url(WHISPERAUDIO_IP, str(WHISPERAUDIO_PORT)+"/whisperaudio")
 
+
+
+
     for setting, entry in editable_settings_entries.items():
         value = entry.get()
         if setting in ["max_context_length", "max_length", "rep_pen_range", "top_k"]:
@@ -560,17 +563,24 @@ def open_settings_window():
     whisperaudio_port_entry.insert(0, WHISPERAUDIO_PORT)
     whisperaudio_port_entry.grid(row=2, column=3)
 
-    # SSL_ENABLE input
+    # SSL_ENABLE checkbox
+    ssl_enable_var = tk.IntVar()  # Set initial value as per SSL_ENABLE
     tk.Label(settings_window, text="Enable SSL:").grid(row=3, column=2)
-    ssl_enable_entry = tk.Entry(settings_window, width=10)
-    ssl_enable_entry.insert(0, SSL_ENABLE)
-    ssl_enable_entry.grid(row=3, column=3)
+    ssl_enable_checkbox = tk.Checkbutton(settings_window, variable=ssl_enable_var, onvalue=1, offvalue=0)
+    ssl_enable_checkbox.grid(row=3, column=3)
 
-    # SSL_SELFCERT input
+    # SSL_SELFCERT checkbox
+    ssl_selfcert_var = tk.IntVar()  # Set initial value as per SSL_SELFCERT
     tk.Label(settings_window, text="Self-Signed Cert:").grid(row=4, column=2)
-    ssl_selfcert_entry = tk.Entry(settings_window, width=10)
-    ssl_selfcert_entry.insert(0, SSL_SELFCERT)
-    ssl_selfcert_entry.grid(row=4, column=3)
+    ssl_selfcert_checkbox = tk.Checkbutton(settings_window, variable=ssl_selfcert_var, onvalue=1, offvalue=0)
+    ssl_selfcert_checkbox.grid(row=4, column=3)
+
+    if str(SSL_ENABLE) == "1":
+        ssl_enable_checkbox.select()
+
+    if str(SSL_SELFCERT) == "1":
+        ssl_selfcert_checkbox.select()
+
 
     # OpenAI API Key
     tk.Label(settings_window, text="OpenAI API Key:").grid(row=5, column=0)
@@ -601,7 +611,7 @@ def open_settings_window():
     aiscribe2_textbox.grid(row=12, column=4, rowspan=10, sticky='nw', padx=(10,0))
 
     # Save, Close, and Default buttons under the left column
-    save_button = tk.Button(settings_window, text="Save", width=15, command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), openai_api_key_entry.get(), aiscribe_textbox.get("1.0", tk.END), aiscribe2_textbox.get("1.0", tk.END), settings_window, koboldcpp_port_entry.get(), whisperaudio_port_entry.get(), ssl_enable_entry.get(),ssl_selfcert_entry.get()))
+    save_button = tk.Button(settings_window, text="Save", width=15, command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), openai_api_key_entry.get(), aiscribe_textbox.get("1.0", tk.END), aiscribe2_textbox.get("1.0", tk.END), settings_window, koboldcpp_port_entry.get(), whisperaudio_port_entry.get(), ssl_enable_var.get(), ssl_selfcert_var.get()))
     save_button.grid(row=row_index, column=0, padx=5, pady=5)
 
     close_button = tk.Button(settings_window, text="Close", width=15, command=settings_window.destroy)
