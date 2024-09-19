@@ -639,7 +639,7 @@ def open_settings_window():
     close_button = tk.Button(settings_window, text="Close", width=15, command=settings_window.destroy)
     close_button.grid(row=row_index + 1, column=0, padx=5, pady=5)
 
-    default_button = tk.Button(settings_window, text="Default", width=15, command=clear_settings_file)
+    default_button = tk.Button(settings_window, text="Default", width=15, command=lambda: clear_settings_file(settings_window))
     default_button.grid(row=row_index + 2, column=0, padx=5, pady=5)
 
 def upload_file():
@@ -673,13 +673,14 @@ def send_and_flash():
     start_flashing()
     send_and_receive()
 
-def clear_settings_file():
+def clear_settings_file(settings_window):
     try:
         open('settings.txt', 'w').close()  # This opens the files and immediately closes it, clearing its contents.
         open('aiscribe.txt', 'w').close()
         open('aiscribe2.txt', 'w').close()
         messagebox.showinfo("Settings Reset", "Settings have been reset. Please restart.")
         print("Settings file cleared.")
+        settings_window.destroy()
     except Exception as e:
         print(f"Error clearing settings files: {e}")
 
