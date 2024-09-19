@@ -698,6 +698,7 @@ def toggle_view():
         blinking_circle_canvas.grid(row=0, column=3, pady=5)
         combobox.grid(row=1, column=0, columnspan=3, pady=5)
         root.attributes('-topmost', True)
+        root.minsize(300, 100)
         current_view = "minimal"
     else:
         mic_button.config(width=15, height=2)
@@ -720,6 +721,7 @@ def toggle_view():
         blinking_circle_canvas.grid(row=1, column=9, pady=5)
         combobox.grid(row=3, column=3, columnspan=3, pady=10, padx=10)
         root.attributes('-topmost', False)
+        root.minsize(900, 400)
         current_view = "full"
 
 def copy_text(widget):
