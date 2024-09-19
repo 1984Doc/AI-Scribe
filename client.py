@@ -210,7 +210,7 @@ def toggle_pause():
     if is_paused:
         pause_button.config(text="Resume", bg="red")
     else:
-        pause_button.config(text="Pause", bg="SystemButtonFace")
+        pause_button.config(text="Pause", bg="gray85")
 
 def record_audio():
     global is_paused, frames, audio_queue
@@ -329,7 +329,7 @@ def toggle_recording():
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
         save_audio()        
-        mic_button.config(bg="SystemButtonFace", text="Mic OFF")         
+        mic_button.config(bg="gray85", text="Mic OFF")         
        
 def clear_all_text_fields():
     user_input.configure(state='normal') 
@@ -342,7 +342,7 @@ def clear_all_text_fields():
 def toggle_gpt_button():
     global is_gpt_button_active
     if is_gpt_button_active:
-        gpt_button.config(bg="SystemButtonFace", text="GPT OFF")
+        gpt_button.config(bg="gray85", text="GPT OFF")
         is_gpt_button_active = False
     else:
         gpt_button.config(bg="red", text="GPT ON")
