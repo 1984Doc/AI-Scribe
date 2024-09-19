@@ -47,7 +47,8 @@ editable_settings = {
     "frmtrmblln": False,
     "Local Whisper": False,
     "Whisper Model": "small.en",
-    "GPT Model": "gpt-4",
+    "Model": "gpt-4",
+    "Model Endpoint": "https://api.openai.com/v1/chat/completions",
     "Real Time": False,
     "Real Time Audio Length": 5,
     "Real Time Silence Length": 1,
@@ -490,13 +491,13 @@ def send_text_to_chatgpt(edited_text):
         "Content-Type": "application/json",
     }
     payload = {
-        "model": editable_settings["GPT Model"].strip(),
+        "model": editable_settings["Model"].strip(),
         "messages": [
             {"role": "user", "content": edited_text}
         ],
     }
 
-    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, data=json.dumps(payload))
+    response = requests.post(editable_settings["Model Endpoint"].strip(), headers=headers, data=json.dumps(payload))
     
     if response.status_code == 200:
             response_data = response.json()
