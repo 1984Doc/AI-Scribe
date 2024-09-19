@@ -539,6 +539,14 @@ def open_settings_window():
     settings_window = tk.Toplevel(root)
     settings_window.title("Settings")
 
+    #not resizeable
+    settings_window.resizable(False, False)
+
+    # make the base window none interactive while updating settings
+    settings_window.grab_set()
+
+
+
     # KOBOLDCPP IP input
     tk.Label(settings_window, text="KOBOLDCPP IP:").grid(row=0, column=0)
     koboldcpp_ip_entry = tk.Entry(settings_window, width=25)
