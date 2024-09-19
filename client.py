@@ -814,6 +814,9 @@ root.bind('<Alt-p>', lambda event: pause_button.invoke())
 # Bind Alt+R to toggle_recording function
 root.bind('<Alt-r>', lambda event: mic_button.invoke())
 
+#set min size
+root.minsize(900, 400);
+
 root.mainloop()
 
 p.terminate()
