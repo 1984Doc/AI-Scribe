@@ -752,56 +752,56 @@ root.grid_rowconfigure(2, weight=1)
 root.grid_rowconfigure(3, weight=0)
 
 user_input = scrolledtext.ScrolledText(root, height=12)
-user_input.grid(row=0, column=0, columnspan=10, padx=5, pady=5)
+user_input.grid(row=0, column=0, columnspan=10, padx=5, pady=5, sticky='nsew')
 
 mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=10)
-mic_button.grid(row=1, column=0, pady=5)
+mic_button.grid(row=1, column=0, pady=5, sticky='nsew')
 
 send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=10)
-send_button.grid(row=1, column=1, pady=5)
+send_button.grid(row=1, column=1, pady=5, sticky='nsew')
 
 pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=10)
-pause_button.grid(row=1, column=2, pady=5)
+pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
 
 clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=10)
-clear_button.grid(row=1, column=3, pady=5)
+clear_button.grid(row=1, column=3, pady=5, sticky='nsew')
 
 toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=10)
-toggle_button.grid(row=1, column=4, pady=5)
+toggle_button.grid(row=1, column=4, pady=5, sticky='nsew')
 
 gpt_button = tk.Button(root, text="GPT OFF", command=toggle_gpt_button, height=2, width=10)
-gpt_button.grid(row=1, column=5, pady=5)
+gpt_button.grid(row=1, column=5, pady=5, sticky='nsew')
 
 settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=10)
-settings_button.grid(row=1, column=6, pady=5)
+settings_button.grid(row=1, column=6, pady=5, sticky='nsew')
 
 upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=10)
-upload_button.grid(row=1, column=7, pady=5)
+upload_button.grid(row=1, column=7, pady=5, sticky='nsew')
 
 switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=10)
-switch_view_button.grid(row=1, column=8, pady=5)
+switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
-blinking_circle_canvas.grid(row=1, column=9, pady=5)
+blinking_circle_canvas.grid(row=1, column=9, pady=5, sticky='nsew')
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 
 response_display = scrolledtext.ScrolledText(root, height=12, state='disabled')
-response_display.grid(row=2, column=0, columnspan=10, padx=5, pady=5)
+response_display.grid(row=2, column=0, columnspan=10, padx=5, pady=5, sticky='nsew')
 
 copy_user_input_button = tk.Button(root, text="Copy", command=lambda: copy_text(user_input), height=2, width=10)
-copy_user_input_button.grid(row=0, column=9, pady=5)
+copy_user_input_button.grid(row=0, column=9, pady=5, sticky='nsew')
 
 copy_response_display_button = tk.Button(root, text="Copy", command=lambda: copy_text(response_display), height=2, width=10)
-copy_response_display_button.grid(row=2, column=9, pady=5)
+copy_response_display_button.grid(row=2, column=9, pady=5, sticky='nsew')
 
 timestamp_listbox = tk.Listbox(root, height=30)
-timestamp_listbox.grid(row=0, column=10, columnspan=2, rowspan=3, padx=5, pady=5)
+timestamp_listbox.grid(row=0, column=10, columnspan=2, rowspan=3, padx=5, pady=5, sticky='nsew')
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
 
 combobox = ttk.Combobox(root, values=dropdown_values, width=35, state="readonly")
 combobox.current(0)
 combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
-combobox.grid(row=3, column=3, columnspan=4, pady=10, padx=10)
+combobox.grid(row=3, column=3, columnspan=4, pady=10, padx=10, sticky='nsew')
 
 update_aiscribe_texts(None)
 
