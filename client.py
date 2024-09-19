@@ -735,7 +735,7 @@ root = tk.Tk()
 root.title("AI Medical Scribe")
 
 # Configure grid weights for scalability
-root.grid_columnconfigure(0, weight=1)
+root.grid_columnconfigure(0, weight=1, minsize= 10)
 root.grid_columnconfigure(1, weight=1)
 root.grid_columnconfigure(2, weight=1)
 root.grid_columnconfigure(3, weight=1)
@@ -747,6 +747,8 @@ root.grid_columnconfigure(8, weight=1)
 root.grid_columnconfigure(9, weight=1)
 root.grid_columnconfigure(10, weight=1)
 root.grid_columnconfigure(11, weight=1)
+root.grid_columnconfigure(12, weight=1)
+root.grid_columnconfigure(13, weight=1, minsize=10)
 root.grid_rowconfigure(0, weight=1)
 root.grid_rowconfigure(1, weight=0)
 root.grid_rowconfigure(2, weight=1)
@@ -796,7 +798,7 @@ copy_response_display_button = tk.Button(root, text="Copy", command=lambda: copy
 copy_response_display_button.grid(row=2, column=10, pady=5, padx=5, sticky='ew')
 
 timestamp_listbox = tk.Listbox(root, height=30)
-timestamp_listbox.grid(row=0, column=11, columnspan=2, rowspan=3, padx=5, pady=5, sticky='nsew')
+timestamp_listbox.grid(row=0, column=11, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
 
 combobox = ttk.Combobox(root, values=dropdown_values, width=35, state="readonly")
