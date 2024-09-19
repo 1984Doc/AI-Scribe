@@ -259,11 +259,11 @@ def realtime_text():
             audio_data = audio_queue.get()
             if audio_data is None:
                 break
-            if editable_settings["Real Time"] == "True":
+            if editable_settings["Real Time"] == True:
                 print("Real Time Audio to Text")
                 audio_buffer = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
                 if not is_silent(audio_buffer):
-                    if editable_settings["Local Whisper"] == "True":
+                    if editable_settings["Local Whisper"] == True:
                         print("Local Real Time Whisper")
                         result = model.transcribe(audio_buffer, fp16=False)
                         update_gui(result['text'])
@@ -303,7 +303,7 @@ def save_audio():
             wf.setframerate(RATE)
             wf.writeframes(b''.join(frames))
         frames = []  # Clear recorded data
-        if editable_settings["Real Time"] == "True":
+        if editable_settings["Real Time"] == True:
             send_and_receive()
         else:
             threaded_send_audio_to_server()
@@ -385,7 +385,7 @@ def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, 
 
 def send_audio_to_server():
     global uploaded_file_path
-    if editable_settings["Local Whisper"] == "True":
+    if editable_settings["Local Whisper"] == True:
         print("Using Local Whisper for transcription.")
         user_input.configure(state='normal')
         user_input.delete("1.0", tk.END)
@@ -583,20 +583,34 @@ def open_settings_window():
 
 
     # OpenAI API Key
-    tk.Label(settings_window, text="OpenAI API Key:").grid(row=5, column=0)
+    tk.Label(settings_window, text="OpenAI API Key:").grid(row=5, column=0, sticky='nw')
     openai_api_key_entry = tk.Entry(settings_window, width=25)
     openai_api_key_entry.insert(0, OPENAI_API_KEY)
-    openai_api_key_entry.grid(row=5, column=1)
+    openai_api_key_entry.grid(row=5, column=1, sticky='nw')
 
     # Editable Settings
     row_index = 6
     for setting, value in editable_settings.items():
-        tk.Label(settings_window, text=f"{setting}:").grid(row=row_index, column=0, sticky='nw')
-        entry = tk.Entry(settings_window, width=25)
-        entry.insert(0, str(value))
-        entry.grid(row=row_index, column=1, sticky='nw')
-        editable_settings_entries[setting] = entry
-        row_index += 1
+        print(setting, value)
+        if value == "True" or value == "False" or value == False or value == True:
+            editable_settings_entries[setting] = tk.BooleanVar()
+            tk.Label(settings_window, text=f"{setting}").grid(row=row_index, column=0, sticky='nw')
+            setting_checkbox = tk.Checkbutton(settings_window, variable=editable_settings_entries[setting])
+            setting_checkbox.grid(row=row_index, column=1, sticky='nw')
+
+
+            if value == True:
+                setting_checkbox.select()
+
+            row_index += 1
+
+        else:
+            tk.Label(settings_window, text=f"{setting}:").grid(row=row_index, column=0, sticky='nw')
+            entry = tk.Entry(settings_window, width=25)
+            entry.insert(0, str(value))
+            entry.grid(row=row_index, column=1, sticky='nw')
+            editable_settings_entries[setting] = entry
+            row_index += 1
 
     # AISCRIBE text box
     tk.Label(settings_window, text="Context Before Conversation").grid(row=0, column=4, sticky='nw', padx=(10,0))
