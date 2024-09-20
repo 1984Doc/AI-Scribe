@@ -495,12 +495,27 @@ def send_text_to_chatgpt(edited_text):
             {"role": "user", "content": edited_text}
         ],
     }
-    response = requests.post(editable_settings["Model Endpoint"].strip(), headers=headers, json=payload)
+    try:
+        response = requests.post(editable_settings["Model Endpoint"].strip(), headers=headers, json=payload)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+        display_text(f"HTTP error occurred: {http_err}")
+    except requests.exceptions.ConnectionError as conn_err:
+        print(f"Connection error occurred: {conn_err}")
+        display_text(f"Connection error occurred: {conn_err}")
+    except requests.exceptions.Timeout as timeout_err:
+        print(f"Timeout error occurred: {timeout_err}")
+        display_text(f"Connection error occurred: {conn_err}")
+    except requests.exceptions.RequestException as req_err:
+        print(f"An error occurred: {req_err}")
+        display_text(f"Connection error occurred: {conn_err}")
     
     if response.status_code == 200:
             response_data = response.json()
             response_text = (response_data['choices'][0]['message']['content'])
             update_gui_with_response(response_text)
+
 
 def show_edit_transcription_popup(formatted_message):
     popup = tk.Toplevel(root)
