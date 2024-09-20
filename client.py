@@ -24,6 +24,8 @@ import speech_recognition as sr # python package is named speechrecognition
 import time
 import queue
 
+NOTE_CREATION = "Note Creation...Please Wait"
+
 # Add these near the top of your script
 editable_settings = {
     "use_story": False,
@@ -424,7 +426,7 @@ def send_audio_to_server():
 def send_and_receive():
     global use_aiscribe, user_message
     user_message = user_input.get("1.0", tk.END).strip()
-    clear_response_display()    
+    display_text(NOTE_CREATION)
     if use_aiscribe:
         formatted_message = f'{AISCRIBE} [{user_message}] {AISCRIBE2}'
     else:
@@ -432,7 +434,7 @@ def send_and_receive():
     threaded_handle_message(formatted_message)  
 
 def handle_message(formatted_message):
-    if gpt_button.cget("bg") == "red":
+    if is_gpt_button_active:
         show_edit_transcription_popup(formatted_message)
     else:
         prompt = get_prompt(formatted_message)
@@ -446,10 +448,10 @@ def handle_message(formatted_message):
             response_text = response_text.replace("  ", " ").strip() 
             update_gui_with_response(response_text)
 
-def clear_response_display():
+def display_text(text):
     response_display.configure(state='normal')
     response_display.delete("1.0", tk.END)
-    response_display.insert(tk.END, "Note Creation...Please Wait")
+    response_display.insert(tk.END, f"{text}\n")
     response_display.configure(state='disabled')
 
 def update_gui_with_response(response_text):
@@ -462,10 +464,7 @@ def update_gui_with_response(response_text):
     for time, _, _ in response_history:
         timestamp_listbox.insert(tk.END, time)
 
-    response_display.configure(state='normal')
-    response_display.delete('1.0', tk.END)
-    response_display.insert(tk.END, f"{response_text}\n")
-    response_display.configure(state='disabled')
+    display_text(response_text)
     pyperclip.copy(response_text)
     stop_flashing()    
 
@@ -496,8 +495,7 @@ def send_text_to_chatgpt(edited_text):
             {"role": "user", "content": edited_text}
         ],
     }
-
-    response = requests.post(editable_settings["Model Endpoint"].strip(), headers=headers, data=json.dumps(payload))
+    response = requests.post(editable_settings["Model Endpoint"].strip(), headers=headers, json=payload)
     
     if response.status_code == 200:
             response_data = response.json()
