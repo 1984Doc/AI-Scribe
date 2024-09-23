@@ -24,6 +24,8 @@ import speech_recognition as sr # python package is named speechrecognition
 import time
 import queue
 
+NOTE_CREATION = "Note Creation...Please Wait"
+
 # Add these near the top of your script
 editable_settings = {
     "use_story": False,
@@ -47,7 +49,8 @@ editable_settings = {
     "frmtrmblln": False,
     "Local Whisper": False,
     "Whisper Model": "small.en",
-    "GPT Model": "gpt-4",
+    "Model": "gpt-4",
+    "Model Endpoint": "https://api.openai.com/v1/chat/completions",
     "Real Time": False,
     "Real Time Audio Length": 5,
     "Real Time Silence Length": 1,
@@ -209,7 +212,7 @@ def toggle_pause():
     if is_paused:
         pause_button.config(text="Resume", bg="red")
     else:
-        pause_button.config(text="Pause", bg="SystemButtonFace")
+        pause_button.config(text="Pause", bg="gray85")
 
 def record_audio():
     global is_paused, frames, audio_queue
@@ -327,9 +330,9 @@ def toggle_recording():
         is_recording = False
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
-        save_audio()
-        mic_button.config(bg="SystemButtonFace", text="Mic OFF")
-
+        save_audio()        
+        mic_button.config(bg="gray85", text="Mic OFF")         
+       
 def clear_all_text_fields():
     user_input.configure(state='normal')
     user_input.delete("1.0", tk.END)
@@ -341,7 +344,7 @@ def clear_all_text_fields():
 def toggle_gpt_button():
     global is_gpt_button_active
     if is_gpt_button_active:
-        gpt_button.config(bg="SystemButtonFace", text="GPT OFF")
+        gpt_button.config(bg="gray85", text="GPT OFF")
         is_gpt_button_active = False
     else:
         gpt_button.config(bg="red", text="GPT ON")
@@ -426,7 +429,7 @@ def send_audio_to_server():
 def send_and_receive():
     global use_aiscribe, user_message
     user_message = user_input.get("1.0", tk.END).strip()
-    clear_response_display()
+    display_text(NOTE_CREATION)
     if use_aiscribe:
         formatted_message = f'{AISCRIBE} [{user_message}] {AISCRIBE2}'
     else:
@@ -434,7 +437,7 @@ def send_and_receive():
     threaded_handle_message(formatted_message)
 
 def handle_message(formatted_message):
-    if gpt_button.cget("bg") == "red":
+    if is_gpt_button_active:
         show_edit_transcription_popup(formatted_message)
     else:
         prompt = get_prompt(formatted_message)
@@ -448,10 +451,10 @@ def handle_message(formatted_message):
             response_text = response_text.replace("  ", " ").strip()
             update_gui_with_response(response_text)
 
-def clear_response_display():
+def display_text(text):
     response_display.configure(state='normal')
     response_display.delete("1.0", tk.END)
-    response_display.insert(tk.END, "Note Creation...Please Wait")
+    response_display.insert(tk.END, f"{text}\n")
     response_display.configure(state='disabled')
 
 def update_gui_with_response(response_text):
@@ -464,10 +467,7 @@ def update_gui_with_response(response_text):
     for time, _, _ in response_history:
         timestamp_listbox.insert(tk.END, time)
 
-    response_display.configure(state='normal')
-    response_display.delete('1.0', tk.END)
-    response_display.insert(tk.END, f"{response_text}\n")
-    response_display.configure(state='disabled')
+    display_text(response_text)
     pyperclip.copy(response_text)
     stop_flashing()
 
@@ -493,18 +493,32 @@ def send_text_to_chatgpt(edited_text):
         "Content-Type": "application/json",
     }
     payload = {
-        "model": editable_settings["GPT Model"].strip(),
+        "model": editable_settings["Model"].strip(),
         "messages": [
             {"role": "user", "content": edited_text}
         ],
     }
-
-    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, data=json.dumps(payload))
-
+    try:
+        response = requests.post(editable_settings["Model Endpoint"].strip(), headers=headers, json=payload)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+        display_text(f"HTTP error occurred: {http_err}")
+    except requests.exceptions.ConnectionError as conn_err:
+        print(f"Connection error occurred: {conn_err}")
+        display_text(f"Connection error occurred: {conn_err}")
+    except requests.exceptions.Timeout as timeout_err:
+        print(f"Timeout error occurred: {timeout_err}")
+        display_text(f"Connection error occurred: {conn_err}")
+    except requests.exceptions.RequestException as req_err:
+        print(f"An error occurred: {req_err}")
+        display_text(f"Connection error occurred: {conn_err}")
+    
     if response.status_code == 200:
             response_data = response.json()
             response_text = (response_data['choices'][0]['message']['content'])
             update_gui_with_response(response_text)
+
 
 def show_edit_transcription_popup(formatted_message):
     popup = tk.Toplevel(root)
@@ -724,10 +738,10 @@ def toggle_view():
         timestamp_listbox.grid()
         copy_user_input_button.grid()
         copy_response_display_button.grid()
-        mic_button.grid(row=1, column=0, pady=5)
-        pause_button.grid(row=1, column=2, pady=5)
-        switch_view_button.grid(row=1, column=8, pady=5)
-        blinking_circle_canvas.grid(row=1, column=9, pady=5)
+        mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
+        pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
+        switch_view_button.grid(row=1, column=8, pady=5,sticky='nsew')
+        blinking_circle_canvas.grid(row=1, column=9, pady=5,sticky='nsew')
         combobox.grid(row=3, column=3, columnspan=3, pady=10, padx=10)
         root.attributes('-topmost', False)
         root.minsize(900, 400)
@@ -850,7 +864,7 @@ root.bind('<Alt-p>', lambda event: pause_button.invoke())
 root.bind('<Alt-r>', lambda event: mic_button.invoke())
 
 #set min size
-root.minsize(900, 400);
+root.minsize(900, 400)
 
 root.mainloop()
 
