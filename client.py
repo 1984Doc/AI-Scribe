@@ -330,9 +330,9 @@ def toggle_recording():
         is_recording = False
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
-        save_audio()        
-        mic_button.config(bg="gray85", text="Mic OFF")         
-       
+        save_audio()
+        mic_button.config(bg="gray85", text="Mic OFF")
+
 def clear_all_text_fields():
     user_input.configure(state='normal')
     user_input.delete("1.0", tk.END)
@@ -513,7 +513,7 @@ def send_text_to_chatgpt(edited_text):
     except requests.exceptions.RequestException as req_err:
         print(f"An error occurred: {req_err}")
         display_text(f"Connection error occurred: {conn_err}")
-    
+
     if response.status_code == 200:
             response_data = response.json()
             response_text = (response_data['choices'][0]['message']['content'])
@@ -724,9 +724,9 @@ def toggle_view():
         root.minsize(300, 100)
         current_view = "minimal"
     else:
-        mic_button.config(width=15, height=2)
-        pause_button.config(width=15, height=2)
-        switch_view_button.config(width=15, height=2)
+        mic_button.config(width=10, height=2)
+        pause_button.config(width=10, height=2)
+        switch_view_button.config(width=10, height=2)
         user_input.grid()
         send_button.grid()
         clear_button.grid()
@@ -740,9 +740,9 @@ def toggle_view():
         copy_response_display_button.grid()
         mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
         pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
-        switch_view_button.grid(row=1, column=8, pady=5,sticky='nsew')
-        blinking_circle_canvas.grid(row=1, column=9, pady=5,sticky='nsew')
-        combobox.grid(row=3, column=3, columnspan=3, pady=10, padx=10)
+        switch_view_button.grid(row=1, column=9, pady=5, sticky='nsew')
+        blinking_circle_canvas.grid(row=1, column=10, pady=5)
+        combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
         root.attributes('-topmost', False)
         root.minsize(900, 400)
         current_view = "full"
