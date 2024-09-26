@@ -28,6 +28,8 @@ NOTE_CREATION = "Note Creation...Please Wait"
 
 # Add these near the top of your script
 editable_settings = {
+    "Model": "gemma-2-2b-it",
+    "Model Endpoint": "https://api.openai.com/v1/",
     "use_story": False,
     "use_memory": False,
     "use_authors_note": False,
@@ -49,8 +51,6 @@ editable_settings = {
     "frmtrmblln": False,
     "Local Whisper": False,
     "Whisper Model": "small.en",
-    "Model": "gpt-4",
-    "Model Endpoint": "https://api.openai.com/v1/chat/completions",
     "Real Time": False,
     "Real Time Audio Length": 5,
     "Real Time Silence Length": 1,
@@ -71,7 +71,7 @@ def build_url(ip, port):
             return f"http://{ip}:{port}"
 
 
-def save_settings_to_file(koboldcpp_ip, whisperaudio_ip, openai_api_key, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert):
+def save_settings_to_file(koboldcpp_ip, whisperaudio_ip, openai_api_key, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
     settings = {
         "koboldcpp_ip": koboldcpp_ip,
         "whisperaudio_ip": whisperaudio_ip,
@@ -80,7 +80,8 @@ def save_settings_to_file(koboldcpp_ip, whisperaudio_ip, openai_api_key, koboldc
         "koboldcpp_port": koboldcpp_port,
         "whisperaudio_port": whisperaudio_port,
         "ssl_enable": str(ssl_enable),
-        "ssl_selfcert": str(ssl_selfcert)
+        "ssl_selfcert": str(ssl_selfcert),
+        "api_style": api_style
     }
     with open('settings.txt', 'w') as file:
         json.dump(settings, file)
@@ -101,10 +102,11 @@ def load_settings_from_file():
             ssl_selfcert = settings.get("ssl_selfcert", "1")
             openai_api_key = settings.get("openai_api_key", "NONE")
             loaded_editable_settings = settings.get("editable_settings", {})
+            api_style = settings.get("api_style", "openai")
             for key, value in loaded_editable_settings.items():
                 if key in editable_settings:
                     editable_settings[key] = value
-            return koboldcpp_ip, whisperaudio_ip, openai_api_key, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert
+            return koboldcpp_ip, whisperaudio_ip, openai_api_key, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style
     except FileNotFoundError:
         # Return default values if file not found
         return "192.168.1.195", "192.168.1.195", "None", "5001", "8000", "0", "1"
@@ -126,7 +128,7 @@ def load_aiscribe2_from_file():
         return None
 
 # Load settings at the start
-KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, KOBOLDCPP_PORT, WHISPERAUDIO_PORT, SSL_ENABLE, SSL_SELFCERT = load_settings_from_file()
+KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, KOBOLDCPP_PORT, WHISPERAUDIO_PORT, SSL_ENABLE, SSL_SELFCERT, API_STYLE = load_settings_from_file()
 KOBOLDCPP = build_url(KOBOLDCPP_IP, KOBOLDCPP_PORT)
 
 WHISPERAUDIO = build_url(WHISPERAUDIO_IP, str(WHISPERAUDIO_PORT)+"/whisperaudio")
@@ -355,8 +357,8 @@ def toggle_aiscribe():
     use_aiscribe = not use_aiscribe
     toggle_button.config(text="AISCRIBE ON" if use_aiscribe else "AISCRIBE OFF")
 
-def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert):
-    global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, editable_settings, AISCRIBE, AISCRIBE2, KOBOLDCPP_PORT, WHISPERAUDIO_PORT, SSL_ENABLE, SSL_SELFCERT
+def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
+    global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, editable_settings, AISCRIBE, AISCRIBE2, KOBOLDCPP_PORT, WHISPERAUDIO_PORT, SSL_ENABLE, SSL_SELFCERT, API_STYLE
     KOBOLDCPP_IP = koboldcpp_ip
     WHISPERAUDIO_IP = whisperaudio_ip
     KOBOLDCPP_PORT = koboldcpp_port
@@ -365,8 +367,11 @@ def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, 
     SSL_SELFCERT = ssl_selfcert
     OPENAI_API_KEY = openai_api_key
     KOBOLDCPP = build_url(KOBOLDCPP_IP, KOBOLDCPP_PORT)
+    API_STYLE = api_style
 
     WHISPERAUDIO = build_url(WHISPERAUDIO_IP, str(WHISPERAUDIO_PORT)+"/whisperaudio")
+
+    print(api_style)
 
 
 
@@ -377,7 +382,7 @@ def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, 
             value = int(value)
         # Add similar conditions for other data types
         editable_settings[setting] = value
-    save_settings_to_file(KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, KOBOLDCPP_PORT, WHISPERAUDIO_PORT, SSL_ENABLE, SSL_SELFCERT)  # Save to file
+    save_settings_to_file(KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, KOBOLDCPP_PORT, WHISPERAUDIO_PORT, SSL_ENABLE, SSL_SELFCERT, API_STYLE)  # Save to file
     AISCRIBE = aiscribe_text
     AISCRIBE2 = aiscribe2_text
     with open('aiscribe.txt', 'w') as f:
@@ -489,7 +494,7 @@ def show_response(event):
 def send_text_to_chatgpt(edited_text):
     api_key = OPENAI_API_KEY
     headers = {
-        "Authorization": f"Bearer {api_key}",
+        # "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
     payload = {
@@ -559,8 +564,6 @@ def open_settings_window():
     # make the base window none interactive while updating settings
     settings_window.grab_set()
 
-
-
     # KOBOLDCPP IP input
     tk.Label(settings_window, text="KOBOLDCPP IP:").grid(row=0, column=0)
     koboldcpp_ip_entry = tk.Entry(settings_window, width=25)
@@ -610,10 +613,24 @@ def open_settings_window():
     openai_api_key_entry.insert(0, OPENAI_API_KEY)
     openai_api_key_entry.grid(row=5, column=1, sticky='nw')
 
+    # Define the dropdown options
+    api_options = ["JanAI", "OpenAI"]
+
+    # Variable to hold the selected option
+    selected_option = ""
+
+    # Create the dropdown menu.
+    tk.Label(settings_window, text="API Style:").grid(row=6, column=0, sticky='nw')
+
+    dropdown = ttk.Combobox(settings_window, values=api_options, width=15, state="readonly")
+    dropdown.current(api_options.index(API_STYLE))
+    dropdown.bind("<<ComboboxSelected>>", selected_option)
+    dropdown.grid(row=6, column=1, columnspan=1, sticky='nsew')
+
+
     # Editable Settings
-    row_index = 6
+    row_index = 7
     for setting, value in editable_settings.items():
-        print(setting, value)
         if value == "True" or value == "False" or value == False or value == True:
             editable_settings_entries[setting] = tk.BooleanVar()
             tk.Label(settings_window, text=f"{setting}").grid(row=row_index, column=0, sticky='nw')
@@ -647,7 +664,7 @@ def open_settings_window():
     aiscribe2_textbox.grid(row=12, column=4, rowspan=10, sticky='nw', padx=(10,0))
 
     # Save, Close, and Default buttons under the left column
-    save_button = tk.Button(settings_window, text="Save", width=15, command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), openai_api_key_entry.get(), aiscribe_textbox.get("1.0", tk.END), aiscribe2_textbox.get("1.0", tk.END), settings_window, koboldcpp_port_entry.get(), whisperaudio_port_entry.get(), ssl_enable_var.get(), ssl_selfcert_var.get()))
+    save_button = tk.Button(settings_window, text="Save", width=15, command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), openai_api_key_entry.get(), aiscribe_textbox.get("1.0", tk.END), aiscribe2_textbox.get("1.0", tk.END), settings_window, koboldcpp_port_entry.get(), whisperaudio_port_entry.get(), ssl_enable_var.get(), ssl_selfcert_var.get(), dropdown.get()))
     save_button.grid(row=row_index, column=0, padx=5, pady=5)
 
     close_button = tk.Button(settings_window, text="Close", width=15, command=settings_window.destroy)
