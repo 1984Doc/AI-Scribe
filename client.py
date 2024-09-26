@@ -28,7 +28,7 @@ NOTE_CREATION = "Note Creation...Please Wait"
 
 # Add these near the top of your script
 editable_settings = {
-    "Model": "gemma-2-2b-it",
+    "Model": "gpt-4",
     "Model Endpoint": "https://api.openai.com/v1/",
     "use_story": False,
     "use_memory": False,
@@ -92,7 +92,7 @@ def load_settings_from_file():
             try:
                 settings = json.load(file)
             except json.JSONDecodeError:
-                return "192.168.1.195", "192.168.1.195", "None", "5001", "8000", "0", "1"
+                return "192.168.1.195", "192.168.1.195", "None", "5001", "8000", "0", "1", "OpenAI"
 
             koboldcpp_ip = settings.get("koboldcpp_ip", "192.168.1.195")
             koboldcpp_port = settings.get("koboldcpp_port", "5001")
@@ -102,7 +102,7 @@ def load_settings_from_file():
             ssl_selfcert = settings.get("ssl_selfcert", "1")
             openai_api_key = settings.get("openai_api_key", "NONE")
             loaded_editable_settings = settings.get("editable_settings", {})
-            api_style = settings.get("api_style", "openai")
+            api_style = settings.get("api_style", "OpenAI")
             for key, value in loaded_editable_settings.items():
                 if key in editable_settings:
                     editable_settings[key] = value
