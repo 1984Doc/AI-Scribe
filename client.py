@@ -346,10 +346,10 @@ def clear_all_text_fields():
 def toggle_gpt_button():
     global is_gpt_button_active
     if is_gpt_button_active:
-        gpt_button.config(bg="gray85", text="GPT OFF")
+        gpt_button.config(bg="gray85", text="KoboldCpp")
         is_gpt_button_active = False
     else:
-        gpt_button.config(bg="red", text="GPT ON")
+        gpt_button.config(bg="red", text="Custom Endpoint")
         is_gpt_button_active = True
 
 def toggle_aiscribe():
@@ -370,11 +370,6 @@ def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, 
     API_STYLE = api_style
 
     WHISPERAUDIO = build_url(WHISPERAUDIO_IP, str(WHISPERAUDIO_PORT)+"/whisperaudio")
-
-    print(api_style)
-
-
-
 
     for setting, entry in editable_settings_entries.items():
         value = entry.get()
@@ -497,6 +492,7 @@ def send_text_to_chatgpt(edited_text):
         # "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
+
     payload = {
         "model": editable_settings["Model"].strip(),
         "messages": [
@@ -504,8 +500,19 @@ def send_text_to_chatgpt(edited_text):
         ],
     }
     try:
-        response = requests.post(editable_settings["Model Endpoint"].strip(), headers=headers, json=payload)
-        response.raise_for_status()
+
+        if editable_settings["Model Endpoint"].endswith('/'):
+            editable_settings["Model Endpoint"] = editable_settings["Model Endpoint"][:-1]
+
+        if API_STYLE == "OpenAI":
+            response = requests.post(editable_settings["Model Endpoint"].strip() +"/chat/completions", headers=headers, json=payload)
+            response.raise_for_status()
+            response_data = response.json()
+            response_text = (response_data['choices'][0]['message']['content'])
+            update_gui_with_response(response_text)
+
+
+
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err}")
         display_text(f"HTTP error occurred: {http_err}")
@@ -518,11 +525,6 @@ def send_text_to_chatgpt(edited_text):
     except requests.exceptions.RequestException as req_err:
         print(f"An error occurred: {req_err}")
         display_text(f"Connection error occurred: {conn_err}")
-
-    if response.status_code == 200:
-            response_data = response.json()
-            response_text = (response_data['choices'][0]['message']['content'])
-            update_gui_with_response(response_text)
 
 
 def show_edit_transcription_popup(formatted_message):
@@ -614,7 +616,7 @@ def open_settings_window():
     openai_api_key_entry.grid(row=5, column=1, sticky='nw')
 
     # Define the dropdown options
-    api_options = ["JanAI", "OpenAI"]
+    api_options = ["OpenAI"]
 
     # Variable to hold the selected option
     selected_option = ""
@@ -838,7 +840,7 @@ clear_button.grid(row=1, column=4, pady=5, sticky='nsew')
 toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=10)
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
 
-gpt_button = tk.Button(root, text="GPT OFF", command=toggle_gpt_button, height=2, width=10)
+gpt_button = tk.Button(root, text="KoboldCpp", command=toggle_gpt_button, height=2, width=13)
 gpt_button.grid(row=1, column=6, pady=5, sticky='nsew')
 
 settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=10)
