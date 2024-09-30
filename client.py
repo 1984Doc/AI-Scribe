@@ -17,7 +17,7 @@ import datetime
 import functools
 import os
 import whisper # python package is named openai-whisper
-from openai import NoneType, OpenAI
+from openai import OpenAI
 import scrubadub
 import re
 import speech_recognition as sr # python package is named speechrecognition
