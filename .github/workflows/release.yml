@@ -6,8 +6,8 @@ on:
       - "v*.*.*"
 
 jobs:
-  build-windows:
-    runs-on: windows-2019
+  build-linux:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -18,7 +18,7 @@ jobs:
           architecture: "x64"
       - name: Install requirements
         run: |
-          pip install -r requirements.txt
+          pip install -r cl_requirements.txt
       - name: Run PyInstaller
         run: |
           pyinstaller client.spec
