@@ -21,7 +21,7 @@ jobs:
           pip install -r cl_requirements.txt
       - name: Run PyInstaller
         run: |
-          pyinstaller --onefile client.spec
+          pyinstaller --onefile client.py
       - uses: actions/upload-artifact@v4
         with:
           name: FreeScribe
