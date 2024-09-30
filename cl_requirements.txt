@@ -5,3 +5,4 @@ openai
 SpeechRecognition
 scrubadub
 pyaudio
+pyinstaller
