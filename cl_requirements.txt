@@ -1,0 +1,7 @@
+requests
+pyperclip
+openai-whisper
+openai
+SpeechRecognition
+scrubadub
+pyaudio
