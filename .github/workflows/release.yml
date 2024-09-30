@@ -25,7 +25,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: FreeScribe
-          path: dist/FreeScribe.exe
+          path: build/client/FreeScribe.exe
 
       - name: create release
         id: create_release
@@ -47,6 +47,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: dist/FreeScribe.exe
+          asset_path: build/client/FreeScribe.exe
           asset_name: FreeScribe-Windows.exe
           asset_content_type: application/zip
