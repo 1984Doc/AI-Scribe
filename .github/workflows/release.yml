@@ -21,7 +21,7 @@ jobs:
           pip install -r cl_requirements.txt
       - name: Run PyInstaller
         run: |
-          pyinstaller client.spec
+          pyinstaller --onefile client.spec
       - uses: actions/upload-artifact@v4
         with:
           name: FreeScribe
@@ -37,7 +37,7 @@ jobs:
           release_name: Release ${{ github.ref }}
           overwrite: true
           body: |
-            Test Release
+            This is a automated release completed by GitHub Actions.
           draft: false
           prerelease: false
       - name: Upload Release Asset
