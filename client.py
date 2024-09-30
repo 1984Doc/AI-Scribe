@@ -17,7 +17,7 @@ import datetime
 import functools
 import os
 import whisper # python package is named openai-whisper
-from openai import OpenAI
+from openai import NoneType, OpenAI
 import scrubadub
 import re
 import speech_recognition as sr # python package is named speechrecognition
@@ -489,8 +489,9 @@ def show_response(event):
 def send_text_to_chatgpt(edited_text):
     api_key = OPENAI_API_KEY
     headers = {
-        # "Authorization": f"Bearer {api_key}",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
+        "accept": "application/json",
     }
 
     payload = {
@@ -505,14 +506,16 @@ def send_text_to_chatgpt(edited_text):
             editable_settings["Model Endpoint"] = editable_settings["Model Endpoint"][:-1]
 
         if API_STYLE == "OpenAI":
-            response = requests.post(editable_settings["Model Endpoint"].strip() +"/chat/completions", headers=headers, json=payload)
+            response = requests.Response
+            if str(SSL_SELFCERT) == "1" and str(SSL_ENABLE) == "1":
+                response = requests.post(editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=False)
+            else:
+                response = requests.post(editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload)
+
             response.raise_for_status()
             response_data = response.json()
             response_text = (response_data['choices'][0]['message']['content'])
             update_gui_with_response(response_text)
-
-
-
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err}")
         display_text(f"HTTP error occurred: {http_err}")
