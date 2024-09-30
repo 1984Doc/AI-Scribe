@@ -22,7 +22,7 @@ jobs:
       - name: Run PyInstaller
         run: |
           python -m PyInstaller client.spec
-      - uses: actions/upload-artifact
+      - uses: actions/upload-artifact@v2
         with:
           name: FreeScribe
           path: dist/FreeScribe.exe
