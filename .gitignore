@@ -6,5 +6,4 @@ settings.txt
 __pycache__
 build
 dist
-client.spec
 recording.wav
