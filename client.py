@@ -109,7 +109,7 @@ def load_settings_from_file():
             return koboldcpp_ip, whisperaudio_ip, openai_api_key, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style
     except FileNotFoundError:
         # Return default values if file not found
-        return "192.168.1.195", "192.168.1.195", "None", "5001", "8000", "0", "1"
+        return "192.168.1.195", "192.168.1.195", "None", "5001", "8000", "0", "1", "OpenAI"
 
 def load_aiscribe_from_file():
     try:
