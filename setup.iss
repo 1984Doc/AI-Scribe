@@ -27,5 +27,5 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 
 [Run]
 ; Run the application after install
-Filename: "{app}\FreeScribe.exe"; Description: "Launch My Application"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\client.exe"; Description: "Launch My Application"; Flags: nowait postinstall skipifsilent
 
