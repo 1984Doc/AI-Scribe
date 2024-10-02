@@ -421,10 +421,15 @@ def send_audio_to_server():
             file_to_send = 'recording.wav'
         with open(file_to_send, 'rb') as f:
             files = {'audio': f}
+
+            headers = {
+                "X-API-Key": editable_settings["Whisper Server API Key"]
+            }
+
             if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
-                response = requests.post(WHISPERAUDIO, files=files, verify=False)
+                response = requests.post(WHISPERAUDIO, headers=headers, files=files, verify=False)
             else:
-                response = requests.post(WHISPERAUDIO, files=files)
+                response = requests.post(WHISPERAUDIO,headers=headers, files=files)
             if response.status_code == 200:
                 transcribed_text = response.json()['text']
                 user_input.configure(state='normal')
