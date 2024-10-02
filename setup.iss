@@ -4,12 +4,15 @@
 ; Required settings
 AppName=FreeScribe
 AppVersion=0.0.1
-DefaultDirName={pf}\FreeScribe
+DefaultDirName={userappdata}\FreeScribe
 DefaultGroupName=FreeScribe
 OutputDir=output
 OutputBaseFilename=FreeScribeInstaller
 Compression=lzma
 SolidCompression=yes
+
+DisableDirPage=yes
+DisableProgramGroupPage=yes
 
 [Files]
 ; Source: is where your PyInstaller output executable is located
