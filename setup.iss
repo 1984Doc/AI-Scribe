@@ -18,8 +18,8 @@ Source: "dist\client.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Create a shortcut for the application in the Start Menu and Desktop
-Name: "{group}\FreeScribe"; Filename: "{app}\FreeScribe.exe"
-Name: "{userdesktop}\FreeScribe"; Filename: "{app}\FreeScribe.exe"; Tasks: desktopicon
+Name: "{group}\FreeScribe"; Filename: "{app}\client.exe"
+Name: "{userdesktop}\FreeScribe"; Filename: "{app}\client.exe"; Tasks: desktopicon
 
 [Tasks]
 ; Option to create a desktop shortcut
