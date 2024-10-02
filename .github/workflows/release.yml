@@ -46,8 +46,8 @@ jobs:
             This is a automated release completed by GitHub Actions.
           draft: false
           prerelease: false
-      - name: Upload Release Asset
-        id: upload-release-asset
+      - name: Upload EXE
+        id: upload-client
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -55,4 +55,15 @@ jobs:
           upload_url: ${{steps.create_release.outputs.upload_url}}
           asset_path: dist/client.exe
           asset_name: client.exe
+          asset_content_type: application/zip
+
+      - name: Upload Installer
+        id: upload-installer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{steps.create_release.outputs.upload_url}}
+          asset_path: output/FreeScribeInstaller.exe
+          asset_name: FreeScribeInstaller_windows.exe
           asset_content_type: application/zip
