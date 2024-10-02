@@ -22,10 +22,6 @@ jobs:
       - name: Run PyInstaller
         run: |
           pyinstaller --onefile --add-data ".\whisper-assets:whisper\assets" client.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: FreeScribe
-          path: dist/client.exe
 
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
