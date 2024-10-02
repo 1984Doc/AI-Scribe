@@ -21,11 +21,17 @@ jobs:
           pip install -r cl_requirements.txt
       - name: Run PyInstaller
         run: |
-          pyinstaller --onefile client.py
+          pyinstaller --onefile --add-data ".\whisper-assets:whisper\assets" client.py
       - uses: actions/upload-artifact@v4
         with:
           name: FreeScribe
           path: dist/client.exe
+
+      - name: Compile .ISS to .EXE Installer
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: setup.iss
+          options: /O+
 
       - name: create release
         id: create_release
@@ -40,8 +46,8 @@ jobs:
             This is a automated release completed by GitHub Actions.
           draft: false
           prerelease: false
-      - name: Upload Release Asset
-        id: upload-release-asset
+      - name: Upload EXE
+        id: upload-client
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -49,4 +55,15 @@ jobs:
           upload_url: ${{steps.create_release.outputs.upload_url}}
           asset_path: dist/client.exe
           asset_name: client.exe
-          asset_content_type: application/zip
+          asset_content_type: application/octet-stream
+
+      - name: Upload Installer
+        id: upload-installer
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{steps.create_release.outputs.upload_url}}
+          asset_path: output/FreeScribeInstaller.exe
+          asset_name: FreeScribeInstaller_windows.exe
+          asset_content_type: application/octet-stream
