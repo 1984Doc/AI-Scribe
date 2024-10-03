@@ -21,7 +21,7 @@ jobs:
           pip install -r cl_requirements.txt
       - name: Run PyInstaller
         run: |
-          pyinstaller --onefile --add-data ".\whisper-assets:whisper\assets" client.py
+          pyinstaller --onefile --add-data ".\whisper-assets:whisper\assets" --name freescribe-client client.py
 
       - name: Compile .ISS to .EXE Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
