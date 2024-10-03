@@ -49,7 +49,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: dist/client.exe
+          asset_path: dist/freescribe-client.exe
           asset_name: client.exe
           asset_content_type: application/octet-stream
 
