@@ -23,11 +23,11 @@ jobs:
         run: |
           pyinstaller --onefile --add-data ".\whisper-assets:whisper\assets" --name freescribe-client client.py
 
-      - name: Compile .ISS to .EXE Installer
-        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+      - name: Set up NSIS
+        uses: joncloud/makensis-action@v4.1
         with:
-          path: setup.iss
-          options: /O+
+          script: "installer.nsi"
+          output: "output/FreeScribeInstaller.exe"
 
       - name: create release
         id: create_release
