@@ -393,6 +393,33 @@ def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, 
     settings_window.destroy()
 
 def send_audio_to_server():
+    """
+    Sends an audio file to either a local or remote Whisper server for transcription.
+
+    Global Variables:
+    ----------------
+    uploaded_file_path : str
+        The path to the uploaded audio file. If `None`, the function defaults to
+        'recording.wav'.
+
+    Parameters:
+    -----------
+    None
+
+    Returns:
+    --------
+    None
+
+    Raises:
+    -------
+    ValueError
+        If the `editable_settings["Local Whisper"]` flag is not a boolean.
+    FileNotFoundError
+        If the specified audio file does not exist.
+    requests.exceptions.RequestException
+        If there is an issue with the HTTP request to the remote server.
+    """
+
     global uploaded_file_path
     if editable_settings["Local Whisper"] == True:
         print("Using Local Whisper for transcription.")
@@ -422,15 +449,23 @@ def send_audio_to_server():
         with open(file_to_send, 'rb') as f:
             files = {'audio': f}
 
+            # Add the API key to the headers
+            # Uses the bearer authentication for our whisper server.
             headers = {
-                "X-API-Key": editable_settings["Whisper Server API Key"]
+                "Authorization": f"Bearer {editable_settings['Whisper Server Bearer Token']}"
             }
 
+            # check for ssl and self cert
+            # if so dont verify the cert
+            # Send the request with the audio file and headers/authorization
             if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
                 response = requests.post(WHISPERAUDIO, headers=headers, files=files, verify=False)
             else:
                 response = requests.post(WHISPERAUDIO,headers=headers, files=files)
+            
+            # on successful response
             if response.status_code == 200:
+                # Updated the ui
                 transcribed_text = response.json()['text']
                 user_input.configure(state='normal')
                 user_input.delete("1.0", tk.END)
