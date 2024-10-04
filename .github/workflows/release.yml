@@ -50,7 +50,7 @@ jobs:
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
           asset_path: dist/freescribe-client.exe
-          asset_name: client.exe
+          asset_name: freescribe-client.exe
           asset_content_type: application/octet-stream
 
       - name: Upload Installer
