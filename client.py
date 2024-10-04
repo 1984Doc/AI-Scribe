@@ -393,43 +393,110 @@ def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, 
     settings_window.destroy()
 
 def send_audio_to_server():
+    """
+    Sends an audio file to either a local or remote Whisper server for transcription.
+
+    Global Variables:
+    ----------------
+    uploaded_file_path : str
+        The path to the uploaded audio file. If `None`, the function defaults to
+        'recording.wav'.
+
+    Parameters:
+    -----------
+    None
+
+    Returns:
+    --------
+    None
+
+    Raises:
+    -------
+    ValueError
+        If the `editable_settings["Local Whisper"]` flag is not a boolean.
+    FileNotFoundError
+        If the specified audio file does not exist.
+    requests.exceptions.RequestException
+        If there is an issue with the HTTP request to the remote server.
+    """
+
     global uploaded_file_path
+
+    # Check if Local Whisper is enabled in the editable settings
     if editable_settings["Local Whisper"] == True:
+        # Inform the user that Local Whisper is being used for transcription
         print("Using Local Whisper for transcription.")
+
+        # Configure the user input widget to be editable and clear its content
         user_input.configure(state='normal')
         user_input.delete("1.0", tk.END)
+
+        # Display a message indicating that audio to text processing is in progress
         user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
+
+        # Load the specified Whisper model
         model_name = editable_settings["Whisper Model"].strip()
         model = whisper.load_model(model_name)
+
+        # Determine the file to send for transcription
         file_to_send = uploaded_file_path if uploaded_file_path else 'recording.wav'
         uploaded_file_path = None
+
+        # Transcribe the audio file using the loaded model
         result = model.transcribe(file_to_send)
         transcribed_text = result["text"]
+
+        # Update the user input widget with the transcribed text
         user_input.configure(state='normal')
         user_input.delete("1.0", tk.END)
         user_input.insert(tk.END, transcribed_text)
+
+        # Send the transcribed text and receive a response
         send_and_receive()
     else:
+        # Inform the user that Remote Whisper is being used for transcription
         print("Using Remote Whisper for transcription.")
+
+        # Configure the user input widget to be editable and clear its content
         user_input.configure(state='normal')
         user_input.delete("1.0", tk.END)
+
+        # Display a message indicating that audio to text processing is in progress
         user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
+
+        # Determine the file to send for transcription
         if uploaded_file_path:
             file_to_send = uploaded_file_path
             uploaded_file_path = None
         else:
             file_to_send = 'recording.wav'
+
+        # Open the audio file in binary mode
         with open(file_to_send, 'rb') as f:
             files = {'audio': f}
+
+            # Add the Bearer token to the headers for authentication
+            headers = {
+                "Authorization": f"Bearer {editable_settings['Whisper Server Bearer Token']}"
+            }
+
+            # Check for SSL and self-signed certificate settings
             if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
-                response = requests.post(WHISPERAUDIO, files=files, verify=False)
+                # Send the request without verifying the SSL certificate
+                response = requests.post(WHISPERAUDIO, headers=headers, files=files, verify=False)
             else:
-                response = requests.post(WHISPERAUDIO, files=files)
+                # Send the request with the audio file and headers/authorization
+                response = requests.post(WHISPERAUDIO,headers=headers, files=files)
+            
+            # On successful response (status code 200)
             if response.status_code == 200:
+                # Update the UI with the transcribed text
                 transcribed_text = response.json()['text']
                 user_input.configure(state='normal')
                 user_input.delete("1.0", tk.END)
                 user_input.insert(tk.END, transcribed_text)
+
+                # Send the transcribed text and receive a response
                 send_and_receive()
 
 def send_and_receive():

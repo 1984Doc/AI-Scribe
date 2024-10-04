@@ -7,3 +7,5 @@ __pycache__
 build
 dist
 recording.wav
+output
+client.spec
