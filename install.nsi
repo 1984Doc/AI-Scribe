@@ -18,7 +18,7 @@ VIAddVersionKey "FileDescription" "FreeScribe Installer"
 
 ; Define the logo image
 !define MUI_HEADERIMAGE
-!define MUI_HEADERIMAGE_BITMAP "logo.bmp"
+!define MUI_HEADERIMAGE_BITMAP "assets/logo.bmp"
 
 ; Define the section of the installer
 Section "MainSection" SEC01
