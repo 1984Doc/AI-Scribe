@@ -17,8 +17,7 @@ VIAddVersionKey "LegalCopyright" "Copyright (c) 2023-2024 Braedon Hendy"
 VIAddVersionKey "FileDescription" "FreeScribe Installer"
 
 ; Define the logo image
-!define MUI_HEADERIMAGE
-!define MUI_HEADERIMAGE_BITMAP "assets/logo.bmp"
+!define MUI_ICON ./assets/logo.ico
 
 ; Define the section of the installer
 Section "MainSection" SEC01
@@ -35,11 +34,6 @@ Section "MainSection" SEC01
     ; Create an uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
-
-Function .onInstSuccess
-    IfSilent +2
-    Exec '"$INSTDIR\freescribe-client.exe"'
-FunctionEnd
 
 ; Define the uninstaller section
 Section "Uninstall"
@@ -60,7 +54,12 @@ SectionEnd
 ; Define the installer pages
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
+!define MUI_FINISHPAGE_RUN "$INSTDIR\freescribe-client.exe"
+!define MUI_FINISHPAGE_RUN_TEXT "Run App now"
+!define MUI_FINISHPAGE_RUN_NOTCHECKED
 !insertmacro MUI_PAGE_FINISH
+!insertmacro MUI_LANGUAGE English
+
 
 ; Define the uninstaller pages
 !insertmacro MUI_UNPAGE_CONFIRM
