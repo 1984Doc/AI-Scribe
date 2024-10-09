@@ -16,6 +16,10 @@ VIAddVersionKey "FileVersion" "0.0.0.1"
 VIAddVersionKey "LegalCopyright" "Copyright (c) 2023-2024 Braedon Hendy"
 VIAddVersionKey "FileDescription" "FreeScribe Installer"
 
+; Define the logo image
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP "logo.bmp"
+
 ; Define the section of the installer
 Section "MainSection" SEC01
     ; Set output path to the installation directory
