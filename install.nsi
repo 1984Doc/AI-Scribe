@@ -63,5 +63,4 @@ SectionEnd
 
 ; Define the uninstaller pages
 !insertmacro MUI_UNPAGE_CONFIRM
-!insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
