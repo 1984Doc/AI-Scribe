@@ -1,3 +1,9 @@
+!include "MUI2.nsh"
+
+!define MUI_COMPONENTSPAGE_SMALLDESC ;No value
+!define MUI_UI "myUI.exe" ;Value
+!define MUI_INSTFILESPAGE_COLORS "FFFFFF 000000" ;Two colors
+
 ; Define the name of the installer
 OutFile "FreeScribeInstaller.exe"
 
