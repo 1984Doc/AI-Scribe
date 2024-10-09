@@ -53,9 +53,9 @@ Section "Uninstall"
 SectionEnd
 
 ; Define the installer pages
-Page directory
-Page instfiles
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
 
 ; Define the uninstaller pages
-UninstPage uninstConfirm
-UninstPage instfiles
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
