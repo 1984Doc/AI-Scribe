@@ -36,6 +36,11 @@ Section "MainSection" SEC01
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
+Function .onInstSuccess
+    IfSilent +2
+    Exec '"$INSTDIR\freescribe-client.exe"'
+FunctionEnd
+
 ; Define the uninstaller section
 Section "Uninstall"
     ; Remove files
@@ -55,7 +60,9 @@ SectionEnd
 ; Define the installer pages
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
 
 ; Define the uninstaller pages
+!insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
