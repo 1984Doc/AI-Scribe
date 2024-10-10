@@ -1,3 +1,5 @@
+!include "MUI2.nsh"
+
 ; Define the name of the installer
 OutFile "FreeScribeInstaller.exe"
 
@@ -13,6 +15,9 @@ VIAddVersionKey "ProductName" "FreeScribe"
 VIAddVersionKey "FileVersion" "0.0.0.1"
 VIAddVersionKey "LegalCopyright" "Copyright (c) 2023-2024 Braedon Hendy"
 VIAddVersionKey "FileDescription" "FreeScribe Installer"
+
+; Define the logo image
+!define MUI_ICON ./assets/logo.ico
 
 ; Define the section of the installer
 Section "MainSection" SEC01
@@ -47,9 +52,16 @@ Section "Uninstall"
 SectionEnd
 
 ; Define the installer pages
-Page directory
-Page instfiles
+!insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!define MUI_FINISHPAGE_RUN "$INSTDIR\freescribe-client.exe"
+!define MUI_FINISHPAGE_RUN_TEXT "Run App now"
+!define MUI_FINISHPAGE_RUN_NOTCHECKED
+!insertmacro MUI_PAGE_FINISH
+!insertmacro MUI_LANGUAGE English
+
 
 ; Define the uninstaller pages
-UninstPage uninstConfirm
-UninstPage instfiles
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
