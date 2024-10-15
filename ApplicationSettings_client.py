@@ -217,6 +217,7 @@ class ApplicationSettings:
         }
         with open('settings.txt', 'w') as file:
             json.dump(settings, file)
+
     def save_settings(self, koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
                       koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
         """
@@ -360,8 +361,6 @@ class ApplicationSettings:
         ssl_selfcert_checkbox = tk.Checkbutton(basic_settings_frame, variable=ssl_selfcert_var)
         ssl_selfcert_checkbox.grid(row=6, column=1, padx=0, pady=5, sticky="w")
 
-        tk.Label(advanced_settings_frame, text="Editable Settings", font=("Arial", 10, "bold")).grid(row=0, column=0, columnspan=2, padx=0, pady=5)
-
         adv_row_counter = 1
         basic_row_counter = 7
 
@@ -419,7 +418,14 @@ class ApplicationSettings:
             ssl_enable_var.get(),
             ssl_selfcert_var.get(),
             dropdown.get()
-        )).pack(pady=10)
+        ), width=10).pack(side="right", padx=2, pady=5)
+
+        default_button = tk.Button(main_frame, text="Default", width=10, command=lambda: self.clear_settings_file(settings_window))
+        default_button.pack(side="right", padx=2, pady=5)
+
+        close_button = tk.Button(main_frame, text="Close", width=10, command=settings_window.destroy)
+        close_button.pack(side="right", padx=2, pady=5)
+
         
     def load_aiscribe_from_file(self):
         """
@@ -475,7 +481,7 @@ class ApplicationSettings:
         If self-signed certificates are allowed, it prints a warning about trusting self-signed certificates.
         If SSL is disabled, prints a message indicating that unencrypted connections will be used.
         """
-        
+
         if str(self.SSL_ENABLE) == "1":
             print("Encrypted SSL/TLS connections are ENABLED between client and server.")
             if str(self.SSL_SELFCERT) == "1":
@@ -500,3 +506,14 @@ class ApplicationSettings:
         
         self.KOBOLDCPP_ENDPOINT = self.build_url(self.KOBOLDCPP_IP, self.KOBOLDCPP_PORT)
         self.WHISPERAUDIO_ENDPOINT = self.build_url(self.WHISPERAUDIO_IP, str(self.WHISPERAUDIO_PORT)+"/whisperaudio")
+
+    def clear_settings_file(self, settings_window):
+        try:
+            open('settings.txt', 'w').close()  # This opens the files and immediately closes it, clearing its contents.
+            open('aiscribe.txt', 'w').close()
+            open('aiscribe2.txt', 'w').close()
+            messagebox.showinfo("Settings Reset", "Settings have been reset. Please restart.")
+            print("Settings file cleared.")
+            settings_window.destroy()
+        except Exception as e:
+            print(f"Error clearing settings files: {e}")
