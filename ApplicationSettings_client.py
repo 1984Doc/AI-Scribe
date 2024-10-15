@@ -1,10 +1,40 @@
+"""
+application_settings.py
+
+This module contains the ApplicationSettings class, which manages the application settings 
+for a system involving audio processing and communication with external APIs.
+"""
+
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+
 class ApplicationSettings:
+    """
+    A class to manage application settings for the audio processing application.
+
+    Attributes:
+        KOBOLDCPP_IP (str): The IP address for the Kobold CPP service.
+        WHISPERAUDIO_IP (str): The IP address for the Whisper Audio service.
+        KOBOLDCPP_PORT (str): The port for the Kobold CPP service.
+        WHISPERAUDIO_PORT (str): The port for the Whisper Audio service.
+        SSL_ENABLE (str): Indicates if SSL is enabled (1) or not (0).
+        SSL_SELFCERT (str): Indicates if self-signed certificates are used (1) or not (0).
+        OPENAI_API_KEY (str): The API key for OpenAI.
+        AISCRIBE (str): A placeholder for AIscribe settings.
+        AISCRIBE2 (str): A placeholder for AIscribe2 settings.
+        API_STYLE (str): The style of API to use (default is "OpenAI").
+
+    Methods:
+        load_settings_from_file():
+            Loads settings from a file.
+        save_settings_to_file():
+            Saves the current settings to a file.
+    """
+
     def __init__(self):
-        # Default settings and variables
+        """Initializes the ApplicationSettings with default values."""
         self.KOBOLDCPP_IP = "192.168.1.195"
         self.WHISPERAUDIO_IP = "192.168.1.195"
         self.KOBOLDCPP_PORT = "5001"
@@ -16,7 +46,6 @@ class ApplicationSettings:
         self.AISCRIBE2 = ""
         self.API_STYLE = "OpenAI"
 
-
         self.basic_settings = {
             "Model",
             "Model Endpoint",
@@ -24,9 +53,8 @@ class ApplicationSettings:
             "Whisper Server API Key",
             "Whisper Model",
             "Real Time",
-
         }
-        
+
         self.advanced_settings = {
             "use_story",
             "use_memory",
@@ -86,6 +114,15 @@ class ApplicationSettings:
         self.editable_settings_entries = {}
 
     def load_settings_from_file(self):
+        """
+        Loads settings from a JSON file.
+
+        The settings are read from 'settings.txt'. If the file does not exist or cannot be parsed,
+        default settings will be used. The method updates the instance attributes with loaded values.
+
+        Returns:
+            tuple: A tuple containing the IPs, ports, SSL settings, and API key.
+        """
         try:
             with open('settings.txt', 'r') as file:
                 try:
@@ -116,6 +153,15 @@ class ApplicationSettings:
                    self.SSL_SELFCERT, self.API_STYLE
 
     def save_settings_to_file(self):
+        """
+        Saves the current settings to a JSON file.
+
+        The settings are written to 'settings.txt'. This includes all application settings 
+        such as IP addresses, ports, SSL settings, and editable settings.
+
+        Returns:
+            None
+        """
         settings = {
             "koboldcpp_ip": self.KOBOLDCPP_IP,
             "whisperaudio_ip": self.WHISPERAUDIO_IP,
@@ -129,9 +175,26 @@ class ApplicationSettings:
         }
         with open('settings.txt', 'w') as file:
             json.dump(settings, file)
-
     def save_settings(self, koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
                       koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
+        """
+        Save the current settings, including IP addresses, API keys, and user-defined parameters.
+
+        This method writes the AI Scribe text to separate text files and updates the internal state
+        of the Settings instance.
+
+        :param str koboldcpp_ip: The IP address for the KOBOLDCPP server.
+        :param str whisperaudio_ip: The IP address for the WhisperAudio server.
+        :param str openai_api_key: The OpenAI API key for authentication.
+        :param str aiscribe_text: The text for the first AI Scribe.
+        :param str aiscribe2_text: The text for the second AI Scribe.
+        :param tk.Toplevel settings_window: The settings window instance to be destroyed after saving.
+        :param str koboldcpp_port: The port for the KOBOLDCPP server.
+        :param str whisperaudio_port: The port for the WhisperAudio server.
+        :param int ssl_enable: Flag indicating whether SSL is enabled.
+        :param int ssl_selfcert: Flag indicating whether to use a self-signed certificate.
+        :param str api_style: The style of API being used.
+        """
         self.KOBOLDCPP_IP = koboldcpp_ip
         self.WHISPERAUDIO_IP = whisperaudio_ip
         self.KOBOLDCPP_PORT = koboldcpp_port
@@ -160,6 +223,12 @@ class ApplicationSettings:
         settings_window.destroy()
 
     def open_settings_window(self):
+        """
+        Open the settings window, allowing the user to modify and save application settings.
+
+        This method creates a new window with various input fields for changing
+        settings related to KOBOLDCPP, WhisperAudio, OpenAI API, and more.
+        """
         settings_window = tk.Toplevel()
         settings_window.title("Settings")
         settings_window.resizable(True, True)
@@ -178,6 +247,13 @@ class ApplicationSettings:
         notebook.add(advanced_frame, text="Advanced Settings")
 
         def add_scrollbar_to_frame(frame):
+            """
+            Add a vertical scrollbar to the given frame.
+
+            :param ttk.Frame frame: The frame to which the scrollbar will be added.
+            :returns: The frame containing the scrollable content.
+            :rtype: ttk.Frame
+            """
             canvas = tk.Canvas(frame)
             scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
             scrollable_frame = ttk.Frame(canvas)
@@ -245,7 +321,6 @@ class ApplicationSettings:
         basic_row_counter = 7
 
         for setting, value in self.editable_settings.items():
-            
             row_counter = None
             frame = None
             
@@ -265,35 +340,32 @@ class ApplicationSettings:
                 var = tk.IntVar(value=int(value))  # Convert boolean to int for checkbox
                 checkbox = tk.Checkbutton(frame, variable=var)
                 checkbox.grid(row=row_counter, column=1, padx=0, pady=5, sticky="w")
-                self.editable_settings_entries[setting] = var  # Store the IntVar
-                
-                if value == True:
-                    checkbox.select()
+                self.editable_settings_entries[setting] = var
             else:
                 entry = tk.Entry(frame)
-                entry.insert(0, value)
+                entry.insert(0, str(value))  # Ensure the value is a string
                 entry.grid(row=row_counter, column=1, padx=0, pady=5, sticky="w")
                 self.editable_settings_entries[setting] = entry
 
+        # make a ai scribe edit text box
+        tk.Label(advanced_settings_frame, text="Pre Prompting").grid(row=adv_row_counter, column=1, columnspan=2, padx=0, pady=5)
+        aiscribe_text = tk.Text(advanced_settings_frame, height=10, width=35)
+        aiscribe_text.insert(tk.END, self.AISCRIBE)
+        aiscribe_text.grid(row=adv_row_counter, column=0, columnspan=2, padx=0, pady=5, sticky="w")
 
-        tk.Label(advanced_settings_frame, text="AI Scribe:").grid(row=adv_row_counter, column=0, padx=0, pady=5, sticky="w")
-        aiscribe_textbox = tk.Text(advanced_settings_frame, height=4, width=30)
-        aiscribe_textbox.insert(1.0, self.AISCRIBE)
-        aiscribe_textbox.grid(row=adv_row_counter, column=1, padx=0, pady=5, sticky="w")
-        adv_row_counter += 1
+        # make a ai scribe2 edit text box
+        tk.Label(advanced_settings_frame, text="Post Prompting").grid(row=adv_row_counter+1, column=1, columnspan=2, padx=0, pady=5)
+        aiscribe2_text = tk.Text(advanced_settings_frame, height=10, width=35)
+        aiscribe2_text.insert(tk.END, self.AISCRIBE2)
+        aiscribe2_text.grid(row=adv_row_counter+1, column=0, columnspan=2, padx=0, pady=5, sticky="w")
 
-        tk.Label(advanced_settings_frame, text="AI Scribe2:").grid(row=adv_row_counter, column=0, padx=0, pady=5, sticky="w")
-        aiscribe2_textbox = tk.Text(advanced_settings_frame, height=4, width=30)
-        aiscribe2_textbox.insert(1.0, self.AISCRIBE2)
-        aiscribe2_textbox.grid(row=adv_row_counter, column=1, padx=0, pady=5, sticky="w")
-        adv_row_counter += 1
 
-        tk.Button(settings_window, text="Save", command=lambda: self.save_settings(
+        tk.Button(main_frame, text="Save", command=lambda: self.save_settings(
             koboldcpp_ip_entry.get(),
             whisperaudio_ip_entry.get(),
             openai_api_key_entry.get(),
-            aiscribe_textbox.get("1.0", "end").strip(),
-            aiscribe2_textbox.get("1.0", "end").strip(),
+            aiscribe_text.get("1.0", tk.END),
+            aiscribe2_text.get("1.0", tk.END),
             settings_window,
             koboldcpp_port_entry.get(),
             whisperaudio_port_entry.get(),
@@ -301,30 +373,40 @@ class ApplicationSettings:
             ssl_selfcert_var.get(),
             dropdown.get()
         )).pack(pady=10)
-
-        settings_window.protocol("WM_DELETE_WINDOW", settings_window.destroy)
-
+        
     def start(self):
+        """
+        Load the settings from the configuration file.
+
+        This method initializes the application settings, including the loading
+        of the default AI Scribe text and other user-defined parameters.
+        """
         self.load_settings_from_file()
-
-        DEFAULT_AISCRIBE = "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
-        DEFAULT_AISCRIBE2 = "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
-
-        self.AISCRIBE = self.load_aiscribe_from_file() or DEFAULT_AISCRIBE
-        self.AISCRIBE2 = self.load_aiscribe2_from_file() or DEFAULT_AISCRIBE2
+        self.AISCRIBE = self.load_aiscribe_from_file() or "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
+        self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
 
     def load_aiscribe_from_file(self):
+        """
+        Load the AI Scribe text from a file.
+
+        :returns: The AI Scribe text, or None if the file does not exist or is empty.
+        :rtype: str or None
+        """
         try:
             with open('aiscribe.txt', 'r') as f:
-                content = f.read().strip()
-                return content if content else None
+                return f.read()
         except FileNotFoundError:
             return None
 
     def load_aiscribe2_from_file(self):
+        """
+        Load the second AI Scribe text from a file.
+
+        :returns: The second AI Scribe text, or None if the file does not exist or is empty.
+        :rtype: str or None
+        """
         try:
             with open('aiscribe2.txt', 'r') as f:
-                content = f.read().strip()
-                return content if content else None
+                return f.read()
         except FileNotFoundError:
             return None
