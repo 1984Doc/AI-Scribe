@@ -15,6 +15,43 @@ class ApplicationSettings:
         self.AISCRIBE = ""
         self.AISCRIBE2 = ""
         self.API_STYLE = "OpenAI"
+
+
+        self.basic_settings = {
+            "Model",
+            "Model Endpoint",
+            "Local Whisper",
+            "Whisper Server API Key",
+            "Whisper Model",
+            "Real Time",
+
+        }
+        
+        self.advanced_settings = {
+            "use_story",
+            "use_memory",
+            "use_authors_note",
+            "use_world_info",
+            "max_context_length",
+            "max_length",
+            "rep_pen",
+            "rep_pen_range",
+            "rep_pen_slope",
+            "temperature",
+            "tfs",
+            "top_a",
+            "top_k",
+            "top_p",
+            "typical",
+            "sampler_order",
+            "singleline",
+            "frmttriminc",
+            "frmtrmblln",
+            "Real Time Audio Length",
+            "Real Time Silence Length",
+            "Silence cut-off"
+        }
+
         self.editable_settings = {
             "Model": "gpt-4",
             "Model Endpoint": "https://api.openai.com/v1/",
@@ -33,7 +70,7 @@ class ApplicationSettings:
             "top_k": 30,
             "top_p": 0.4,
             "typical": 0.19,
-            "sampler_order": [6, 0, 1, 3, 4, 2, 5],
+            "sampler_order": "[6, 0, 1, 3, 4, 2, 5]",
             "singleline": False,
             "frmttriminc": False,
             "frmtrmblln": False,
@@ -45,6 +82,7 @@ class ApplicationSettings:
             "Real Time Silence Length": 1,
             "Silence cut-off": 0.01
         }
+
         self.editable_settings_entries = {}
 
     def load_settings_from_file(self):
@@ -163,64 +201,92 @@ class ApplicationSettings:
         tk.Label(basic_settings_frame, text="KOBOLDCPP IP:").grid(row=0, column=0, padx=0, pady=5, sticky="w")
         koboldcpp_ip_entry = tk.Entry(basic_settings_frame, width=25)
         koboldcpp_ip_entry.insert(0, self.KOBOLDCPP_IP)
-        koboldcpp_ip_entry.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+        koboldcpp_ip_entry.grid(row=0, column=1, padx=0, pady=5, sticky="w")
 
-        tk.Label(basic_settings_frame, text="PORT:").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="PORT:").grid(row=0, column=2, padx=0, pady=5, sticky="w")
         koboldcpp_port_entry = tk.Entry(basic_settings_frame, width=10)
         koboldcpp_port_entry.insert(0, self.KOBOLDCPP_PORT)
-        koboldcpp_port_entry.grid(row=0, column=3, padx=5, pady=5, sticky="w")
+        koboldcpp_port_entry.grid(row=0, column=3, padx=0, pady=5, sticky="w")
 
-        tk.Label(basic_settings_frame, text="WHISPERAUDIO IP:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="WHISPERAUDIO IP:").grid(row=1, column=0, padx=0, pady=5, sticky="w")
         whisperaudio_ip_entry = tk.Entry(basic_settings_frame, width=25)
         whisperaudio_ip_entry.insert(0, self.WHISPERAUDIO_IP)
-        whisperaudio_ip_entry.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+        whisperaudio_ip_entry.grid(row=1, column=1, padx=0, pady=5, sticky="w")
 
-        tk.Label(basic_settings_frame, text="PORT:").grid(row=1, column=2, padx=5, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="PORT:").grid(row=1, column=2, padx=0, pady=5, sticky="w")
         whisperaudio_port_entry = tk.Entry(basic_settings_frame, width=10)
         whisperaudio_port_entry.insert(0, self.WHISPERAUDIO_PORT)
-        whisperaudio_port_entry.grid(row=1, column=3, padx=5, pady=5, sticky="w")
+        whisperaudio_port_entry.grid(row=1, column=3, padx=0, pady=5, sticky="w")
 
-        tk.Label(basic_settings_frame, text="OpenAI API Key:").grid(row=3, column=0, padx=5, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="OpenAI API Key:").grid(row=3, column=0, padx=0, pady=5, sticky="w")
         openai_api_key_entry = tk.Entry(basic_settings_frame, width=25)
         openai_api_key_entry.insert(0, self.OPENAI_API_KEY)
-        openai_api_key_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        openai_api_key_entry.grid(row=3, column=1, padx=0, pady=5, sticky="w")
 
-        tk.Label(basic_settings_frame, text="API Style:").grid(row=4, column=0, padx=5, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="API Style:").grid(row=4, column=0, padx=0, pady=5, sticky="w")
         api_options = ["OpenAI"]
         dropdown = ttk.Combobox(basic_settings_frame, values=api_options, width=15, state="readonly")
         dropdown.current(api_options.index(self.API_STYLE))
-        dropdown.grid(row=4, column=1, padx=5, pady=5, sticky="w")
+        dropdown.grid(row=4, column=1, padx=0, pady=5, sticky="w")
 
         ssl_enable_var = tk.IntVar(value=self.SSL_ENABLE)
-        tk.Label(basic_settings_frame, text="Enable SSL:").grid(row=5, column=0, padx=5, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="Enable SSL:").grid(row=5, column=0, padx=0, pady=5, sticky="w")
         ssl_enable_checkbox = tk.Checkbutton(basic_settings_frame, variable=ssl_enable_var)
-        ssl_enable_checkbox.grid(row=5, column=1, padx=5, pady=5, sticky="w")
+        ssl_enable_checkbox.grid(row=5, column=1, padx=0, pady=5, sticky="w")
 
         ssl_selfcert_var = tk.IntVar(value=self.SSL_SELFCERT)
-        tk.Label(basic_settings_frame, text="Self-Signed Cert:").grid(row=6, column=0, padx=5, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="Self-Signed Cert:").grid(row=6, column=0, padx=0, pady=5, sticky="w")
         ssl_selfcert_checkbox = tk.Checkbutton(basic_settings_frame, variable=ssl_selfcert_var)
-        ssl_selfcert_checkbox.grid(row=6, column=1, padx=5, pady=5, sticky="w")
+        ssl_selfcert_checkbox.grid(row=6, column=1, padx=0, pady=5, sticky="w")
 
-        tk.Label(basic_settings_frame, text="AI Scribe:").grid(row=7, column=0, padx=5, pady=5, sticky="w")
-        aiscribe_textbox = tk.Text(basic_settings_frame, height=4, width=30)
-        aiscribe_textbox.insert(1.0, self.AISCRIBE)
-        aiscribe_textbox.grid(row=7, column=1, padx=5, pady=5, sticky="w")
+        tk.Label(advanced_settings_frame, text="Editable Settings", font=("Arial", 10, "bold")).grid(row=0, column=0, columnspan=2, padx=0, pady=5)
 
-        tk.Label(basic_settings_frame, text="AI Scribe2:").grid(row=8, column=0, padx=5, pady=5, sticky="w")
-        aiscribe2_textbox = tk.Text(basic_settings_frame, height=4, width=30)
-        aiscribe2_textbox.insert(1.0, self.AISCRIBE2)
-        aiscribe2_textbox.grid(row=8, column=1, padx=5, pady=5, sticky="w")
+        adv_row_counter = 1
+        basic_row_counter = 7
 
-        tk.Label(advanced_settings_frame, text="Editable Settings", font=("Arial", 10, "bold")).grid(row=0, column=0, columnspan=2, padx=5, pady=5)
-
-        row_counter = 1
         for setting, value in self.editable_settings.items():
-            tk.Label(advanced_settings_frame, text=f"{setting}:").grid(row=row_counter, column=0, padx=5, pady=5, sticky="w")
-            entry = tk.Entry(advanced_settings_frame)
-            entry.insert(0, value)
-            entry.grid(row=row_counter, column=1, padx=5, pady=5, sticky="w")
-            self.editable_settings_entries[setting] = entry
-            row_counter += 1
+            
+            row_counter = None
+            frame = None
+            
+            if setting in self.basic_settings:
+                row_counter = basic_row_counter
+                frame = basic_settings_frame
+                basic_row_counter += 1
+            elif setting in self.advanced_settings:
+                row_counter = adv_row_counter
+                frame = advanced_settings_frame
+                adv_row_counter += 1
+
+            tk.Label(frame, text=f"{setting}:").grid(row=row_counter, column=0, padx=0, pady=5, sticky="w")
+            
+            # Check if the value is a boolean
+            if value in [True, False]:
+                var = tk.IntVar(value=int(value))  # Convert boolean to int for checkbox
+                checkbox = tk.Checkbutton(frame, variable=var)
+                checkbox.grid(row=row_counter, column=1, padx=0, pady=5, sticky="w")
+                self.editable_settings_entries[setting] = var  # Store the IntVar
+                
+                if value == True:
+                    checkbox.select()
+            else:
+                entry = tk.Entry(frame)
+                entry.insert(0, value)
+                entry.grid(row=row_counter, column=1, padx=0, pady=5, sticky="w")
+                self.editable_settings_entries[setting] = entry
+
+
+        tk.Label(advanced_settings_frame, text="AI Scribe:").grid(row=adv_row_counter, column=0, padx=0, pady=5, sticky="w")
+        aiscribe_textbox = tk.Text(advanced_settings_frame, height=4, width=30)
+        aiscribe_textbox.insert(1.0, self.AISCRIBE)
+        aiscribe_textbox.grid(row=adv_row_counter, column=1, padx=0, pady=5, sticky="w")
+        adv_row_counter += 1
+
+        tk.Label(advanced_settings_frame, text="AI Scribe2:").grid(row=adv_row_counter, column=0, padx=0, pady=5, sticky="w")
+        aiscribe2_textbox = tk.Text(advanced_settings_frame, height=4, width=30)
+        aiscribe2_textbox.insert(1.0, self.AISCRIBE2)
+        aiscribe2_textbox.grid(row=adv_row_counter, column=1, padx=0, pady=5, sticky="w")
+        adv_row_counter += 1
 
         tk.Button(settings_window, text="Save", command=lambda: self.save_settings(
             koboldcpp_ip_entry.get(),
