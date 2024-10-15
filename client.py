@@ -365,16 +365,16 @@ def send_audio_to_server():
 
             # Add the Bearer token to the headers for authentication
             headers = {
-                "Authorization": f"Bearer {app_settings.editable_settings['Whisper Server Bearer Token']}"
+                "Authorization": f"Bearer {app_settings.editable_settings['Whisper Server API Key']}"
             }
 
             # Check for SSL and self-signed certificate settings
             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
                 # Send the request without verifying the SSL certificate
-                response = requests.post(app_settings.WHISPERAUDIO, headers=headers, files=files, verify=False)
+                response = requests.post(WHISPERAUDIO, headers=headers, files=files, verify=False)
             else:
                 # Send the request with the audio file and headers/authorization
-                response = requests.post(app_settings.WHISPERAUDIO,headers=headers, files=files)
+                response = requests.post(WHISPERAUDIO,headers=headers, files=files)
             
             # On successful response (status code 200)
             if response.status_code == 200:
