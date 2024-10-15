@@ -340,26 +340,26 @@ class ApplicationSettings:
         whisperaudio_port_entry.insert(0, self.WHISPERAUDIO_PORT)
         whisperaudio_port_entry.grid(row=1, column=3, padx=0, pady=5, sticky="w")
 
-        tk.Label(basic_settings_frame, text="OpenAI API Key:").grid(row=3, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="OpenAI API Key:").grid(row=5, column=0, padx=0, pady=5, sticky="w")
         openai_api_key_entry = tk.Entry(basic_settings_frame, width=25)
         openai_api_key_entry.insert(0, self.OPENAI_API_KEY)
-        openai_api_key_entry.grid(row=3, column=1, padx=0, pady=5, sticky="w")
+        openai_api_key_entry.grid(row=5, column=1, padx=0, pady=5, sticky="w")
 
-        tk.Label(basic_settings_frame, text="API Style:").grid(row=4, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="API Style:").grid(row=6, column=0, padx=0, pady=5, sticky="w")
         api_options = ["OpenAI"]
         dropdown = ttk.Combobox(basic_settings_frame, values=api_options, width=15, state="readonly")
         dropdown.current(api_options.index(self.API_STYLE))
-        dropdown.grid(row=4, column=1, padx=0, pady=5, sticky="w")
+        dropdown.grid(row=6, column=1, padx=0, pady=5, sticky="w")
 
         ssl_enable_var = tk.IntVar(value=self.SSL_ENABLE)
-        tk.Label(basic_settings_frame, text="Enable SSL:").grid(row=5, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="Enable SSL:").grid(row=3, column=0, padx=0, pady=5, sticky="w")
         ssl_enable_checkbox = tk.Checkbutton(basic_settings_frame, variable=ssl_enable_var)
-        ssl_enable_checkbox.grid(row=5, column=1, padx=0, pady=5, sticky="w")
+        ssl_enable_checkbox.grid(row=3, column=1, padx=0, pady=5, sticky="w")
 
         ssl_selfcert_var = tk.IntVar(value=self.SSL_SELFCERT)
-        tk.Label(basic_settings_frame, text="Self-Signed Cert:").grid(row=6, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(basic_settings_frame, text="Self-Signed Cert:").grid(row=4, column=0, padx=0, pady=5, sticky="w")
         ssl_selfcert_checkbox = tk.Checkbutton(basic_settings_frame, variable=ssl_selfcert_var)
-        ssl_selfcert_checkbox.grid(row=6, column=1, padx=0, pady=5, sticky="w")
+        ssl_selfcert_checkbox.grid(row=4, column=1, padx=0, pady=5, sticky="w")
 
         adv_row_counter = 1
         basic_row_counter = 7
