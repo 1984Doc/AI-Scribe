@@ -348,16 +348,18 @@ class ApplicationSettings:
                 self.editable_settings_entries[setting] = entry
 
         # make a ai scribe edit text box
-        tk.Label(advanced_settings_frame, text="Pre Prompting").grid(row=adv_row_counter, column=1, columnspan=2, padx=0, pady=5)
-        aiscribe_text = tk.Text(advanced_settings_frame, height=10, width=35)
+        tk.Label(advanced_settings_frame, text="Pre Prompting").grid(row=adv_row_counter, column=0, padx=0, pady=5, sticky="w")
+        aiscribe_text = tk.Text(advanced_settings_frame, height=10, width=25)
         aiscribe_text.insert(tk.END, self.AISCRIBE)
-        aiscribe_text.grid(row=adv_row_counter, column=0, columnspan=2, padx=0, pady=5, sticky="w")
+        aiscribe_text.grid(row=adv_row_counter, column=1, columnspan=2, padx=0, pady=5, sticky="w")
+
+        adv_row_counter += 1
 
         # make a ai scribe2 edit text box
-        tk.Label(advanced_settings_frame, text="Post Prompting").grid(row=adv_row_counter+1, column=1, columnspan=2, padx=0, pady=5)
-        aiscribe2_text = tk.Text(advanced_settings_frame, height=10, width=35)
+        tk.Label(advanced_settings_frame, text="Post Prompting").grid(row=adv_row_counter, column=0, padx=0, pady=5, sticky="w")
+        aiscribe2_text = tk.Text(advanced_settings_frame, height=10, width=25)
         aiscribe2_text.insert(tk.END, self.AISCRIBE2)
-        aiscribe2_text.grid(row=adv_row_counter+1, column=0, columnspan=2, padx=0, pady=5, sticky="w")
+        aiscribe2_text.grid(row=adv_row_counter, column=1, columnspan=2, padx=0, pady=5, sticky="w")
 
 
         tk.Button(main_frame, text="Save", command=lambda: self.save_settings(
