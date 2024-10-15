@@ -70,6 +70,8 @@ class ApplicationSettings:
         Loads the second AI Scribe text from a file.
     build_url(ip, port):
         Constructs a URL based on IP, port, and SSL settings.
+    clear_settings_file(settings_window):
+        Clears the content of settings files and closes the settings window.
     """
 
     def __init__(self):
@@ -508,12 +510,34 @@ class ApplicationSettings:
         self.WHISPERAUDIO_ENDPOINT = self.build_url(self.WHISPERAUDIO_IP, str(self.WHISPERAUDIO_PORT)+"/whisperaudio")
 
     def clear_settings_file(self, settings_window):
+        """
+        Clears the content of settings files and closes the settings window.
+
+        This method attempts to open and clear the contents of three text files:
+        `settings.txt`, `aiscribe.txt`, and `aiscribe2.txt`. After clearing the
+        files, it displays a message box to notify the user that the settings
+        have been reset and closes the `settings_window`. If an error occurs
+        during this process, the exception will be caught and printed.
+
+        :param settings_window: The settings window object to be closed after resetting.
+        :type settings_window: tkinter.Toplevel or similar
+        :raises Exception: If there is an issue with file handling or window destruction.
+
+        Example usage:
+
+        """
         try:
-            open('settings.txt', 'w').close()  # This opens the files and immediately closes it, clearing its contents.
+            # Open the files and immediately close them to clear their contents.
+            open('settings.txt', 'w').close()  
             open('aiscribe.txt', 'w').close()
             open('aiscribe2.txt', 'w').close()
+
+            # Display a message box informing the user of successful reset.
             messagebox.showinfo("Settings Reset", "Settings have been reset. Please restart.")
             print("Settings file cleared.")
+
+            # Close the settings window.
             settings_window.destroy()
         except Exception as e:
+            # Print any exception that occurs during file handling or window destruction.
             print(f"Error clearing settings files: {e}")
