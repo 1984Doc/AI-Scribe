@@ -635,121 +635,145 @@ def show_edit_transcription_popup(formatted_message):
 def open_settings_window():
     settings_window = tk.Toplevel(root)
     settings_window.title("Settings")
-
-    #not resizeable
-    settings_window.resizable(False, False)
-
-    # make the base window none interactive while updating settings
+    
+    # make the window scrollable
+    settings_window.resizable(True, True)
     settings_window.grab_set()
 
+    # Create the main frame to hold both notebook and footer
+    main_frame = tk.Frame(settings_window)
+    main_frame.pack(expand=True, fill='both')
+
+    # Create a notebook for tabs
+    notebook = ttk.Notebook(main_frame)
+    notebook.pack(expand=True, fill='both')
+
+    # Create frames for Basic and Advanced tabs
+    basic_frame = ttk.Frame(notebook)
+    advanced_frame = ttk.Frame(notebook)
+
+    notebook.add(basic_frame, text="Basic Settings")
+    notebook.add(advanced_frame, text="Advanced Settings")
+
+    # Make frames scrollable
+    def add_scrollbar_to_frame(frame):
+        canvas = tk.Canvas(frame)
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        return scrollable_frame
+
+    basic_settings_frame = add_scrollbar_to_frame(basic_frame)
+    advanced_settings_frame = add_scrollbar_to_frame(advanced_frame)
+
+    # BASIC SETTINGS
+
     # KOBOLDCPP IP input
-    tk.Label(settings_window, text="KOBOLDCPP IP:").grid(row=0, column=0)
-    koboldcpp_ip_entry = tk.Entry(settings_window, width=25)
+    tk.Label(basic_settings_frame, text="KOBOLDCPP IP:").grid(row=0, column=0, padx=5, pady=5)
+    koboldcpp_ip_entry = tk.Entry(basic_settings_frame, width=25)
     koboldcpp_ip_entry.insert(0, KOBOLDCPP_IP)
-    koboldcpp_ip_entry.grid(row=0, column=1)
+    koboldcpp_ip_entry.grid(row=0, column=1, padx=5, pady=5)
 
     # KOBOLDCPP PORT input
-    tk.Label(settings_window, text="PORT:").grid(row=0, column=2)
-    koboldcpp_port_entry = tk.Entry(settings_window, width=10)
+    tk.Label(basic_settings_frame, text="PORT:").grid(row=0, column=2, padx=5, pady=5)
+    koboldcpp_port_entry = tk.Entry(basic_settings_frame, width=10)
     koboldcpp_port_entry.insert(0, KOBOLDCPP_PORT)
-    koboldcpp_port_entry.grid(row=0, column=3)
+    koboldcpp_port_entry.grid(row=0, column=3, padx=5, pady=5)
 
     # WHISPERAUDIO IP input
-    tk.Label(settings_window, text="WHISPERAUDIO IP:").grid(row=2, column=0)
-    whisperaudio_ip_entry = tk.Entry(settings_window, width=25)
+    tk.Label(basic_settings_frame, text="WHISPERAUDIO IP:").grid(row=1, column=0, padx=5, pady=5)
+    whisperaudio_ip_entry = tk.Entry(basic_settings_frame, width=25)
     whisperaudio_ip_entry.insert(0, WHISPERAUDIO_IP)
-    whisperaudio_ip_entry.grid(row=2, column=1)
+    whisperaudio_ip_entry.grid(row=1, column=1, padx=5, pady=5)
 
     # WHISPERAUDIO PORT input
-    tk.Label(settings_window, text="PORT:").grid(row=2, column=2)
-    whisperaudio_port_entry = tk.Entry(settings_window, width=10)
+    tk.Label(basic_settings_frame, text="PORT:").grid(row=1, column=2, padx=5, pady=5)
+    whisperaudio_port_entry = tk.Entry(basic_settings_frame, width=10)
     whisperaudio_port_entry.insert(0, WHISPERAUDIO_PORT)
-    whisperaudio_port_entry.grid(row=2, column=3)
-
-    # SSL_ENABLE checkbox
-    ssl_enable_var = tk.IntVar()  # Set initial value as per SSL_ENABLE
-    tk.Label(settings_window, text="Enable SSL:").grid(row=3, column=2)
-    ssl_enable_checkbox = tk.Checkbutton(settings_window, variable=ssl_enable_var, onvalue=1, offvalue=0)
-    ssl_enable_checkbox.grid(row=3, column=3)
-
-    # SSL_SELFCERT checkbox
-    ssl_selfcert_var = tk.IntVar()  # Set initial value as per SSL_SELFCERT
-    tk.Label(settings_window, text="Self-Signed Cert:").grid(row=4, column=2)
-    ssl_selfcert_checkbox = tk.Checkbutton(settings_window, variable=ssl_selfcert_var, onvalue=1, offvalue=0)
-    ssl_selfcert_checkbox.grid(row=4, column=3)
-
-    if str(SSL_ENABLE) == "1":
-        ssl_enable_checkbox.select()
-
-    if str(SSL_SELFCERT) == "1":
-        ssl_selfcert_checkbox.select()
-
+    whisperaudio_port_entry.grid(row=1, column=3, padx=5, pady=5)
 
     # OpenAI API Key
-    tk.Label(settings_window, text="OpenAI API Key:").grid(row=5, column=0, sticky='nw')
-    openai_api_key_entry = tk.Entry(settings_window, width=25)
+    tk.Label(basic_settings_frame, text="OpenAI API Key:").grid(row=3, column=0, padx=5, pady=5)
+    openai_api_key_entry = tk.Entry(basic_settings_frame, width=25)
     openai_api_key_entry.insert(0, OPENAI_API_KEY)
-    openai_api_key_entry.grid(row=5, column=1, sticky='nw')
+    openai_api_key_entry.grid(row=3, column=1, padx=5, pady=5)
 
-    # Define the dropdown options
+    # API Style Dropdown
+    tk.Label(basic_settings_frame, text="API Style:").grid(row=4, column=0, padx=5, pady=5)
     api_options = ["OpenAI"]
-
-    # Variable to hold the selected option
-    selected_option = ""
-
-    # Create the dropdown menu.
-    tk.Label(settings_window, text="API Style:").grid(row=6, column=0, sticky='nw')
-
-    dropdown = ttk.Combobox(settings_window, values=api_options, width=15, state="readonly")
+    dropdown = ttk.Combobox(basic_settings_frame, values=api_options, width=15, state="readonly")
     dropdown.current(api_options.index(API_STYLE))
-    dropdown.bind("<<ComboboxSelected>>", selected_option)
-    dropdown.grid(row=6, column=1, columnspan=1, sticky='nsew')
+    dropdown.grid(row=4, column=1, padx=5, pady=5)
 
+    # SSL_ENABLE checkbox
+    ssl_enable_var = tk.IntVar(value=SSL_ENABLE)
+    tk.Label(basic_settings_frame, text="Enable SSL:").grid(row=5, column=0, padx=5, pady=5)
+    ssl_enable_checkbox = tk.Checkbutton(basic_settings_frame, variable=ssl_enable_var)
+    ssl_enable_checkbox.grid(row=5, column=1, padx=5, pady=5)
 
-    # Editable Settings
-    row_index = 7
+    # SSL_SELFCERT checkbox
+    ssl_selfcert_var = tk.IntVar(value=SSL_SELFCERT)
+    tk.Label(basic_settings_frame, text="Self-Signed Cert:").grid(row=6, column=0, padx=5, pady=5)
+    ssl_selfcert_checkbox = tk.Checkbutton(basic_settings_frame, variable=ssl_selfcert_var)
+    ssl_selfcert_checkbox.grid(row=6, column=1, padx=5, pady=5)
+
+    # ADVANCED SETTINGS
+
+    # Editable settings
+    row_index = 2
     for setting, value in editable_settings.items():
-        if value == "True" or value == "False" or value == False or value == True:
-            editable_settings_entries[setting] = tk.BooleanVar()
-            tk.Label(settings_window, text=f"{setting}").grid(row=row_index, column=0, sticky='nw')
-            setting_checkbox = tk.Checkbutton(settings_window, variable=editable_settings_entries[setting])
-            setting_checkbox.grid(row=row_index, column=1, sticky='nw')
-
-
-            if value == True:
-                setting_checkbox.select()
-
-            row_index += 1
-
+        if isinstance(value, bool):
+            var = tk.BooleanVar(value=value)
+            tk.Label(advanced_settings_frame, text=setting).grid(row=row_index, column=0, padx=5, pady=5)
+            setting_checkbox = tk.Checkbutton(advanced_settings_frame, variable=var)
+            setting_checkbox.grid(row=row_index, column=1, padx=5, pady=5)
+            editable_settings_entries[setting] = var
         else:
-            tk.Label(settings_window, text=f"{setting}:").grid(row=row_index, column=0, sticky='nw')
-            entry = tk.Entry(settings_window, width=25)
+            tk.Label(advanced_settings_frame, text=f"{setting}:").grid(row=row_index, column=0, padx=5, pady=5)
+            entry = tk.Entry(advanced_settings_frame, width=25)
             entry.insert(0, str(value))
-            entry.grid(row=row_index, column=1, sticky='nw')
+            entry.grid(row=row_index, column=1, padx=5, pady=5)
             editable_settings_entries[setting] = entry
-            row_index += 1
+        row_index += 1
 
-    # AISCRIBE text box
-    tk.Label(settings_window, text="Context Before Conversation").grid(row=0, column=4, sticky='nw', padx=(10,0))
-    aiscribe_textbox = tk.Text(settings_window, width=50, height=15)
+    # AISCRIBE text box in advanced settings
+    tk.Label(advanced_settings_frame, text="Context Before Conversation:").grid(row=row_index, column=0, padx=5, pady=5)
+    aiscribe_textbox = tk.Text(advanced_settings_frame, width=50, height=5)
     aiscribe_textbox.insert('1.0', AISCRIBE)
-    aiscribe_textbox.grid(row=1, column=4, rowspan=10, sticky='nw', padx=(10,0))
+    aiscribe_textbox.grid(row=row_index + 1, column=0, columnspan=2, padx=5, pady=5)
 
     # AISCRIBE2 text box
-    tk.Label(settings_window, text="Context After Conversation").grid(row=11, column=4, sticky='nw', padx=(10,0))
-    aiscribe2_textbox = tk.Text(settings_window, width=50, height=15)
+    tk.Label(advanced_settings_frame, text="Context After Conversation:").grid(row=row_index + 2, column=0, padx=5, pady=5)
+    aiscribe2_textbox = tk.Text(advanced_settings_frame, width=50, height=5)
     aiscribe2_textbox.insert('1.0', AISCRIBE2)
-    aiscribe2_textbox.grid(row=12, column=4, rowspan=10, sticky='nw', padx=(10,0))
+    aiscribe2_textbox.grid(row=row_index + 3, column=0, columnspan=2, padx=5, pady=5)
 
-    # Save, Close, and Default buttons under the left column
-    save_button = tk.Button(settings_window, text="Save", width=15, command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), openai_api_key_entry.get(), aiscribe_textbox.get("1.0", tk.END), aiscribe2_textbox.get("1.0", tk.END), settings_window, koboldcpp_port_entry.get(), whisperaudio_port_entry.get(), ssl_enable_var.get(), ssl_selfcert_var.get(), dropdown.get()))
-    save_button.grid(row=row_index, column=0, padx=5, pady=5)
+    # Create a footer frame to hold Save, Close, Default buttons
+    footer_frame = tk.Frame(main_frame)
+    footer_frame.pack(side='bottom', fill='x', padx=10, pady=10)  # Stick to bottom
 
-    close_button = tk.Button(settings_window, text="Close", width=15, command=settings_window.destroy)
-    close_button.grid(row=row_index + 1, column=0, padx=5, pady=5)
+    save_button = tk.Button(footer_frame, text="Save", width=15)
+    save_button.pack(side='left', padx=5)
 
-    default_button = tk.Button(settings_window, text="Default", width=15, command=lambda: clear_settings_file(settings_window))
-    default_button.grid(row=row_index + 2, column=0, padx=5, pady=5)
+    close_button = tk.Button(footer_frame, text="Close", width=15, command=settings_window.destroy)
+    close_button.pack(side='left', padx=5)
+
+    default_button = tk.Button(footer_frame, text="Default", width=15)
+    default_button.pack(side='left', padx=5)
+
 
 def upload_file():
     global uploaded_file_path
