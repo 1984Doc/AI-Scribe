@@ -1,8 +1,20 @@
 """
 application_settings.py
 
-This module contains the ApplicationSettings class, which manages the application settings 
-for a system involving audio processing and communication with external APIs.
+This software is released under the AGPL-3.0 license
+Copyright (c) 2023-2024 Braedon Hendy
+
+Further updates and packaging added in 2024 through the ClinicianFOCUS initiative, 
+a collaboration with Dr. Braedon Hendy and Conestoga College Institute of Applied 
+Learning and Technology as part of the CNERG+ applied research project, 
+Unburdening Primary Healthcare: An Open-Source AI Clinician Partner Platform". 
+Prof. Michael Yingbull (PI), Dr. Braedon Hendy (Partner), 
+and Research Students - Software Developer Alex Simko, Pemba Sherpa (F24), and Naitik Patel.
+
+This module contains the ApplicationSettings class, which manages the settings for an
+application that involves audio processing and external API interactions, including
+KoboldCPP, WhisperAudio, and OpenAI services.
+
 """
 
 import json
@@ -12,25 +24,52 @@ from tkinter import ttk, messagebox
 
 class ApplicationSettings:
     """
-    A class to manage application settings for the audio processing application.
+    Manages application settings related to audio processing and external API services.
 
-    Attributes:
-        KOBOLDCPP_IP (str): The IP address for the Kobold CPP service.
-        WHISPERAUDIO_IP (str): The IP address for the Whisper Audio service.
-        KOBOLDCPP_PORT (str): The port for the Kobold CPP service.
-        WHISPERAUDIO_PORT (str): The port for the Whisper Audio service.
-        SSL_ENABLE (str): Indicates if SSL is enabled (1) or not (0).
-        SSL_SELFCERT (str): Indicates if self-signed certificates are used (1) or not (0).
-        OPENAI_API_KEY (str): The API key for OpenAI.
-        AISCRIBE (str): A placeholder for AIscribe settings.
-        AISCRIBE2 (str): A placeholder for AIscribe2 settings.
-        API_STYLE (str): The style of API to use (default is "OpenAI").
+    Attributes
+    ----------
+    KOBOLDCPP_IP : str
+        The IP address for the Kobold CPP service.
+    WHISPERAUDIO_IP : str
+        The IP address for the Whisper Audio service.
+    KOBOLDCPP_PORT : str
+        The port for the Kobold CPP service.
+    WHISPERAUDIO_PORT : str
+        The port for the Whisper Audio service.
+    SSL_ENABLE : str
+        Whether SSL is enabled ('1' for enabled, '0' for disabled).
+    SSL_SELFCERT : str
+        Whether self-signed certificates are used ('1' for enabled, '0' for disabled).
+    OPENAI_API_KEY : str
+        The API key for OpenAI integration.
+    AISCRIBE : str
+        Placeholder for the first AI Scribe settings.
+    AISCRIBE2 : str
+        Placeholder for the second AI Scribe settings.
+    API_STYLE : str
+        The API style to be used (default is 'OpenAI').
 
-    Methods:
-        load_settings_from_file():
-            Loads settings from a file.
-        save_settings_to_file():
-            Saves the current settings to a file.
+    editable_settings : dict
+        A dictionary containing user-editable settings such as model parameters, audio 
+        settings, and real-time processing configurations.
+    
+    Methods
+    -------
+    load_settings_from_file():
+        Loads settings from a JSON file and updates the internal state.
+    save_settings_to_file():
+        Saves the current settings to a JSON file.
+    save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, 
+                  settings_window, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
+        Saves the current settings, including API keys, IP addresses, and user-defined parameters.
+    open_settings_window():
+        Opens the settings window, allowing the user to modify and save application settings.
+    load_aiscribe_from_file():
+        Loads the first AI Scribe text from a file.
+    load_aiscribe2_from_file():
+        Loads the second AI Scribe text from a file.
+    build_url(ip, port):
+        Constructs a URL based on IP, port, and SSL settings.
     """
 
     def __init__(self):
@@ -45,6 +84,9 @@ class ApplicationSettings:
         self.AISCRIBE = ""
         self.AISCRIBE2 = ""
         self.API_STYLE = "OpenAI"
+
+        self.KOBOLDCPP_ENDPOINT = None
+        self.WHISPERAUDIO_ENDPOINT = None
 
         self.basic_settings = {
             "Model",
@@ -215,6 +257,9 @@ class ApplicationSettings:
         self.AISCRIBE = aiscribe_text
         self.AISCRIBE2 = aiscribe2_text
 
+        self.KOBOLDCPP_ENDPOINT = self.build_url(self.KOBOLDCPP_IP, self.KOBOLDCPP_PORT)
+        self.WHISPERAUDIO_ENDPOINT = self.build_url(self.WHISPERAUDIO_IP, str(self.WHISPERAUDIO_PORT)+"/whisperaudio")
+
         with open('aiscribe.txt', 'w') as f:
             f.write(self.AISCRIBE)
         with open('aiscribe2.txt', 'w') as f:
@@ -376,17 +421,6 @@ class ApplicationSettings:
             dropdown.get()
         )).pack(pady=10)
         
-    def start(self):
-        """
-        Load the settings from the configuration file.
-
-        This method initializes the application settings, including the loading
-        of the default AI Scribe text and other user-defined parameters.
-        """
-        self.load_settings_from_file()
-        self.AISCRIBE = self.load_aiscribe_from_file() or "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
-        self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
-
     def load_aiscribe_from_file(self):
         """
         Load the AI Scribe text from a file.
@@ -412,3 +446,57 @@ class ApplicationSettings:
                 return f.read()
         except FileNotFoundError:
             return None
+
+    def build_url(self, ip, port):
+        """
+        Build a URL string based on the IP address, port, and SSL settings.
+
+        If SSL is enabled (`SSL_ENABLE` is set to "1"), the method returns a URL
+        with the `https` scheme, otherwise, it returns a URL with the `http` scheme.
+        
+        The method also handles the case of self-signed SSL certificates based on
+        the `SSL_SELFCERT` setting.
+
+        Parameters
+        ----------
+        ip : str
+            The IP address of the server.
+        port : str
+            The port number of the server.
+
+        Returns
+        -------
+        str
+            A fully formed URL for either `https` or `http` depending on the SSL settings.
+
+        Prints
+        ------
+        If SSL is enabled, prints a message indicating that SSL/TLS connections are enabled.
+        If self-signed certificates are allowed, it prints a warning about trusting self-signed certificates.
+        If SSL is disabled, prints a message indicating that unencrypted connections will be used.
+        """
+        
+        if str(self.SSL_ENABLE) == "1":
+            print("Encrypted SSL/TLS connections are ENABLED between client and server.")
+            if str(self.SSL_SELFCERT) == "1":
+                print("...Self-signed SSL certificates are ALLOWED in Settings...\n...You may disregard subsequent log Warning if you are trusting self-signed certificates from server...")
+            else:
+                print("...Self-signed SSL certificates are DISABLED in Settings...\n...Trusted/Verified SSL certificates must be used on server, otherwise SSL connection will fail...")
+            return f"https://{ip}:{port}"
+        else:
+            print("UNENCRYPTED http connections are being used between Client and Whisper/Kobbold server...")
+            return f"http://{ip}:{port}"
+
+    def start(self):
+        """
+        Load the settings from the configuration file.
+
+        This method initializes the application settings, including the loading
+        of the default AI Scribe text and other user-defined parameters.
+        """
+        self.load_settings_from_file()
+        self.AISCRIBE = self.load_aiscribe_from_file() or "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
+        self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
+        
+        self.KOBOLDCPP_ENDPOINT = self.build_url(self.KOBOLDCPP_IP, self.KOBOLDCPP_PORT)
+        self.WHISPERAUDIO_ENDPOINT = self.build_url(self.WHISPERAUDIO_IP, str(self.WHISPERAUDIO_PORT)+"/whisperaudio")
