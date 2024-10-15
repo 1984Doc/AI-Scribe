@@ -36,25 +36,6 @@ app_settings.start()
 
 NOTE_CREATION = "Note Creation...Please Wait"
 
-
-
-def build_url(ip, port):
-        if str(app_settings.SSL_ENABLE) == "1":
-            print("Encrypted SSL/TLS connections are ENABLED between client and server.")
-            if str(app_settings.SSL_SELFCERT) == "1":
-                print("...Self-signed SSL certificates are ALLOWED in Settings...\n...You may disregard subsequent log Warning if you are trusting self-signed certificates from server...")
-            else:
-                print("...Self-signed SSL certificates are DISABLED in Settings...\n...Trusted/Verified SSL certificates must be used on server, otherwise SSL connection will fail...")
-            return f"https://{ip}:{port}"
-        else:
-            print("UNENCRYPTED http connections are being used between Client and Whisper/Kobbold server...")
-            return f"http://{ip}:{port}"
-
-# Load settings at the start
-KOBOLDCPP = build_url(app_settings.KOBOLDCPP_IP, app_settings.KOBOLDCPP_PORT)
-
-WHISPERAUDIO = build_url(app_settings.WHISPERAUDIO_IP, str(app_settings.WHISPERAUDIO_PORT)+"/whisperaudio")
-
 user_message = []
 response_history = []
 current_view = "full"
@@ -208,9 +189,9 @@ def realtime_text():
                             }
 
                             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                                response = requests.post(app_settings.WHISPERAUDIO, headers=headers,files=files, verify=False)
+                                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers,files=files, verify=False)
                             else:
-                                response = requests.post(app_settings.WHISPERAUDIO, headers=headers,files=files)
+                                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers,files=files)
                             if response.status_code == 200:
                                 text = response.json()['text']
                                 update_gui(text)
@@ -371,10 +352,10 @@ def send_audio_to_server():
             # Check for SSL and self-signed certificate settings
             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
                 # Send the request without verifying the SSL certificate
-                response = requests.post(WHISPERAUDIO, headers=headers, files=files, verify=False)
+                response = requests.post(WHISPERAUDIO_ENDPOINT, headers=headers, files=files, verify=False)
             else:
                 # Send the request with the audio file and headers/authorization
-                response = requests.post(WHISPERAUDIO,headers=headers, files=files)
+                response = requests.post(WHISPERAUDIO_ENDPOINT,headers=headers, files=files)
             
             # On successful response (status code 200)
             if response.status_code == 200:
@@ -403,9 +384,9 @@ def handle_message(formatted_message):
     else:
         prompt = get_prompt(formatted_message)
         if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-            response = requests.post(f"{KOBOLDCPP}/api/v1/generate", json=prompt, verify=False)
+            response = requests.post(f"{app_settings.KOBOLDCPP_ENDPOINT}/api/v1/generate", json=prompt, verify=False)
         else:
-            response = requests.post(f"{KOBOLDCPP}/api/v1/generate", json=prompt)
+            response = requests.post(f"{app_settings.KOBOLDCPP_ENDPOINT}/api/v1/generate", json=prompt)
         if response.status_code == 200:
             results = response.json()['results']
             response_text = results[0]['text']
