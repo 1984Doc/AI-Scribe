@@ -240,3 +240,25 @@ class ApplicationSettings:
 
     def start(self):
         self.load_settings_from_file()
+
+        DEFAULT_AISCRIBE = "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
+        DEFAULT_AISCRIBE2 = "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
+
+        self.AISCRIBE = self.load_aiscribe_from_file() or DEFAULT_AISCRIBE
+        self.AISCRIBE2 = self.load_aiscribe2_from_file() or DEFAULT_AISCRIBE2
+
+    def load_aiscribe_from_file(self):
+        try:
+            with open('aiscribe.txt', 'r') as f:
+                content = f.read().strip()
+                return content if content else None
+        except FileNotFoundError:
+            return None
+
+    def load_aiscribe2_from_file(self):
+        try:
+            with open('aiscribe2.txt', 'r') as f:
+                content = f.read().strip()
+                return content if content else None
+        except FileNotFoundError:
+            return None
