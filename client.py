@@ -23,46 +23,25 @@ import re
 import speech_recognition as sr # python package is named speechrecognition
 import time
 import queue
+import ApplicationSettings_client as settings
+
+# GUI Setup
+root = tk.Tk()
+root.title("AI Medical Scribe")
+
+# settings window
+app_settings = settings.ApplicationSettings()
+app_settings.start()
+
 
 NOTE_CREATION = "Note Creation...Please Wait"
 
-# Add these near the top of your script
-editable_settings = {
-    "Model": "gpt-4",
-    "Model Endpoint": "https://api.openai.com/v1/",
-    "use_story": False,
-    "use_memory": False,
-    "use_authors_note": False,
-    "use_world_info": False,
-    "max_context_length": 5000,
-    "max_length": 400,
-    "rep_pen": 1.1,
-    "rep_pen_range": 5000,
-    "rep_pen_slope": 0.7,
-    "temperature": 0.1,
-    "tfs": 0.97,
-    "top_a": 0.8,
-    "top_k": 30,
-    "top_p": 0.4,
-    "typical": 0.19,
-    "sampler_order": [6, 0, 1, 3, 4, 2, 5],
-    "singleline": False,
-    "frmttriminc": False,
-    "frmtrmblln": False,
-    "Local Whisper": False,
-    "Whisper Server API Key": "None",
-    "Whisper Model": "small.en",
-    "Real Time": False,
-    "Real Time Audio Length": 5,
-    "Real Time Silence Length": 1,
-    "Silence cut-off": 0.01
-}
 
 
 def build_url(ip, port):
-        if str(SSL_ENABLE) == "1":
+        if str(app_settings.SSL_ENABLE) == "1":
             print("Encrypted SSL/TLS connections are ENABLED between client and server.")
-            if str(SSL_SELFCERT) == "1":
+            if str(app_settings.SSL_SELFCERT) == "1":
                 print("...Self-signed SSL certificates are ALLOWED in Settings...\n...You may disregard subsequent log Warning if you are trusting self-signed certificates from server...")
             else:
                 print("...Self-signed SSL certificates are DISABLED in Settings...\n...Trusted/Verified SSL certificates must be used on server, otherwise SSL connection will fail...")
@@ -71,28 +50,10 @@ def build_url(ip, port):
             print("UNENCRYPTED http connections are being used between Client and Whisper/Kobbold server...")
             return f"http://{ip}:{port}"
 
-
-def load_aiscribe_from_file():
-    try:
-        with open('aiscribe.txt', 'r') as f:
-            content = f.read().strip()
-            return content if content else None
-    except FileNotFoundError:
-        return None
-
-def load_aiscribe2_from_file():
-    try:
-        with open('aiscribe2.txt', 'r') as f:
-            content = f.read().strip()
-            return content if content else None
-    except FileNotFoundError:
-        return None
-
 # Load settings at the start
-KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, KOBOLDCPP_PORT, WHISPERAUDIO_PORT, SSL_ENABLE, SSL_SELFCERT, API_STYLE = load_settings_from_file()
-KOBOLDCPP = build_url(KOBOLDCPP_IP, KOBOLDCPP_PORT)
+KOBOLDCPP = build_url(app_settings.KOBOLDCPP_IP, app_settings.KOBOLDCPP_PORT)
 
-WHISPERAUDIO = build_url(WHISPERAUDIO_IP, str(WHISPERAUDIO_PORT)+"/whisperaudio")
+WHISPERAUDIO = build_url(app_settings.WHISPERAUDIO_IP, str(app_settings.WHISPERAUDIO_PORT)+"/whisperaudio")
 
 user_message = []
 response_history = []
@@ -100,10 +61,6 @@ current_view = "full"
 username = "user"
 botname = "Assistant"
 num_lines_to_keep = 20
-DEFAULT_AISCRIBE = "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
-DEFAULT_AISCRIBE2 = "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
-AISCRIBE = load_aiscribe_from_file() or DEFAULT_AISCRIBE
-AISCRIBE2 = load_aiscribe2_from_file() or DEFAULT_AISCRIBE2
 uploaded_file_path = None
 is_recording = False
 is_realtimeactive = False
@@ -119,35 +76,35 @@ CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
-editable_settings_entries = {}
+
 
 
 def get_prompt(formatted_message):
 
-    sampler_order = editable_settings["sampler_order"]
+    sampler_order = app_settings.editable_settings["sampler_order"]
     if isinstance(sampler_order, str):
         sampler_order = json.loads(sampler_order)
     return {
         "prompt": f"{formatted_message}\n",
-        "use_story": editable_settings["use_story"],
-        "use_memory": editable_settings["use_memory"],
-        "use_authors_note": editable_settings["use_authors_note"],
-        "use_world_info": editable_settings["use_world_info"],
-        "max_context_length": int(editable_settings["max_context_length"]),
-        "max_length": int(editable_settings["max_length"]),
-        "rep_pen": float(editable_settings["rep_pen"]),
-        "rep_pen_range": int(editable_settings["rep_pen_range"]),
-        "rep_pen_slope": float(editable_settings["rep_pen_slope"]),
-        "temperature": float(editable_settings["temperature"]),
-        "tfs": float(editable_settings["tfs"]),
-        "top_a": float(editable_settings["top_a"]),
-        "top_k": int(editable_settings["top_k"]),
-        "top_p": float(editable_settings["top_p"]),
-        "typical": float(editable_settings["typical"]),
+        "use_story": app_settings.editable_settings["use_story"],
+        "use_memory": app_settings.editable_settings["use_memory"],
+        "use_authors_note": app_settings.editable_settings["use_authors_note"],
+        "use_world_info": app_settings.editable_settings["use_world_info"],
+        "max_context_length": int(app_settings.editable_settings["max_context_length"]),
+        "max_length": int(app_settings.editable_settings["max_length"]),
+        "rep_pen": float(app_settings.editable_settings["rep_pen"]),
+        "rep_pen_range": int(app_settings.editable_settings["rep_pen_range"]),
+        "rep_pen_slope": float(app_settings.editable_settings["rep_pen_slope"]),
+        "temperature": float(app_settings.editable_settings["temperature"]),
+        "tfs": float(app_settings.editable_settings["tfs"]),
+        "top_a": float(app_settings.editable_settings["top_a"]),
+        "top_k": int(app_settings.editable_settings["top_k"]),
+        "top_p": float(app_settings.editable_settings["top_p"]),
+        "typical": float(app_settings.editable_settings["typical"]),
         "sampler_order": sampler_order,
-        "singleline": editable_settings["singleline"],
-        "frmttriminc": editable_settings["frmttriminc"],
-        "frmtrmblln": editable_settings["frmtrmblln"]
+        "singleline": app_settings.editable_settings["singleline"],
+        "frmttriminc": app_settings.editable_settings["frmttriminc"],
+        "frmtrmblln": app_settings.editable_settings["frmtrmblln"]
     }
 
 def threaded_toggle_recording():
@@ -182,8 +139,8 @@ def record_audio():
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
     current_chunk = []
     silent_duration = 0
-    minimum_silent_duration = int(editable_settings["Real Time Silence Length"])
-    minimum_audio_duration = int(editable_settings["Real Time Audio Length"])
+    minimum_silent_duration = int(app_settings.editable_settings["Real Time Silence Length"])
+    minimum_audio_duration = int(app_settings.editable_settings["Real Time Audio Length"])
     while is_recording:
         if not is_paused:
             data = stream.read(CHUNK, exception_on_overflow=False)
@@ -201,7 +158,7 @@ def record_audio():
                 last_second_data = b''.join(current_chunk[-RATE // CHUNK:])
                 last_second_buffer = np.frombuffer(last_second_data, dtype=np.int16).astype(np.float32) / 32768
                 if is_silent(last_second_buffer) and silent_duration >= minimum_silent_duration:
-                    if editable_settings["Real Time"]:
+                    if app_settings.editable_settings["Real Time"]:
                         audio_queue.put(b''.join(current_chunk))
                     current_chunk = []
                     silent_duration = 0
@@ -210,7 +167,7 @@ def record_audio():
     audio_queue.put(None)
 
 
-def is_silent(data, threshold=float(editable_settings["Silence cut-off"])):
+def is_silent(data, threshold=float(app_settings.editable_settings["Silence cut-off"])):
     max_value = max(data)
     #print(f"Max audio value: {max_value}")
     return max_value < threshold
@@ -219,17 +176,17 @@ def realtime_text():
     global frames, is_realtimeactive
     if not is_realtimeactive:
         is_realtimeactive = True
-        model_name = editable_settings["Whisper Model"].strip()
+        model_name = app_settings.editable_settings["Whisper Model"].strip()
         model = whisper.load_model(model_name)
         while True:
             audio_data = audio_queue.get()
             if audio_data is None:
                 break
-            if editable_settings["Real Time"] == True:
+            if app_settings.editable_settings["Real Time"] == True:
                 print("Real Time Audio to Text")
                 audio_buffer = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
                 if not is_silent(audio_buffer):
-                    if editable_settings["Local Whisper"] == True:
+                    if app_settings.editable_settings["Local Whisper"] == True:
                         print("Local Real Time Whisper")
                         result = model.transcribe(audio_buffer, fp16=False)
                         update_gui(result['text'])
@@ -247,13 +204,13 @@ def realtime_text():
                             files = {'audio': f}
 
                             headers = {
-                                "X-API-Key": editable_settings["Whisper Server API Key"]
+                                "X-API-Key": app_settings.editable_settings["Whisper Server API Key"]
                             }
 
-                            if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
-                                response = requests.post(WHISPERAUDIO, headers=headers,files=files, verify=False)
+                            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
+                                response = requests.post(app_settings.WHISPERAUDIO, headers=headers,files=files, verify=False)
                             else:
-                                response = requests.post(WHISPERAUDIO, headers=headers,files=files)
+                                response = requests.post(app_settings.WHISPERAUDIO, headers=headers,files=files)
                             if response.status_code == 200:
                                 text = response.json()['text']
                                 update_gui(text)
@@ -274,7 +231,7 @@ def save_audio():
             wf.setframerate(RATE)
             wf.writeframes(b''.join(frames))
         frames = []  # Clear recorded data
-        if editable_settings["Real Time"] == True:
+        if app_settings.editable_settings["Real Time"] == True:
             send_and_receive()
         else:
             threaded_send_audio_to_server()
@@ -284,7 +241,7 @@ def toggle_recording():
     if not is_recording:
         user_input.configure(state='normal')
         user_input.delete("1.0", tk.END)
-        if not editable_settings["Real Time"]:
+        if not app_settings.editable_settings["Real Time"]:
             user_input.insert(tk.END, "Recording")
         response_display.configure(state='normal')
         response_display.delete("1.0", tk.END)
@@ -344,7 +301,7 @@ def send_audio_to_server():
     Raises:
     -------
     ValueError
-        If the `editable_settings["Local Whisper"]` flag is not a boolean.
+        If the `app_settings.editable_settings["Local Whisper"]` flag is not a boolean.
     FileNotFoundError
         If the specified audio file does not exist.
     requests.exceptions.RequestException
@@ -354,7 +311,7 @@ def send_audio_to_server():
     global uploaded_file_path
 
     # Check if Local Whisper is enabled in the editable settings
-    if editable_settings["Local Whisper"] == True:
+    if app_settings.editable_settings["Local Whisper"] == True:
         # Inform the user that Local Whisper is being used for transcription
         print("Using Local Whisper for transcription.")
 
@@ -366,7 +323,7 @@ def send_audio_to_server():
         user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
 
         # Load the specified Whisper model
-        model_name = editable_settings["Whisper Model"].strip()
+        model_name = app_settings.editable_settings["Whisper Model"].strip()
         model = whisper.load_model(model_name)
 
         # Determine the file to send for transcription
@@ -408,16 +365,16 @@ def send_audio_to_server():
 
             # Add the Bearer token to the headers for authentication
             headers = {
-                "Authorization": f"Bearer {editable_settings['Whisper Server Bearer Token']}"
+                "Authorization": f"Bearer {app_settings.editable_settings['Whisper Server Bearer Token']}"
             }
 
             # Check for SSL and self-signed certificate settings
-            if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
+            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
                 # Send the request without verifying the SSL certificate
-                response = requests.post(WHISPERAUDIO, headers=headers, files=files, verify=False)
+                response = requests.post(app_settings.WHISPERAUDIO, headers=headers, files=files, verify=False)
             else:
                 # Send the request with the audio file and headers/authorization
-                response = requests.post(WHISPERAUDIO,headers=headers, files=files)
+                response = requests.post(app_settings.WHISPERAUDIO,headers=headers, files=files)
             
             # On successful response (status code 200)
             if response.status_code == 200:
@@ -445,7 +402,7 @@ def handle_message(formatted_message):
         show_edit_transcription_popup(formatted_message)
     else:
         prompt = get_prompt(formatted_message)
-        if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
+        if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
             response = requests.post(f"{KOBOLDCPP}/api/v1/generate", json=prompt, verify=False)
         else:
             response = requests.post(f"{KOBOLDCPP}/api/v1/generate", json=prompt)
@@ -491,7 +448,7 @@ def show_response(event):
         pyperclip.copy(response_text)
 
 def send_text_to_chatgpt(edited_text):
-    api_key = OPENAI_API_KEY
+    api_key = app_settings.OPENAI_API_KEY
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -499,22 +456,22 @@ def send_text_to_chatgpt(edited_text):
     }
 
     payload = {
-        "model": editable_settings["Model"].strip(),
+        "model": app_settings.editable_settings["Model"].strip(),
         "messages": [
             {"role": "user", "content": edited_text}
         ],
     }
     try:
 
-        if editable_settings["Model Endpoint"].endswith('/'):
-            editable_settings["Model Endpoint"] = editable_settings["Model Endpoint"][:-1]
+        if app_settings.editable_settings["Model Endpoint"].endswith('/'):
+            app_settings.editable_settings["Model Endpoint"] = app_settings.editable_settings["Model Endpoint"][:-1]
 
-        if API_STYLE == "OpenAI":
+        if app_settings.API_STYLE == "OpenAI":
             response = requests.Response
-            if str(SSL_SELFCERT) == "1" and str(SSL_ENABLE) == "1":
-                response = requests.post(editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=False)
+            if str(app_settings.SSL_SELFCERT) == "1" and str(app_settings.SSL_ENABLE) == "1":
+                response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=False)
             else:
-                response = requests.post(editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload)
+                response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload)
 
             response.raise_for_status()
             response_data = response.json()
@@ -673,7 +630,7 @@ def get_dropdown_values_and_mapping():
         print("options.txt not found, using default values.")
         # Fallback default options if file not found
         options = ["Settings Template"]
-        mapping["Settings Template"] = (AISCRIBE, AISCRIBE2)
+        mapping["Settings Template"] = (app_settings.AISCRIBE, app_settings.AISCRIBE2)
     return options, mapping
 
 dropdown_values, option_mapping = get_dropdown_values_and_mapping()
@@ -683,10 +640,6 @@ def update_aiscribe_texts(event):
     selected_option = combobox.get()
     if selected_option in option_mapping:
         AISCRIBE, AISCRIBE2 = option_mapping[selected_option]
-
-# GUI Setup
-root = tk.Tk()
-root.title("AI Medical Scribe")
 
 # Configure grid weights for scalability
 root.grid_columnconfigure(0, weight=1, minsize= 10)
@@ -729,7 +682,7 @@ toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
 gpt_button = tk.Button(root, text="KoboldCpp", command=toggle_gpt_button, height=2, width=13)
 gpt_button.grid(row=1, column=6, pady=5, sticky='nsew')
 
-settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=10)
+settings_button = tk.Button(root, text="Settings", command=app_settings.open_settings_window, height=2, width=10)
 settings_button.grid(row=1, column=7, pady=5, sticky='nsew')
 
 upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=10)
