@@ -1,7 +1,7 @@
 !include "MUI2.nsh"
 
 ; Define the name of the installer
-OutFile "FreeScribeInstaller.exe"
+OutFile "..\dist\FreeScribeInstaller.exe"
 
 ; Define the default installation directory to AppData
 InstallDir "$APPDATA\FreeScribe"
@@ -25,7 +25,7 @@ Section "MainSection" SEC01
     SetOutPath "$INSTDIR"
 
     ; Add files to the installer
-    File /r "dist\*"
+    File /r "..\dist\freescribe-client.exe"
 
     ; Create a start menu shortcut
     CreateDirectory "$SMPROGRAMS\FreeScribe"
