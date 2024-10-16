@@ -1,10 +1,20 @@
-# from stack overflow: https://stackoverflow.com/questions/3221956/how-do-i-display-tooltips-in-tkinter
+# This module provides a Tooltip class to display tooltips for Tkinter widgets.
+# The Tooltip class is adapted from a solution on Stack Overflow.
+# https://stackoverflow.com/questions/3221956/how-do-i-display-tooltips-in-tkinter
 
 import tkinter as tk
 
+# Tooltip class
+# This class creates a tooltip for a given widget.
+# It handles the scheduling and display of the tooltip when the mouse enters the widget,
+# and hides the tooltip when the mouse leaves the widget.
 class Tooltip(object):
     """
     Create a tooltip for a given widget.
+
+    This class creates a tooltip for a given widget. It handles the scheduling and display
+    of the tooltip when the mouse enters the widget, and hides the tooltip when the mouse
+    leaves the widget.
 
     :param widget: The widget to which the tooltip will be attached.
     :type widget: tkinter.Widget
