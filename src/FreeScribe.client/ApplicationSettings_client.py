@@ -152,7 +152,18 @@ class ApplicationSettings:
             "Real Time": False,
             "Real Time Audio Length": 5,
             "Real Time Silence Length": 1,
-            "Silence cut-off": 0.01
+            "Silence cut-off": 0.01,
+            "LLM Container Name": "llm-container-1",
+            "LLM Caddy Container Name": "caddy-llm-container",
+            "Whisper Container Name": "speech-container",
+            "Whisper Caddy Container Name": "caddy"
+        }
+
+        self.docker_settings = {
+            "LLM Cotnainer Name",
+            "LLM Caddy Container Name",
+            "Whisper Container Name",
+            "Whisper Caddy Container Name"
         }
 
         self.editable_settings_entries = {}
@@ -290,9 +301,11 @@ class ApplicationSettings:
 
         basic_frame = ttk.Frame(notebook)
         advanced_frame = ttk.Frame(notebook)
+        docker_frame = ttk.Frame(notebook)
 
         notebook.add(basic_frame, text="Basic Settings")
         notebook.add(advanced_frame, text="Advanced Settings")
+        notebook.add(docker_frame, text="Docker Settings")
 
         def add_scrollbar_to_frame(frame):
             """
@@ -365,6 +378,7 @@ class ApplicationSettings:
 
         adv_row_counter = 1
         basic_row_counter = 7
+        docker_row_counter = 1
 
         for setting, value in self.editable_settings.items():
             row_counter = None
@@ -378,6 +392,10 @@ class ApplicationSettings:
                 row_counter = adv_row_counter
                 frame = advanced_settings_frame
                 adv_row_counter += 1
+            elif setting in self.docker_settings:
+                row_counter = docker_row_counter
+                frame = docker_frame
+                docker_row_counter += 1
 
             tk.Label(frame, text=f"{setting}:").grid(row=row_counter, column=0, padx=0, pady=5, sticky="w")
             
@@ -428,7 +446,8 @@ class ApplicationSettings:
         close_button = tk.Button(main_frame, text="Close", width=10, command=settings_window.destroy)
         close_button.pack(side="right", padx=2, pady=5)
 
-        
+        # DOCKER SETTINGS
+       
     def load_aiscribe_from_file(self):
         """
         Load the AI Scribe text from a file.
