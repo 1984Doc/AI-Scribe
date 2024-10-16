@@ -18,10 +18,10 @@ jobs:
           architecture: "x64"
       - name: Install requirements
         run: |
-          pip install -r cl_requirements.txt
+          pip install -r client_requirements.txt
       - name: Run PyInstaller
         run: |
-          pyinstaller --onefile --add-data ".\whisper-assets:whisper\assets" --name freescribe-client client.py
+          pyinstaller --onefile --add-data ".\src\FreeScribe.client\whisper-assets:whisper\assets" --name freescribe-client .\src\FreeScribe.client\client.py
 
       - name: Set up NSIS
         uses: joncloud/makensis-action@1c9f4bf2ea0c771147db31a2f3a7f5d8705c0105 # v4.1 commit hash
@@ -56,6 +56,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: FreeScribeInstaller.exe
+          asset_path: dist/FreeScribeInstaller.exe
           asset_name: FreeScribeInstaller_windows.exe
           asset_content_type: application/octet-stream
