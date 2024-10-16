@@ -4,11 +4,24 @@ import tkinter as tk
 
 class Tooltip(object):
     """
-    create a tooltip for a given widget
+    Create a tooltip for a given widget.
+
+    :param widget: The widget to which the tooltip will be attached.
+    :type widget: tkinter.Widget
+    :param text: The text to display in the tooltip.
+    :type text: str, optional
     """
     def __init__(self, widget, text='widget info'):
-        self.waittime = 500     #miliseconds
-        self.wraplength = 180   #pixels
+        """
+        Initialize the Tooltip object.
+
+        :param widget: The widget to which the tooltip will be attached.
+        :type widget: tkinter.Widget
+        :param text: The text to display in the tooltip.
+        :type text: str, optional
+        """
+        self.waittime = 500     # milliseconds
+        self.wraplength = 180   # pixels
         self.widget = widget
         self.text = text
         self.widget.bind("<Enter>", self.enter)
@@ -18,23 +31,47 @@ class Tooltip(object):
         self.tw = None
 
     def enter(self, event=None):
+        """
+        Schedule the tooltip to be shown when the mouse enters the widget.
+
+        :param event: The event object.
+        :type event: tkinter.Event, optional
+        """
         self.schedule()
 
     def leave(self, event=None):
+        """
+        Unschedule the tooltip and hide it when the mouse leaves the widget.
+
+        :param event: The event object.
+        :type event: tkinter.Event, optional
+        """
         self.unschedule()
         self.hidetip()
 
     def schedule(self):
+        """
+        Schedule the tooltip to be shown after a delay.
+        """
         self.unschedule()
         self.id = self.widget.after(self.waittime, self.showtip)
 
     def unschedule(self):
+        """
+        Cancel the scheduled tooltip if it exists.
+        """
         id = self.id
         self.id = None
         if id:
             self.widget.after_cancel(id)
 
     def showtip(self, event=None):
+        """
+        Show the tooltip.
+
+        :param event: The event object.
+        :type event: tkinter.Event, optional
+        """
         x = y = 0
         x, y, cx, cy = self.widget.bbox("insert")
         x += self.widget.winfo_rootx() + 25
@@ -50,6 +87,9 @@ class Tooltip(object):
         label.pack(ipadx=1)
 
     def hidetip(self):
+        """
+        Hide the tooltip.
+        """
         tw = self.tw
         self.tw= None
         if tw:
