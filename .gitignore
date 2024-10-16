@@ -9,3 +9,4 @@ dist
 recording.wav
 output
 client.spec
+.aider*
