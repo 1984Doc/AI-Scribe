@@ -759,8 +759,10 @@ def on_exit():
     # Create a pop up that says yes or no with tkinter messagebox to option to close the docker containers
 
     if messagebox.askyesno("Exit", "Do you want to close the Docker containers? (Leaving them open will signifcantly slow down your computer)"):
-        manage.stop_container(container_name)
-        manage.stop_container(cotnainer_name2)
+        manage.stop_container(llm_container_name)
+        manage.stop_container(llm_container_name2)
+        manage.stop_container(whisper_cotnainer_name)
+        manage.stop_container(whisper_cotnainer_name2)
     else:
         pass
 
