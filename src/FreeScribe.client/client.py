@@ -27,6 +27,7 @@ import queue
 import ApplicationSettings_client as settings
 from ContainerManager import ContainerManager
 import atexit
+import asyncio
 
 
 # GUI Setup
@@ -727,20 +728,25 @@ whisper_dot = tk.Label(footer_frame, text='●', fg='red')
 whisper_dot.pack(side=tk.LEFT)
 tt.Tooltip(whisper_dot, text="Whisper Status: Green = Running, Red = Stopped")
 
-whisper_cotnainer_name = "whisper-llm-container"
-whisper_cotnainer_name2 = "caddy"
+
 # start whisper container button
-start_whisper_button = tk.Button(footer_frame, text="Start Whisper", command=lambda: app_settings.start_whisper())
+start_whisper_button = tk.Button(footer_frame, text="Start Whisper", command=lambda: (manage.start_container(app_settings.editable_settings["Whisper Container Name"]), manage.start_container(app_settings.editable_settings["Whisper Caddy Container Name"]), manage.set_status_icon_color(whisper_dot, True)))
 start_whisper_button.pack(side=tk.RIGHT)
 
-llm_container_name = "local-llm-container-llm-container-1"
-llm_container_name2 = "caddy-llm-container"
 manage = ContainerManager()
 # start local llm container button
-start_llm_button = tk.Button(footer_frame, text="Start LLM", command=lambda:(manage.start_container(container_name), manage.start_container(cotnainer_name2)))
+start_llm_button = tk.Button(footer_frame, text="Start LLM", command=lambda:(manage.start_container(app_settings.editable_settings["LLM Container Name"]), manage.start_container(app_settings.editable_settings["LLM Caddy Container Name"]), manage.set_status_icon_color(llm_dot, True)))
 start_llm_button.pack(side=tk.RIGHT)
 
 update_aiscribe_texts(None)
+
+#stop whisper container button
+stop_whisper_button = tk.Button(footer_frame, text="Stop Whisper", command=lambda: (manage.stop_container(app_settings.editable_settings["Whisper Container Name"]), manage.stop_container(app_settings.editable_settings["Whisper Caddy Container Name"]), manage.set_status_icon_color(whisper_dot, False)))
+stop_whisper_button.pack(side=tk.RIGHT)
+
+#stop llm container button
+stop_llm_button = tk.Button(footer_frame, text="Stop LLM", command=lambda: (manage.stop_container(app_settings.editable_settings["LLM Container Name"]), manage.stop_container(app_settings.editable_settings["LLM Caddy Container Name"]), manage.set_status_icon_color(llm_dot, False)))
+stop_llm_button.pack(side=tk.RIGHT)
 
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: pause_button.invoke())
@@ -759,10 +765,10 @@ def on_exit():
     # Create a pop up that says yes or no with tkinter messagebox to option to close the docker containers
 
     if messagebox.askyesno("Exit", "Do you want to close the Docker containers? (Leaving them open will signifcantly slow down your computer)"):
-        manage.stop_container(llm_container_name)
-        manage.stop_container(llm_container_name2)
-        manage.stop_container(whisper_cotnainer_name)
-        manage.stop_container(whisper_cotnainer_name2)
+        manage.stop_container(app_settings.editable_settings["LLM Container Name"])
+        manage.stop_container(app_settings.editable_settings["LLM Caddy Container Name"])
+        manage.stop_container(app_settings.editable_settings["Whisper Container Name"])
+        manage.stop_container(app_settings.editable_settings["Whisper Caddy Container Name"])
     else:
         pass
 
