@@ -769,7 +769,5 @@ def on_exit():
         manage.stop_container(app_settings.editable_settings["LLM Caddy Container Name"])
         manage.stop_container(app_settings.editable_settings["Whisper Container Name"])
         manage.stop_container(app_settings.editable_settings["Whisper Caddy Container Name"])
-    else:
-        pass
 
 atexit.register(on_exit)
