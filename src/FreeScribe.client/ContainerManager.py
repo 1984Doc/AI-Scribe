@@ -1,5 +1,6 @@
 import docker
 import asyncio
+import time
 
 class ContainerManager:
     """
@@ -66,3 +67,14 @@ class ContainerManager:
         else:
             widget.config(fg='red')
 
+    def check_docker_status_thread(self, llm_dot, whisper_dot, app_settings):
+        while True:
+            print("Checking Docker container status...")
+            # Check the status of the containers and set the color of the status icons.
+            if self.check_container_status(app_settings.editable_settings["LLM Container Name"]) and self.check_container_status(app_settings.editable_settings["LLM Caddy Container Name"]):
+                self.set_status_icon_color(llm_dot, True)
+
+            if self.check_container_status(app_settings.editable_settings["Whisper Container Name"]) and self.check_container_status(app_settings.editable_settings["Whisper Caddy Container Name"]):
+                self.set_status_icon_color(whisper_dot, True)
+
+            llm_dot.after(10000, lambda: self.check_docker_status_thread(llm_dot, whisper_dot, app_settings))
