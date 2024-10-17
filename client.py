@@ -23,113 +23,18 @@ import re
 import speech_recognition as sr # python package is named speechrecognition
 import time
 import queue
+import ApplicationSettings_client as settings
+
+# GUI Setup
+root = tk.Tk()
+root.title("AI Medical Scribe")
+
+# settings window
+app_settings = settings.ApplicationSettings()
+app_settings.start()
+
 
 NOTE_CREATION = "Note Creation...Please Wait"
-
-# Add these near the top of your script
-editable_settings = {
-    "use_story": False,
-    "use_memory": False,
-    "use_authors_note": False,
-    "use_world_info": False,
-    "max_context_length": 5000,
-    "max_length": 400,
-    "rep_pen": 1.1,
-    "rep_pen_range": 5000,
-    "rep_pen_slope": 0.7,
-    "temperature": 0.1,
-    "tfs": 0.97,
-    "top_a": 0.8,
-    "top_k": 30,
-    "top_p": 0.4,
-    "typical": 0.19,
-    "sampler_order": [6, 0, 1, 3, 4, 2, 5],
-    "singleline": False,
-    "frmttriminc": False,
-    "frmtrmblln": False,
-    "Local Whisper": False,
-    "Whisper Model": "small.en",
-    "Model": "gpt-4",
-    "Model Endpoint": "https://api.openai.com/v1/chat/completions",
-    "Real Time": False,
-    "Real Time Audio Length": 5,
-    "Real Time Silence Length": 1,
-    "Silence cut-off": 0.01
-}
-
-
-def build_url(ip, port):
-        if str(SSL_ENABLE) == "1":
-            print("Encrypted SSL/TLS connections are ENABLED between client and server.")
-            if str(SSL_SELFCERT) == "1":
-                print("...Self-signed SSL certificates are ALLOWED in Settings...\n...You may disregard subsequent log Warning if you are trusting self-signed certificates from server...")
-            else:
-                print("...Self-signed SSL certificates are DISABLED in Settings...\n...Trusted/Verified SSL certificates must be used on server, otherwise SSL connection will fail...")
-            return f"https://{ip}:{port}"
-        else:
-            print("UNENCRYPTED http connections are being used between Client and Whisper/Kobbold server...")
-            return f"http://{ip}:{port}"
-
-
-def save_settings_to_file(koboldcpp_ip, whisperaudio_ip, openai_api_key, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert):
-    settings = {
-        "koboldcpp_ip": koboldcpp_ip,
-        "whisperaudio_ip": whisperaudio_ip,
-        "openai_api_key": openai_api_key,
-        "editable_settings": editable_settings,
-        "koboldcpp_port": koboldcpp_port,
-        "whisperaudio_port": whisperaudio_port,
-        "ssl_enable": str(ssl_enable),
-        "ssl_selfcert": str(ssl_selfcert)
-    }
-    with open('settings.txt', 'w') as file:
-        json.dump(settings, file)
-
-def load_settings_from_file():
-    try:
-        with open('settings.txt', 'r') as file:
-            try:
-                settings = json.load(file)
-            except json.JSONDecodeError:
-                return "192.168.1.195", "192.168.1.195", "None", "5001", "8000", "0", "1"
-
-            koboldcpp_ip = settings.get("koboldcpp_ip", "192.168.1.195")
-            koboldcpp_port = settings.get("koboldcpp_port", "5001")
-            whisperaudio_ip = settings.get("whisperaudio_ip", "192.168.1.195")
-            whisperaudio_port = settings.get("whisperaudio_port", "8000")
-            ssl_enable = settings.get("ssl_enable", "0")
-            ssl_selfcert = settings.get("ssl_selfcert", "1")
-            openai_api_key = settings.get("openai_api_key", "NONE")
-            loaded_editable_settings = settings.get("editable_settings", {})
-            for key, value in loaded_editable_settings.items():
-                if key in editable_settings:
-                    editable_settings[key] = value
-            return koboldcpp_ip, whisperaudio_ip, openai_api_key, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert
-    except FileNotFoundError:
-        # Return default values if file not found
-        return "192.168.1.195", "192.168.1.195", "None", "5001", "8000", "0", "1"
-
-def load_aiscribe_from_file():
-    try:
-        with open('aiscribe.txt', 'r') as f:
-            content = f.read().strip()
-            return content if content else None
-    except FileNotFoundError:
-        return None
-
-def load_aiscribe2_from_file():
-    try:
-        with open('aiscribe2.txt', 'r') as f:
-            content = f.read().strip()
-            return content if content else None
-    except FileNotFoundError:
-        return None
-
-# Load settings at the start
-KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, KOBOLDCPP_PORT, WHISPERAUDIO_PORT, SSL_ENABLE, SSL_SELFCERT = load_settings_from_file()
-KOBOLDCPP = build_url(KOBOLDCPP_IP, KOBOLDCPP_PORT)
-
-WHISPERAUDIO = build_url(WHISPERAUDIO_IP, str(WHISPERAUDIO_PORT)+"/whisperaudio")
 
 user_message = []
 response_history = []
@@ -137,10 +42,6 @@ current_view = "full"
 username = "user"
 botname = "Assistant"
 num_lines_to_keep = 20
-DEFAULT_AISCRIBE = "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
-DEFAULT_AISCRIBE2 = "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
-AISCRIBE = load_aiscribe_from_file() or DEFAULT_AISCRIBE
-AISCRIBE2 = load_aiscribe2_from_file() or DEFAULT_AISCRIBE2
 uploaded_file_path = None
 is_recording = False
 is_realtimeactive = False
@@ -156,35 +57,35 @@ CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
-editable_settings_entries = {}
+
 
 
 def get_prompt(formatted_message):
 
-    sampler_order = editable_settings["sampler_order"]
+    sampler_order = app_settings.editable_settings["sampler_order"]
     if isinstance(sampler_order, str):
         sampler_order = json.loads(sampler_order)
     return {
         "prompt": f"{formatted_message}\n",
-        "use_story": editable_settings["use_story"],
-        "use_memory": editable_settings["use_memory"],
-        "use_authors_note": editable_settings["use_authors_note"],
-        "use_world_info": editable_settings["use_world_info"],
-        "max_context_length": int(editable_settings["max_context_length"]),
-        "max_length": int(editable_settings["max_length"]),
-        "rep_pen": float(editable_settings["rep_pen"]),
-        "rep_pen_range": int(editable_settings["rep_pen_range"]),
-        "rep_pen_slope": float(editable_settings["rep_pen_slope"]),
-        "temperature": float(editable_settings["temperature"]),
-        "tfs": float(editable_settings["tfs"]),
-        "top_a": float(editable_settings["top_a"]),
-        "top_k": int(editable_settings["top_k"]),
-        "top_p": float(editable_settings["top_p"]),
-        "typical": float(editable_settings["typical"]),
+        "use_story": app_settings.editable_settings["use_story"],
+        "use_memory": app_settings.editable_settings["use_memory"],
+        "use_authors_note": app_settings.editable_settings["use_authors_note"],
+        "use_world_info": app_settings.editable_settings["use_world_info"],
+        "max_context_length": int(app_settings.editable_settings["max_context_length"]),
+        "max_length": int(app_settings.editable_settings["max_length"]),
+        "rep_pen": float(app_settings.editable_settings["rep_pen"]),
+        "rep_pen_range": int(app_settings.editable_settings["rep_pen_range"]),
+        "rep_pen_slope": float(app_settings.editable_settings["rep_pen_slope"]),
+        "temperature": float(app_settings.editable_settings["temperature"]),
+        "tfs": float(app_settings.editable_settings["tfs"]),
+        "top_a": float(app_settings.editable_settings["top_a"]),
+        "top_k": int(app_settings.editable_settings["top_k"]),
+        "top_p": float(app_settings.editable_settings["top_p"]),
+        "typical": float(app_settings.editable_settings["typical"]),
         "sampler_order": sampler_order,
-        "singleline": editable_settings["singleline"],
-        "frmttriminc": editable_settings["frmttriminc"],
-        "frmtrmblln": editable_settings["frmtrmblln"]
+        "singleline": app_settings.editable_settings["singleline"],
+        "frmttriminc": app_settings.editable_settings["frmttriminc"],
+        "frmtrmblln": app_settings.editable_settings["frmtrmblln"]
     }
 
 def threaded_toggle_recording():
@@ -219,8 +120,8 @@ def record_audio():
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
     current_chunk = []
     silent_duration = 0
-    minimum_silent_duration = int(editable_settings["Real Time Silence Length"])
-    minimum_audio_duration = int(editable_settings["Real Time Audio Length"])
+    minimum_silent_duration = int(app_settings.editable_settings["Real Time Silence Length"])
+    minimum_audio_duration = int(app_settings.editable_settings["Real Time Audio Length"])
     while is_recording:
         if not is_paused:
             data = stream.read(CHUNK, exception_on_overflow=False)
@@ -238,7 +139,7 @@ def record_audio():
                 last_second_data = b''.join(current_chunk[-RATE // CHUNK:])
                 last_second_buffer = np.frombuffer(last_second_data, dtype=np.int16).astype(np.float32) / 32768
                 if is_silent(last_second_buffer) and silent_duration >= minimum_silent_duration:
-                    if editable_settings["Real Time"]:
+                    if app_settings.editable_settings["Real Time"]:
                         audio_queue.put(b''.join(current_chunk))
                     current_chunk = []
                     silent_duration = 0
@@ -247,7 +148,7 @@ def record_audio():
     audio_queue.put(None)
 
 
-def is_silent(data, threshold=float(editable_settings["Silence cut-off"])):
+def is_silent(data, threshold=float(app_settings.editable_settings["Silence cut-off"])):
     max_value = max(data)
     #print(f"Max audio value: {max_value}")
     return max_value < threshold
@@ -256,17 +157,17 @@ def realtime_text():
     global frames, is_realtimeactive
     if not is_realtimeactive:
         is_realtimeactive = True
-        model_name = editable_settings["Whisper Model"].strip()
+        model_name = app_settings.editable_settings["Whisper Model"].strip()
         model = whisper.load_model(model_name)
         while True:
             audio_data = audio_queue.get()
             if audio_data is None:
                 break
-            if editable_settings["Real Time"] == True:
+            if app_settings.editable_settings["Real Time"] == True:
                 print("Real Time Audio to Text")
                 audio_buffer = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
                 if not is_silent(audio_buffer):
-                    if editable_settings["Local Whisper"] == True:
+                    if app_settings.editable_settings["Local Whisper"] == True:
                         print("Local Real Time Whisper")
                         result = model.transcribe(audio_buffer, fp16=False)
                         update_gui(result['text'])
@@ -282,10 +183,15 @@ def realtime_text():
                         file_to_send = 'realtime.wav'
                         with open(file_to_send, 'rb') as f:
                             files = {'audio': f}
-                            if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
-                                response = requests.post(WHISPERAUDIO, files=files, verify=False)
+
+                            headers = {
+                                "X-API-Key": app_settings.editable_settings["Whisper Server API Key"]
+                            }
+
+                            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
+                                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers,files=files, verify=False)
                             else:
-                                response = requests.post(WHISPERAUDIO, files=files)
+                                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers,files=files)
                             if response.status_code == 200:
                                 text = response.json()['text']
                                 update_gui(text)
@@ -306,7 +212,7 @@ def save_audio():
             wf.setframerate(RATE)
             wf.writeframes(b''.join(frames))
         frames = []  # Clear recorded data
-        if editable_settings["Real Time"] == True:
+        if app_settings.editable_settings["Real Time"] == True:
             send_and_receive()
         else:
             threaded_send_audio_to_server()
@@ -316,7 +222,7 @@ def toggle_recording():
     if not is_recording:
         user_input.configure(state='normal')
         user_input.delete("1.0", tk.END)
-        if not editable_settings["Real Time"]:
+        if not app_settings.editable_settings["Real Time"]:
             user_input.insert(tk.END, "Recording")
         response_display.configure(state='normal')
         response_display.delete("1.0", tk.END)
@@ -344,10 +250,10 @@ def clear_all_text_fields():
 def toggle_gpt_button():
     global is_gpt_button_active
     if is_gpt_button_active:
-        gpt_button.config(bg="gray85", text="GPT OFF")
+        gpt_button.config(bg="gray85", text="KoboldCpp")
         is_gpt_button_active = False
     else:
-        gpt_button.config(bg="red", text="GPT ON")
+        gpt_button.config(bg="red", text="Custom Endpoint")
         is_gpt_button_active = True
 
 def toggle_aiscribe():
@@ -355,75 +261,111 @@ def toggle_aiscribe():
     use_aiscribe = not use_aiscribe
     toggle_button.config(text="AISCRIBE ON" if use_aiscribe else "AISCRIBE OFF")
 
-def save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert):
-    global KOBOLDCPP, WHISPERAUDIO, KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, editable_settings, AISCRIBE, AISCRIBE2, KOBOLDCPP_PORT, WHISPERAUDIO_PORT, SSL_ENABLE, SSL_SELFCERT
-    KOBOLDCPP_IP = koboldcpp_ip
-    WHISPERAUDIO_IP = whisperaudio_ip
-    KOBOLDCPP_PORT = koboldcpp_port
-    WHISPERAUDIO_PORT = whisperaudio_port
-    SSL_ENABLE = ssl_enable
-    SSL_SELFCERT = ssl_selfcert
-    OPENAI_API_KEY = openai_api_key
-    KOBOLDCPP = build_url(KOBOLDCPP_IP, KOBOLDCPP_PORT)
-
-    WHISPERAUDIO = build_url(WHISPERAUDIO_IP, str(WHISPERAUDIO_PORT)+"/whisperaudio")
-
-
-
-
-    for setting, entry in editable_settings_entries.items():
-        value = entry.get()
-        if setting in ["max_context_length", "max_length", "rep_pen_range", "top_k"]:
-            value = int(value)
-        # Add similar conditions for other data types
-        editable_settings[setting] = value
-    save_settings_to_file(KOBOLDCPP_IP, WHISPERAUDIO_IP, OPENAI_API_KEY, KOBOLDCPP_PORT, WHISPERAUDIO_PORT, SSL_ENABLE, SSL_SELFCERT)  # Save to file
-    AISCRIBE = aiscribe_text
-    AISCRIBE2 = aiscribe2_text
-    with open('aiscribe.txt', 'w') as f:
-        f.write(AISCRIBE)
-    with open('aiscribe2.txt', 'w') as f:
-        f.write(AISCRIBE2)
-    settings_window.destroy()
-
 def send_audio_to_server():
+    """
+    Sends an audio file to either a local or remote Whisper server for transcription.
+
+    Global Variables:
+    ----------------
+    uploaded_file_path : str
+        The path to the uploaded audio file. If `None`, the function defaults to
+        'recording.wav'.
+
+    Parameters:
+    -----------
+    None
+
+    Returns:
+    --------
+    None
+
+    Raises:
+    -------
+    ValueError
+        If the `app_settings.editable_settings["Local Whisper"]` flag is not a boolean.
+    FileNotFoundError
+        If the specified audio file does not exist.
+    requests.exceptions.RequestException
+        If there is an issue with the HTTP request to the remote server.
+    """
+
     global uploaded_file_path
-    if editable_settings["Local Whisper"] == True:
+
+    # Check if Local Whisper is enabled in the editable settings
+    if app_settings.editable_settings["Local Whisper"] == True:
+        # Inform the user that Local Whisper is being used for transcription
         print("Using Local Whisper for transcription.")
+
+        # Configure the user input widget to be editable and clear its content
         user_input.configure(state='normal')
         user_input.delete("1.0", tk.END)
+
+        # Display a message indicating that audio to text processing is in progress
         user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
-        model_name = editable_settings["Whisper Model"].strip()
+
+        # Load the specified Whisper model
+        model_name = app_settings.editable_settings["Whisper Model"].strip()
         model = whisper.load_model(model_name)
+
+        # Determine the file to send for transcription
         file_to_send = uploaded_file_path if uploaded_file_path else 'recording.wav'
         uploaded_file_path = None
+
+        # Transcribe the audio file using the loaded model
         result = model.transcribe(file_to_send)
         transcribed_text = result["text"]
+
+        # Update the user input widget with the transcribed text
         user_input.configure(state='normal')
         user_input.delete("1.0", tk.END)
         user_input.insert(tk.END, transcribed_text)
+
+        # Send the transcribed text and receive a response
         send_and_receive()
     else:
+        # Inform the user that Remote Whisper is being used for transcription
         print("Using Remote Whisper for transcription.")
+
+        # Configure the user input widget to be editable and clear its content
         user_input.configure(state='normal')
         user_input.delete("1.0", tk.END)
+
+        # Display a message indicating that audio to text processing is in progress
         user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
+
+        # Determine the file to send for transcription
         if uploaded_file_path:
             file_to_send = uploaded_file_path
             uploaded_file_path = None
         else:
             file_to_send = 'recording.wav'
+
+        # Open the audio file in binary mode
         with open(file_to_send, 'rb') as f:
             files = {'audio': f}
-            if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
-                response = requests.post(WHISPERAUDIO, files=files, verify=False)
+
+            # Add the Bearer token to the headers for authentication
+            headers = {
+                "Authorization": f"Bearer {app_settings.editable_settings['Whisper Server API Key']}"
+            }
+
+            # Check for SSL and self-signed certificate settings
+            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
+                # Send the request without verifying the SSL certificate
+                response = requests.post(WHISPERAUDIO_ENDPOINT, headers=headers, files=files, verify=False)
             else:
-                response = requests.post(WHISPERAUDIO, files=files)
+                # Send the request with the audio file and headers/authorization
+                response = requests.post(WHISPERAUDIO_ENDPOINT,headers=headers, files=files)
+            
+            # On successful response (status code 200)
             if response.status_code == 200:
+                # Update the UI with the transcribed text
                 transcribed_text = response.json()['text']
                 user_input.configure(state='normal')
                 user_input.delete("1.0", tk.END)
                 user_input.insert(tk.END, transcribed_text)
+
+                # Send the transcribed text and receive a response
                 send_and_receive()
 
 def send_and_receive():
@@ -441,10 +383,10 @@ def handle_message(formatted_message):
         show_edit_transcription_popup(formatted_message)
     else:
         prompt = get_prompt(formatted_message)
-        if str(SSL_ENABLE) == "1" and str(SSL_SELFCERT) == "1":
-            response = requests.post(f"{KOBOLDCPP}/api/v1/generate", json=prompt, verify=False)
+        if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
+            response = requests.post(f"{app_settings.KOBOLDCPP_ENDPOINT}/api/v1/generate", json=prompt, verify=False)
         else:
-            response = requests.post(f"{KOBOLDCPP}/api/v1/generate", json=prompt)
+            response = requests.post(f"{app_settings.KOBOLDCPP_ENDPOINT}/api/v1/generate", json=prompt)
         if response.status_code == 200:
             results = response.json()['results']
             response_text = results[0]['text']
@@ -487,20 +429,35 @@ def show_response(event):
         pyperclip.copy(response_text)
 
 def send_text_to_chatgpt(edited_text):
-    api_key = OPENAI_API_KEY
+    api_key = app_settings.OPENAI_API_KEY
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
+        "accept": "application/json",
     }
+
     payload = {
-        "model": editable_settings["Model"].strip(),
+        "model": app_settings.editable_settings["Model"].strip(),
         "messages": [
             {"role": "user", "content": edited_text}
         ],
     }
     try:
-        response = requests.post(editable_settings["Model Endpoint"].strip(), headers=headers, json=payload)
-        response.raise_for_status()
+
+        if app_settings.editable_settings["Model Endpoint"].endswith('/'):
+            app_settings.editable_settings["Model Endpoint"] = app_settings.editable_settings["Model Endpoint"][:-1]
+
+        if app_settings.API_STYLE == "OpenAI":
+            response = requests.Response
+            if str(app_settings.SSL_SELFCERT) == "1" and str(app_settings.SSL_ENABLE) == "1":
+                response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=False)
+            else:
+                response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload)
+
+            response.raise_for_status()
+            response_data = response.json()
+            response_text = (response_data['choices'][0]['message']['content'])
+            update_gui_with_response(response_text)
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err}")
         display_text(f"HTTP error occurred: {http_err}")
@@ -513,11 +470,6 @@ def send_text_to_chatgpt(edited_text):
     except requests.exceptions.RequestException as req_err:
         print(f"An error occurred: {req_err}")
         display_text(f"Connection error occurred: {conn_err}")
-
-    if response.status_code == 200:
-            response_data = response.json()
-            response_text = (response_data['choices'][0]['message']['content'])
-            update_gui_with_response(response_text)
 
 
 def show_edit_transcription_popup(formatted_message):
@@ -546,115 +498,6 @@ def show_edit_transcription_popup(formatted_message):
     cancel_button = tk.Button(popup, text="Cancel", command=popup.destroy)
     cancel_button.pack(side=tk.LEFT, padx=10, pady=10)
 
-
-
-
-def open_settings_window():
-    settings_window = tk.Toplevel(root)
-    settings_window.title("Settings")
-
-    #not resizeable
-    settings_window.resizable(False, False)
-
-    # make the base window none interactive while updating settings
-    settings_window.grab_set()
-
-
-
-    # KOBOLDCPP IP input
-    tk.Label(settings_window, text="KOBOLDCPP IP:").grid(row=0, column=0)
-    koboldcpp_ip_entry = tk.Entry(settings_window, width=25)
-    koboldcpp_ip_entry.insert(0, KOBOLDCPP_IP)
-    koboldcpp_ip_entry.grid(row=0, column=1)
-
-    # KOBOLDCPP PORT input
-    tk.Label(settings_window, text="PORT:").grid(row=0, column=2)
-    koboldcpp_port_entry = tk.Entry(settings_window, width=10)
-    koboldcpp_port_entry.insert(0, KOBOLDCPP_PORT)
-    koboldcpp_port_entry.grid(row=0, column=3)
-
-    # WHISPERAUDIO IP input
-    tk.Label(settings_window, text="WHISPERAUDIO IP:").grid(row=2, column=0)
-    whisperaudio_ip_entry = tk.Entry(settings_window, width=25)
-    whisperaudio_ip_entry.insert(0, WHISPERAUDIO_IP)
-    whisperaudio_ip_entry.grid(row=2, column=1)
-
-    # WHISPERAUDIO PORT input
-    tk.Label(settings_window, text="PORT:").grid(row=2, column=2)
-    whisperaudio_port_entry = tk.Entry(settings_window, width=10)
-    whisperaudio_port_entry.insert(0, WHISPERAUDIO_PORT)
-    whisperaudio_port_entry.grid(row=2, column=3)
-
-    # SSL_ENABLE checkbox
-    ssl_enable_var = tk.IntVar()  # Set initial value as per SSL_ENABLE
-    tk.Label(settings_window, text="Enable SSL:").grid(row=3, column=2)
-    ssl_enable_checkbox = tk.Checkbutton(settings_window, variable=ssl_enable_var, onvalue=1, offvalue=0)
-    ssl_enable_checkbox.grid(row=3, column=3)
-
-    # SSL_SELFCERT checkbox
-    ssl_selfcert_var = tk.IntVar()  # Set initial value as per SSL_SELFCERT
-    tk.Label(settings_window, text="Self-Signed Cert:").grid(row=4, column=2)
-    ssl_selfcert_checkbox = tk.Checkbutton(settings_window, variable=ssl_selfcert_var, onvalue=1, offvalue=0)
-    ssl_selfcert_checkbox.grid(row=4, column=3)
-
-    if str(SSL_ENABLE) == "1":
-        ssl_enable_checkbox.select()
-
-    if str(SSL_SELFCERT) == "1":
-        ssl_selfcert_checkbox.select()
-
-
-    # OpenAI API Key
-    tk.Label(settings_window, text="OpenAI API Key:").grid(row=5, column=0, sticky='nw')
-    openai_api_key_entry = tk.Entry(settings_window, width=25)
-    openai_api_key_entry.insert(0, OPENAI_API_KEY)
-    openai_api_key_entry.grid(row=5, column=1, sticky='nw')
-
-    # Editable Settings
-    row_index = 6
-    for setting, value in editable_settings.items():
-        print(setting, value)
-        if value == "True" or value == "False" or value == False or value == True:
-            editable_settings_entries[setting] = tk.BooleanVar()
-            tk.Label(settings_window, text=f"{setting}").grid(row=row_index, column=0, sticky='nw')
-            setting_checkbox = tk.Checkbutton(settings_window, variable=editable_settings_entries[setting])
-            setting_checkbox.grid(row=row_index, column=1, sticky='nw')
-
-
-            if value == True:
-                setting_checkbox.select()
-
-            row_index += 1
-
-        else:
-            tk.Label(settings_window, text=f"{setting}:").grid(row=row_index, column=0, sticky='nw')
-            entry = tk.Entry(settings_window, width=25)
-            entry.insert(0, str(value))
-            entry.grid(row=row_index, column=1, sticky='nw')
-            editable_settings_entries[setting] = entry
-            row_index += 1
-
-    # AISCRIBE text box
-    tk.Label(settings_window, text="Context Before Conversation").grid(row=0, column=4, sticky='nw', padx=(10,0))
-    aiscribe_textbox = tk.Text(settings_window, width=50, height=15)
-    aiscribe_textbox.insert('1.0', AISCRIBE)
-    aiscribe_textbox.grid(row=1, column=4, rowspan=10, sticky='nw', padx=(10,0))
-
-    # AISCRIBE2 text box
-    tk.Label(settings_window, text="Context After Conversation").grid(row=11, column=4, sticky='nw', padx=(10,0))
-    aiscribe2_textbox = tk.Text(settings_window, width=50, height=15)
-    aiscribe2_textbox.insert('1.0', AISCRIBE2)
-    aiscribe2_textbox.grid(row=12, column=4, rowspan=10, sticky='nw', padx=(10,0))
-
-    # Save, Close, and Default buttons under the left column
-    save_button = tk.Button(settings_window, text="Save", width=15, command=lambda: save_settings(koboldcpp_ip_entry.get(), whisperaudio_ip_entry.get(), openai_api_key_entry.get(), aiscribe_textbox.get("1.0", tk.END), aiscribe2_textbox.get("1.0", tk.END), settings_window, koboldcpp_port_entry.get(), whisperaudio_port_entry.get(), ssl_enable_var.get(), ssl_selfcert_var.get()))
-    save_button.grid(row=row_index, column=0, padx=5, pady=5)
-
-    close_button = tk.Button(settings_window, text="Close", width=15, command=settings_window.destroy)
-    close_button.grid(row=row_index + 1, column=0, padx=5, pady=5)
-
-    default_button = tk.Button(settings_window, text="Default", width=15, command=lambda: clear_settings_file(settings_window))
-    default_button.grid(row=row_index + 2, column=0, padx=5, pady=5)
 
 def upload_file():
     global uploaded_file_path
@@ -768,7 +611,7 @@ def get_dropdown_values_and_mapping():
         print("options.txt not found, using default values.")
         # Fallback default options if file not found
         options = ["Settings Template"]
-        mapping["Settings Template"] = (AISCRIBE, AISCRIBE2)
+        mapping["Settings Template"] = (app_settings.AISCRIBE, app_settings.AISCRIBE2)
     return options, mapping
 
 dropdown_values, option_mapping = get_dropdown_values_and_mapping()
@@ -778,10 +621,6 @@ def update_aiscribe_texts(event):
     selected_option = combobox.get()
     if selected_option in option_mapping:
         AISCRIBE, AISCRIBE2 = option_mapping[selected_option]
-
-# GUI Setup
-root = tk.Tk()
-root.title("AI Medical Scribe")
 
 # Configure grid weights for scalability
 root.grid_columnconfigure(0, weight=1, minsize= 10)
@@ -821,10 +660,10 @@ clear_button.grid(row=1, column=4, pady=5, sticky='nsew')
 toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=10)
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
 
-gpt_button = tk.Button(root, text="GPT OFF", command=toggle_gpt_button, height=2, width=10)
+gpt_button = tk.Button(root, text="KoboldCpp", command=toggle_gpt_button, height=2, width=13)
 gpt_button.grid(row=1, column=6, pady=5, sticky='nsew')
 
-settings_button = tk.Button(root, text="Settings", command=open_settings_window, height=2, width=10)
+settings_button = tk.Button(root, text="Settings", command=app_settings.open_settings_window, height=2, width=10)
 settings_button.grid(row=1, column=7, pady=5, sticky='nsew')
 
 upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=10)
