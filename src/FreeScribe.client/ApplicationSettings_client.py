@@ -160,7 +160,7 @@ class ApplicationSettings:
         }
 
         self.docker_settings = {
-            "LLM Cotnainer Name",
+            "LLM Container Name",
             "LLM Caddy Container Name",
             "Whisper Container Name",
             "Whisper Caddy Container Name"
@@ -301,11 +301,11 @@ class ApplicationSettings:
 
         basic_frame = ttk.Frame(notebook)
         advanced_frame = ttk.Frame(notebook)
-        docker_frame = ttk.Frame(notebook)
+        docker_settings_frame = ttk.Frame(notebook) 
 
         notebook.add(basic_frame, text="Basic Settings")
         notebook.add(advanced_frame, text="Advanced Settings")
-        notebook.add(docker_frame, text="Docker Settings")
+        notebook.add(docker_settings_frame, text="Docker Settings")
 
         def add_scrollbar_to_frame(frame):
             """
@@ -394,7 +394,7 @@ class ApplicationSettings:
                 adv_row_counter += 1
             elif setting in self.docker_settings:
                 row_counter = docker_row_counter
-                frame = docker_frame
+                frame = docker_settings_frame
                 docker_row_counter += 1
 
             tk.Label(frame, text=f"{setting}:").grid(row=row_counter, column=0, padx=0, pady=5, sticky="w")
