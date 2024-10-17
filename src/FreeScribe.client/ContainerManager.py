@@ -5,14 +5,28 @@ import time
 class ContainerManager:
     """
     Manages Docker containers by starting and stopping them.
+
+    This class provides methods to interact with Docker containers,
+    including starting, stopping, and checking their status.
+
+    Attributes:
+        client (docker.DockerClient): The Docker client used to interact with containers.
     """
 
     def __init__(self):
+        """
+        Initialize the ContainerManager with a Docker client.
+        """
         self.client = docker.from_env()
 
     def start_container(self, container_name):
         """
         Start a Docker container by its name.
+
+        :param container_name: The name of the container to start.
+        :type container_name: str
+        :raises docker.errors.NotFound: If the specified container is not found.
+        :raises docker.errors.APIError: If an error occurs while starting the container.
         """
         try:
             container = self.client.containers.get(container_name)
@@ -26,6 +40,11 @@ class ContainerManager:
     def stop_container(self, container_name):
         """
         Stop a Docker container by its name.
+
+        :param container_name: The name of the container to stop.
+        :type container_name: str
+        :raises docker.errors.NotFound: If the specified container is not found.
+        :raises docker.errors.APIError: If an error occurs while stopping the container.
         """
         try:
             container = self.client.containers.get(container_name)
@@ -39,6 +58,13 @@ class ContainerManager:
     def check_container_status(self, container_name):
         """
         Check the status of a Docker container by its name.
+
+        :param container_name: The name of the container to check.
+        :type container_name: str
+        :return: True if the container is running, False otherwise.
+        :rtype: bool
+        :raises docker.errors.NotFound: If the specified container is not found.
+        :raises docker.errors.APIError: If an error occurs while checking the container status.
         """
         try:
             container = self.client.containers.get(container_name)
@@ -60,14 +86,31 @@ class ContainerManager:
     def set_status_icon_color(self, widget, status):
         """
         Set the color of the status icon based on the status of the container.
+
+        :param widget: The widget representing the status icon.
+        :type widget: tkinter.Widget
+        :param status: The status of the container (True for running, False otherwise).
+        :type status: bool
         """
-        
         if status:
             widget.config(fg='green')
         else:
             widget.config(fg='red')
 
     def check_docker_status_thread(self, llm_dot, whisper_dot, app_settings):
+        """
+        Continuously check the status of Docker containers and update status icons.
+
+        This method runs in a separate thread and periodically checks the status
+        of specified containers, updating the corresponding status icons.
+
+        :param llm_dot: The widget representing the LLM container status icon.
+        :type llm_dot: tkinter.Widget
+        :param whisper_dot: The widget representing the Whisper container status icon.
+        :type whisper_dot: tkinter.Widget
+        :param app_settings: An object containing application settings.
+        :type app_settings: AppSettings
+        """
         while True:
             print("Checking Docker container status...")
             # Check the status of the containers and set the color of the status icons.
