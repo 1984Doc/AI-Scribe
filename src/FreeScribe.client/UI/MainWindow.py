@@ -3,6 +3,17 @@ Main window module for the FreeScribe client application.
 
 This module contains the MainWindow class which is responsible for managing the main window of the application.
 It includes methods to start and stop Docker containers for LLM and Whisper services.
+
+This software is released under the AGPL-3.0 license
+Copyright (c) 2023-2024 Braedon Hendy
+
+Further updates and packaging added in 2024 through the ClinicianFOCUS initiative, 
+a collaboration with Dr. Braedon Hendy and Conestoga College Institute of Applied 
+Learning and Technology as part of the CNERG+ applied research project, 
+Unburdening Primary Healthcare: An Open-Source AI Clinician Partner Platform". 
+Prof. Michael Yingbull (PI), Dr. Braedon Hendy (Partner), 
+and Research Students - Software Developer Alex Simko, Pemba Sherpa (F24), and Naitik Patel.
+
 """
 
 from ContainerManager import ContainerManager
