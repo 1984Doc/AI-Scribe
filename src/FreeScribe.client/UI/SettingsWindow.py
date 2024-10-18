@@ -62,8 +62,6 @@ class ApplicationSettings:
     save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, 
                   settings_window, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
         Saves the current settings, including API keys, IP addresses, and user-defined parameters.
-    open_settings_window():
-        Opens the settings window, allowing the user to modify and save application settings.
     load_aiscribe_from_file():
         Loads the first AI Scribe text from a file.
     load_aiscribe2_from_file():
