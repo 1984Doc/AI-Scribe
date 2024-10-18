@@ -768,11 +768,10 @@ def on_exit():
 
     main_window = MainWindow()
 
-    if main_window.container_manager is not None:
-        if app_settings.editable_settings["Auto Shutdown Containers on Exit"] is True:
-            main_window.container_manager.stop_container(app_settings.editable_settings["LLM Container Name"])
-            main_window.container_manager.stop_container(app_settings.editable_settings["LLM Caddy Container Name"])
-            main_window.container_manager.stop_container(app_settings.editable_settings["Whisper Container Name"])
-            main_window.container_manager.stop_container(app_settings.editable_settings["Whisper Caddy Container Name"])
+    if main_window.container_manager is not None and app_settings.editable_settings["Auto Shutdown Containers on Exit"] is True:
+        main_window.container_manager.stop_container(app_settings.editable_settings["LLM Container Name"])
+        main_window.container_manager.stop_container(app_settings.editable_settings["LLM Caddy Container Name"])
+        main_window.container_manager.stop_container(app_settings.editable_settings["Whisper Container Name"])
+        main_window.container_manager.stop_container(app_settings.editable_settings["Whisper Caddy Container Name"])
 
 atexit.register(on_exit)
