@@ -80,8 +80,6 @@ class ContainerManager:
                 return True
             else:
                 return False
-
-            print(f"Container {container_name} is {status}.")
         except docker.errors.NotFound:
             print(f"Container {container_name} not found.")
             return False
