@@ -8,6 +8,9 @@
 >
 > Braedon Hendy
 
+## Demo
+[Youtube Demo](https://www.youtube.com/watch?v=w8kUB8Y3A30)
+
 ## Changelog
 
 - **2024-03-17** - updated `client.py` to allow for `OpenAI` token access when `GPT` button is selected.  A prompt will show to allow for scrubbing of any personal health information.
