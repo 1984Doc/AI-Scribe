@@ -37,7 +37,7 @@ class Tooltip(object):
         self.widget.bind("<Enter>", self.enter)
         self.widget.bind("<Leave>", self.leave)
         self.widget.bind("<ButtonPress>", self.leave)
-        self.id = None
+        self.ttid = None
         self.tw = None
 
     def enter(self, event=None):
@@ -64,16 +64,16 @@ class Tooltip(object):
         Schedule the tooltip to be shown after a delay.
         """
         self.unschedule()
-        self.id = self.widget.after(self.waittime, self.showtip)
+        self.ttid = self.widget.after(self.waittime, self.showtip)
 
     def unschedule(self):
         """
         Cancel the scheduled tooltip if it exists.
         """
-        id = self.id
-        self.id = None
-        if id:
-            self.widget.after_cancel(id)
+        ttid = self.ttid
+        self.ttid = None
+        if ttid:
+            self.widget.after_cancel(ttid)
 
     def showtip(self, event=None):
         """
