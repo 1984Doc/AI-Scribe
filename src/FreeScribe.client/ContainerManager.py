@@ -37,10 +37,10 @@ class ContainerManager:
             container = self.client.containers.get(container_name)
             container.start()
             return True
-        except docker.errors.NotFound:
-            raise docker.errors.NotFound(f"Container {container_name} not found.")
+        except docker.errors.NotFound as e:
+            raise docker.errors.NotFound(f"Container {container_name} not found.") from e
         except docker.errors.APIError as e:
-            raise docker.errors.APIError(f"An error occurred while starting the container: {e}")
+            raise docker.errors.APIError(f"An error occurred while starting the container: {e}") from e
 
     def stop_container(self, container_name):
         """
@@ -56,10 +56,10 @@ class ContainerManager:
             container.stop()
             print(f"Container {container_name} stopped successfully.")
             return True
-        except docker.errors.NotFound:
-            raise docker.errors.NotFound(f"Container {container_name} not found.")
+        except docker.errors.NotFound as e:
+            raise docker.errors.NotFound(f"Container {container_name} not found.") from e
         except docker.errors.APIError as e:
-            raise docker.errors.APIError(f"An error occurred while stopping the container: {e}")
+            raise docker.errors.APIError(f"An error occurred while stopping the container: {e}") from e
 
     def check_container_status(self, container_name):
         """
