@@ -1,14 +1,21 @@
-"""
-SettingsWindowUI.py
+import json
+import tkinter as tk
+from tkinter import ttk, messagebox
+
+class SettingsWindowUI:
+    def __init__(self, settings):
+        self.settings = settings
+        self.window = None
+        self.main_frame = None
+        self.notebook = None
+        self.basic_frame = None
+        self.advanced_frame = None
+        self.docker_settings_frame = None
+        self.basic_settings_frame = None
+        self.advanced_settings_frame = None
         
 
     def open_settings_window(self):
-        """
-        Opens the settings window and initializes its UI components.
-
-        This method creates the main window, sets up the notebook with tabs for basic, advanced, and Docker settings,
-        and initializes the UI components for each tab.
-        """
         self.window = tk.Toplevel()
         self.window.title("Settings")
         self.window.resizable(True, True)
@@ -37,15 +44,6 @@ SettingsWindowUI.py
         self.create_buttons()
 
     def add_scrollbar_to_frame(self, frame):
-        """
-        Adds a scrollbar to the given frame.
-
-        Args:
-            frame (tk.Frame): The frame to which the scrollbar will be added.
-
-        Returns:
-            tk.Frame: The scrollable frame.
-        """
         canvas = tk.Canvas(frame)
         scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
@@ -64,11 +62,6 @@ SettingsWindowUI.py
         return scrollable_frame
 
     def create_basic_settings(self):
-        """
-        Creates the UI components for the basic settings tab.
-
-        This method initializes and places the UI components for the basic settings tab, including entries for IP addresses, ports, and other settings.
-        """
         tk.Label(self.basic_settings_frame, text="KOBOLDCPP IP:").grid(row=0, column=0, padx=0, pady=5, sticky="w")
         self.koboldcpp_ip_entry = tk.Entry(self.basic_settings_frame, width=25)
         self.koboldcpp_ip_entry.insert(0, self.settings.KOBOLDCPP_IP)
@@ -112,11 +105,6 @@ SettingsWindowUI.py
         self.create_editable_settings(self.basic_settings_frame, self.settings.basic_settings, start_row=7)
 
     def create_advanced_settings(self):
-        """
-        Creates the UI components for the advanced settings tab.
-
-        This method initializes and places the UI components for the advanced settings tab, including editable settings and text areas for pre and post prompting.
-        """
         self.create_editable_settings(self.advanced_settings_frame, self.settings.advanced_settings)
 
         tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=len(self.settings.advanced_settings), column=0, padx=0, pady=5, sticky="w")
@@ -130,22 +118,9 @@ SettingsWindowUI.py
         self.aiscribe2_text.grid(row=len(self.settings.advanced_settings)+1, column=1, columnspan=2, padx=0, pady=5, sticky="w")
 
     def create_docker_settings(self):
-        """
-        Creates the UI components for the Docker settings tab.
-
-        This method initializes and places the UI components for the Docker settings tab, including editable settings.
-        """
         self.create_editable_settings(self.docker_settings_frame, self.settings.docker_settings)
 
-    def create_editable_settings(self, frame, settings_set, start_row=0):
-        """
-        Creates editable settings UI components for the given frame.
-
-        Args:
-            frame (tk.Frame): The frame in which to place the editable settings.
-            settings_set (list): The list of settings to create UI components for.
-            start_row (int): The starting row for placing the settings.
-        """
+    def create_editable_settings(self, frame, settings_set, start_row=0):        
         for i, setting in enumerate(settings_set):
             tk.Label(frame, text=f"{setting}:").grid(row=start_row+i, column=0, padx=0, pady=5, sticky="w")
             
@@ -163,21 +138,11 @@ SettingsWindowUI.py
                 self.settings.editable_settings_entries[setting] = entry
 
     def create_buttons(self):
-        """
-        Creates the buttons for the settings window.
-
-        This method initializes and places the buttons for saving settings, resetting to default, and closing the window.
-        """
         tk.Button(self.main_frame, text="Save", command=self.save_settings, width=10).pack(side="right", padx=2, pady=5)
         tk.Button(self.main_frame, text="Default", width=10, command=self.reset_to_default).pack(side="right", padx=2, pady=5)
         tk.Button(self.main_frame, text="Close", width=10, command=self.window.destroy).pack(side="right", padx=2, pady=5)
 
     def save_settings(self):
-        """
-        Saves the settings entered by the user.
-
-        This method retrieves the values from the UI components and calls the `save_settings` method of the `settings` object to save them.
-        """
         self.settings.save_settings(
             self.koboldcpp_ip_entry.get(),
             self.whisperaudio_ip_entry.get(),
@@ -190,13 +155,9 @@ SettingsWindowUI.py
             self.ssl_enable_var.get(),
             self.ssl_selfcert_var.get(),
             self.api_dropdown.get(),
+
         )
         self.window.destroy()
 
     def reset_to_default(self):
-        """
-        Resets the settings to their default values.
-
-        This method calls the `clear_settings_file` method of the `settings` object to reset the settings to their default values.
-        """
         self.settings.clear_settings_file(self.window)
