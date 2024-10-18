@@ -156,14 +156,16 @@ class ApplicationSettings:
             "LLM Container Name": "llm-container-1",
             "LLM Caddy Container Name": "caddy-llm-container",
             "Whisper Container Name": "speech-container",
-            "Whisper Caddy Container Name": "caddy"
+            "Whisper Caddy Container Name": "caddy",
+            "Auto Shutdown Containers on Exit": True
         }
 
         self.docker_settings = {
             "LLM Container Name",
             "LLM Caddy Container Name",
             "Whisper Container Name",
-            "Whisper Caddy Container Name"
+            "Whisper Caddy Container Name",
+            "Auto Shutdown Containers on Exit"
         }
 
         self.editable_settings_entries = {}
