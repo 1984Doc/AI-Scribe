@@ -211,7 +211,6 @@ class SettingsWindowUI:
             tk.Label(frame, text=f"{setting}:").grid(row=start_row+i, column=0, padx=0, pady=5, sticky="w")
             
             value = self.settings.editable_settings[setting]
-            print(i, setting, value)
             if value in [True, False]:
                 var = tk.IntVar(value=int(value))
                 checkbox = tk.Checkbutton(frame, variable=var)
