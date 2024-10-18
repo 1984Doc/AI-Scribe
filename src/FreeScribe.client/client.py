@@ -4,6 +4,7 @@
 
 import tkinter as tk
 from tkinter import scrolledtext, ttk, filedialog
+import Tooltip as tt
 import requests
 import pyperclip
 import wave
@@ -24,6 +25,11 @@ import speech_recognition as sr # python package is named speechrecognition
 import time
 import queue
 import ApplicationSettings_client as settings
+from ContainerManager import ContainerManager
+import atexit
+import asyncio
+from UI.MainWindow import MainWindow
+
 
 # GUI Setup
 root = tk.Tk()
@@ -641,6 +647,7 @@ root.grid_rowconfigure(0, weight=1)
 root.grid_rowconfigure(1, weight=0)
 root.grid_rowconfigure(2, weight=1)
 root.grid_rowconfigure(3, weight=0)
+root.grid_rowconfigure(4, weight=0)
 
 user_input = scrolledtext.ScrolledText(root, height=12)
 user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
@@ -694,7 +701,54 @@ combobox.current(0)
 combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
 combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
 
-update_aiscribe_texts(None)
+window = MainWindow()
+
+if window.container_manager.client is not None:
+    # Footer frame
+    footer_frame = tk.Frame(root, bd=1, relief=tk.SUNKEN)
+    footer_frame.grid(row=4, column=0, columnspan=14, sticky='nsew')
+
+    # Docker status bar for llm and whisper containers
+    docker_status = tk.Label(footer_frame, text="Docker Containers: ")
+    docker_status.pack(side=tk.LEFT)
+
+    # LLM Container Status
+    llm_status = tk.Label(footer_frame, text="LLM Container Status:", padx=10)
+    llm_status.pack(side=tk.LEFT)
+    tt.Tooltip(llm_status, text="The LLM container is essential for generating responses and creating the SOAP notes. This service must be running.")
+
+    # Red dot for LLM status
+    llm_dot = tk.Label(footer_frame, text='●', fg='red')
+    llm_dot.pack(side=tk.LEFT)
+    tt.Tooltip(llm_dot, text="LLM Container Status: Green = Running, Red = Stopped")
+
+    # Whisper Server Status
+    whisper_status = tk.Label(footer_frame, text="Whisper Server Status:", padx=10)
+    whisper_status.pack(side=tk.LEFT)
+    tt.Tooltip(whisper_status, text="The whisper server is responsible for transcribing microphone input to text. This service must be running.")
+
+    # Red dot for Whisper status
+    whisper_dot = tk.Label(footer_frame, text='●', fg='red')
+    whisper_dot.pack(side=tk.LEFT)
+    tt.Tooltip(whisper_dot, text="Whisper Status: Green = Running, Red = Stopped")
+
+    # start whisper container button
+    start_whisper_button = tk.Button(footer_frame, text="Start Whisper", command=lambda: window.start_whisper_container(whisper_dot, app_settings))
+    start_whisper_button.pack(side=tk.RIGHT)
+
+    # start local llm container button
+    start_llm_button = tk.Button(footer_frame, text="Start LLM", command= lambda: window.start_LLM_container(llm_dot, app_settings))
+    start_llm_button.pack(side=tk.RIGHT)
+
+    update_aiscribe_texts(None)
+
+    #stop whisper container button
+    stop_whisper_button = tk.Button(footer_frame, text="Stop Whisper", command=lambda: window.stop_whisper_container(whisper_dot, app_settings))
+    stop_whisper_button.pack(side=tk.RIGHT)
+
+    #stop llm container button
+    stop_llm_button = tk.Button(footer_frame, text="Stop LLM", command=lambda: window.stop_LLM_container(llm_dot, app_settings))
+    stop_llm_button.pack(side=tk.RIGHT)
 
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: pause_button.invoke())
@@ -708,3 +762,16 @@ root.minsize(900, 400)
 root.mainloop()
 
 p.terminate()
+
+def on_exit():
+    # Create a pop up that says yes or no with tkinter messagebox to option to close the docker containers
+
+    main_window = MainWindow()
+
+    if main_window.container_manager is not None and app_settings.editable_settings["Auto Shutdown Containers on Exit"] is True:
+        main_window.container_manager.stop_container(app_settings.editable_settings["LLM Container Name"])
+        main_window.container_manager.stop_container(app_settings.editable_settings["LLM Caddy Container Name"])
+        main_window.container_manager.stop_container(app_settings.editable_settings["Whisper Container Name"])
+        main_window.container_manager.stop_container(app_settings.editable_settings["Whisper Caddy Container Name"])
+
+atexit.register(on_exit)
