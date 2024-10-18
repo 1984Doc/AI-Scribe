@@ -17,7 +17,12 @@ class ContainerManager:
         """
         Initialize the ContainerManager with a Docker client.
         """
-        self.client = docker.from_env()
+        self.client = None
+
+        try:
+            self.client = docker.from_env()
+        except docker.errors.DockerException as e:
+            print(f"An error occurred while initializing the Docker client, removing status bar: {e}")
 
     def start_container(self, container_name):
         """
@@ -32,10 +37,13 @@ class ContainerManager:
             container = self.client.containers.get(container_name)
             container.start()
             print(f"Container {container_name} started successfully.")
+            return True
         except docker.errors.NotFound:
             print(f"Container {container_name} not found.")
+            return False
         except docker.errors.APIError as e:
             print(f"An error occurred while starting the container: {e}")
+            return False
 
     def stop_container(self, container_name):
         """
@@ -50,10 +58,13 @@ class ContainerManager:
             container = self.client.containers.get(container_name)
             container.stop()
             print(f"Container {container_name} stopped successfully.")
+            return True
         except docker.errors.NotFound:
             print(f"Container {container_name} not found.")
+            return False
         except docker.errors.APIError as e:
             print(f"An error occurred while stopping the container: {e}")
+            return False
 
     def check_container_status(self, container_name):
         """
