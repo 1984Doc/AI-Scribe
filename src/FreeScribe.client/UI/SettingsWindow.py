@@ -24,6 +24,7 @@ import requests
 import numpy as np
 import pyaudio
 
+
 p = pyaudio.PyAudio()
 
 class SettingsWindow():
@@ -483,9 +484,9 @@ class SettingsWindow():
         self.main_window = window
 
     def audio_callback(indata, frames, time, status):
-    volume_norm = np.linalg.norm(indata) * 10  # Calculate the volume level
-    volume_norm = min(volume_norm, 100)  # Cap the maximum volume at 100
-    update_bar(volume_norm)
+        volume_norm = np.linalg.norm(indata) * 10  # Calculate the volume level
+        volume_norm = min(volume_norm, 100)  # Cap the maximum volume at 100
+        update_bar(volume_norm)
 
     # Update the bar length based on the input level
     def update_bar(volume, canvas, window):
