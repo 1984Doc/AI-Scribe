@@ -20,9 +20,9 @@ KoboldCPP, WhisperAudio, and OpenAI services.
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox
+import requests
 
-
-class ApplicationSettings:
+class SettingsWindow():
     """
     Manages application settings related to audio processing and external API services.
 
@@ -393,3 +393,38 @@ class ApplicationSettings:
         except Exception as e:
             # Print any exception that occurs during file handling or window destruction.
             print(f"Error clearing settings files: {e}")
+
+    def get_available_models(self):
+        """
+        Returns a list of available models for the user to choose from.
+
+        This method returns a list of available models that can be used with the AI Scribe
+        service. The list includes the default model, `gpt-4`, as well as any other models
+        that may be added in the future.
+
+        Returns:
+            list: A list of available models for the user to choose from.
+        """
+        
+        headers = {
+            "Authorization": "Bearer ***REMOVED***"
+        }
+
+        try:
+            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=1000)
+            response.raise_for_status()  # Raise an error for bad responses
+            models = response.json().get("data", [])  # Extract the 'data' field
+            return [model["id"] for model in models]
+        except requests.RequestException as e:
+            messagebox.showerror("Error", f"Failed to fetch models: {e}")
+
+    def update_models_dropdown(self, dropdown):
+        """
+        Updates the models dropdown with the available models.
+
+        This method fetches the available models from the AI Scribe service and updates
+        the dropdown widget in the settings window with the new list of models.
+        """
+
+        models = self.get_available_models()
+        dropdown["values"] = models

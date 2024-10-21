@@ -33,12 +33,12 @@ import re
 import speech_recognition as sr # python package is named speechrecognition
 import time
 import queue
-import UI.SettingsWindow as settings
 from ContainerManager import ContainerManager
 import atexit
 import asyncio
 from UI.MainWindow import MainWindow
 from UI.SettingsWindowUI import SettingsWindowUI
+from UI.SettingsWindow import SettingsWindow
 
 
 # GUI Setup
@@ -46,7 +46,7 @@ root = tk.Tk()
 root.title("AI Medical Scribe")
 
 # settings window
-app_settings = settings.ApplicationSettings()
+app_settings = SettingsWindow()
 app_settings.start()
 
 

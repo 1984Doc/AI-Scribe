@@ -22,6 +22,8 @@ Classes:
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox
+import Tooltip as tt
+
 
 class SettingsWindowUI:
     """
@@ -169,7 +171,19 @@ class SettingsWindowUI:
         self.ssl_selfcert_checkbox = tk.Checkbutton(self.basic_settings_frame, variable=self.ssl_selfcert_var)
         self.ssl_selfcert_checkbox.grid(row=4, column=1, padx=0, pady=5, sticky="w")
 
-        self.create_editable_settings(self.basic_settings_frame, self.settings.basic_settings, start_row=7)
+
+        tk.Label(self.basic_settings_frame, text="Models").grid(row=7, column=0, padx=0, pady=5, sticky="w")
+        models_drop_down_options = self.settings.get_available_models() or ["No models available"]
+
+        self.models_drop_down = ttk.Combobox(self.basic_settings_frame, values=models_drop_down_options, width=15, state="readonly")
+        self.models_drop_down.current(api_options.index(self.settings.API_STYLE))
+        self.models_drop_down.grid(row=7, column=1, padx=0, pady=5, sticky="w")
+        
+        refresh_button = ttk.Button(self.basic_settings_frame, text="↻", command=lambda: self.settings.update_models_dropdown(self.models_drop_down), width=4)
+        refresh_button.grid(row=7, column=2, columnspan=1, padx=0, pady=5, sticky="w")
+        tt.Tooltip(refresh_button, text="Refresh the list of available models")
+
+        self.create_editable_settings(self.basic_settings_frame, self.settings.basic_settings, start_row=8)
 
     def create_advanced_settings(self):
         """
