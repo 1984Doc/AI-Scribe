@@ -121,7 +121,7 @@ def threaded_realtime_text():
     thread.start()
 
 def threaded_handle_message(formatted_message):
-    thread = threading.Thread(target=show_edit_transcription_popup, args=(formatted_message))
+    thread = threading.Thread(target=show_edit_transcription_popup, args=(formatted_message,))
     thread.start()
 
 def threaded_send_audio_to_server():
@@ -562,7 +562,6 @@ def toggle_view():
         send_button.grid_remove()
         clear_button.grid_remove()
         toggle_button.grid_remove()
-        gpt_button.grid_remove()
         settings_button.grid_remove()
         upload_button.grid_remove()
         response_display.grid_remove()
@@ -588,7 +587,6 @@ def toggle_view():
         send_button.grid()
         clear_button.grid()
         toggle_button.grid()
-        gpt_button.grid()
         settings_button.grid()
         upload_button.grid()
         response_display.grid()
