@@ -179,7 +179,7 @@ class SettingsWindowUI:
         self.models_drop_down.current(api_options.index(self.settings.API_STYLE))
         self.models_drop_down.grid(row=7, column=1, padx=0, pady=5, sticky="w")
         
-        refresh_button = ttk.Button(self.basic_settings_frame, text="↻", command=lambda: self.settings.update_models_dropdown(self.models_drop_down), width=4)
+        refresh_button = ttk.Button(self.basic_settings_frame, text="↻", command=lambda: (self.save_settings(False), self.settings.update_models_dropdown(self.models_drop_down)), width=4)
         refresh_button.grid(row=7, column=2, columnspan=1, padx=0, pady=5, sticky="w")
         tt.Tooltip(refresh_button, text="Refresh the list of available models")
 
@@ -247,7 +247,7 @@ class SettingsWindowUI:
         tk.Button(self.main_frame, text="Default", width=10, command=self.reset_to_default).pack(side="right", padx=2, pady=5)
         tk.Button(self.main_frame, text="Close", width=10, command=self.window.destroy).pack(side="right", padx=2, pady=5)
 
-    def save_settings(self):
+    def save_settings(self, close_window=True):
         """
         Saves the settings entered by the user.
 
@@ -268,7 +268,10 @@ class SettingsWindowUI:
             self.api_dropdown.get(),
 
         )
-        self.window.destroy()
+
+        print(close_window)
+        if close_window:
+            self.window.destroy()
 
     def reset_to_default(self):
         """

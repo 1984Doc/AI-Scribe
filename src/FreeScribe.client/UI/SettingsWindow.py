@@ -278,8 +278,6 @@ class SettingsWindow():
             f.write(self.AISCRIBE)
         with open('aiscribe2.txt', 'w') as f:
             f.write(self.AISCRIBE2)
-        
-        settings_window.destroy()
       
     def load_aiscribe_from_file(self):
         """
@@ -407,7 +405,8 @@ class SettingsWindow():
         """
         
         headers = {
-            "Authorization": "Bearer ***REMOVED***"
+            "Authorization": f"Bearer {self.OPENAI_API_KEY}",
+            "X-API-Key": self.OPENAI_API_KEY
         }
 
         try:
@@ -417,6 +416,7 @@ class SettingsWindow():
             return [model["id"] for model in models]
         except requests.RequestException as e:
             messagebox.showerror("Error", f"Failed to fetch models: {e}")
+            return ["Failed to load models"]
 
     def update_models_dropdown(self, dropdown):
         """
@@ -425,6 +425,6 @@ class SettingsWindow():
         This method fetches the available models from the AI Scribe service and updates
         the dropdown widget in the settings window with the new list of models.
         """
-
+        
         models = self.get_available_models()
         dropdown["values"] = models
