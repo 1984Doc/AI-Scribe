@@ -45,7 +45,7 @@ class SettingsWindowUI:
         advanced_settings_frame (tk.Frame): The scrollable frame for advanced settings.
     """
 
-    def __init__(self, settings):
+    def __init__(self, settings, main_window):
         """
         Initializes the SettingsWindowUI.
 
@@ -53,7 +53,8 @@ class SettingsWindowUI:
             settings (ApplicationSettings): The settings object containing application settings.
         """
         self.settings = settings
-        self.window = None
+        self.main_window = main_window
+        self.settings_window = None
         self.main_frame = None
         self.notebook = None
         self.basic_frame = None
@@ -70,12 +71,12 @@ class SettingsWindowUI:
         This method initializes and displays the settings window, including
         the notebook with tabs for basic, advanced, and Docker settings.
         """
-        self.window = tk.Toplevel()
-        self.window.title("Settings")
-        self.window.resizable(True, True)
-        self.window.grab_set()
+        self.settings_window = tk.Toplevel()
+        self.settings_window.title("Settings")
+        self.settings_window.resizable(True, True)
+        self.settings_window.grab_set()
 
-        self.main_frame = tk.Frame(self.window)
+        self.main_frame = tk.Frame(self.settings_window)
         self.main_frame.pack(expand=True, fill='both')
 
         self.notebook = ttk.Notebook(self.main_frame)
@@ -245,7 +246,7 @@ class SettingsWindowUI:
         """
         tk.Button(self.main_frame, text="Save", command=self.save_settings, width=10).pack(side="right", padx=2, pady=5)
         tk.Button(self.main_frame, text="Default", width=10, command=self.reset_to_default).pack(side="right", padx=2, pady=5)
-        tk.Button(self.main_frame, text="Close", width=10, command=self.window.destroy).pack(side="right", padx=2, pady=5)
+        tk.Button(self.main_frame, text="Close", width=10, command=self.settings_window.destroy).pack(side="right", padx=2, pady=5)
 
     def save_settings(self, close_window=True):
         """
@@ -260,7 +261,7 @@ class SettingsWindowUI:
             self.openai_api_key_entry.get(),
             self.aiscribe_text.get("1.0", tk.END),
             self.aiscribe2_text.get("1.0", tk.END),
-            self.window,
+            self.settings_window,
             self.koboldcpp_port_entry.get(),
             self.whisperaudio_port_entry.get(),
             self.ssl_enable_var.get(),
@@ -269,9 +270,13 @@ class SettingsWindowUI:
 
         )
 
-        print(close_window)
+        if self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is None:
+            self.main_window.create_docker_status_bar()
+        elif not self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is not None:
+            self.main_window.destroy_docker_status_bar()
+
         if close_window:
-            self.window.destroy()
+            self.settings_window.destroy()
 
     def reset_to_default(self):
         """
@@ -280,4 +285,4 @@ class SettingsWindowUI:
         This method calls the `clear_settings_file` method of the `settings` object
         to reset the settings to their default values.
         """
-        self.settings.clear_settings_file(self.window)
+        self.settings.clear_settings_file(self.settings_window)

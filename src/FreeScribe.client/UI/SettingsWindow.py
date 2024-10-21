@@ -21,6 +21,10 @@ import json
 import tkinter as tk
 from tkinter import ttk, messagebox
 import requests
+import numpy as np
+import pyaudio
+
+p = pyaudio.PyAudio()
 
 class SettingsWindow():
     """
@@ -74,6 +78,7 @@ class SettingsWindow():
 
     def __init__(self):
         """Initializes the ApplicationSettings with default values."""
+
         self.KOBOLDCPP_IP = "192.168.1.195"
         self.WHISPERAUDIO_IP = "192.168.1.195"
         self.KOBOLDCPP_PORT = "5001"
@@ -95,6 +100,7 @@ class SettingsWindow():
             "Whisper Server API Key",
             "Whisper Model",
             "Real Time",
+            "Use Docker Status Bar",
         }
 
         self.advanced_settings = {
@@ -155,7 +161,8 @@ class SettingsWindow():
             "LLM Caddy Container Name": "caddy-llm-container",
             "Whisper Container Name": "speech-container",
             "Whisper Caddy Container Name": "caddy",
-            "Auto Shutdown Containers on Exit": True
+            "Auto Shutdown Containers on Exit": True,
+            "Use Docker Status Bar": False,
         }
 
         self.docker_settings = {

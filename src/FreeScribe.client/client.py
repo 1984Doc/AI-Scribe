@@ -37,6 +37,7 @@ from ContainerManager import ContainerManager
 import atexit
 import asyncio
 from UI.MainWindow import MainWindow
+from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 
@@ -45,9 +46,17 @@ from UI.SettingsWindow import SettingsWindow
 root = tk.Tk()
 root.title("AI Medical Scribe")
 
-# settings window
+# settings logic
 app_settings = SettingsWindow()
 app_settings.start()
+
+#  create our ui elements and settings config
+window = MainWindowUI(root, app_settings)
+settings_window = SettingsWindowUI(app_settings, window)
+
+if app_settings.editable_settings["Use Docker Status Bar"]:
+    window.create_docker_status_bar()
+
 
 
 NOTE_CREATION = "Note Creation...Please Wait"
@@ -680,8 +689,6 @@ toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
 gpt_button = tk.Button(root, text="KoboldCpp", command=toggle_gpt_button, height=2, width=13)
 gpt_button.grid(row=1, column=6, pady=5, sticky='nsew')
 
-settings_window = SettingsWindowUI(app_settings)
-
 settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=10)
 settings_button.grid(row=1, column=7, pady=5, sticky='nsew')
 
@@ -713,54 +720,7 @@ combobox.current(0)
 combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
 combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
 
-window = MainWindow()
-
-if window.container_manager.client is not None:
-    # Footer frame
-    footer_frame = tk.Frame(root, bd=1, relief=tk.SUNKEN)
-    footer_frame.grid(row=4, column=0, columnspan=14, sticky='nsew')
-
-    # Docker status bar for llm and whisper containers
-    docker_status = tk.Label(footer_frame, text="Docker Containers: ")
-    docker_status.pack(side=tk.LEFT)
-
-    # LLM Container Status
-    llm_status = tk.Label(footer_frame, text="LLM Container Status:", padx=10)
-    llm_status.pack(side=tk.LEFT)
-    tt.Tooltip(llm_status, text="The LLM container is essential for generating responses and creating the SOAP notes. This service must be running.")
-
-    # Red dot for LLM status
-    llm_dot = tk.Label(footer_frame, text='●', fg='red')
-    llm_dot.pack(side=tk.LEFT)
-    tt.Tooltip(llm_dot, text="LLM Container Status: Green = Running, Red = Stopped")
-
-    # Whisper Server Status
-    whisper_status = tk.Label(footer_frame, text="Whisper Server Status:", padx=10)
-    whisper_status.pack(side=tk.LEFT)
-    tt.Tooltip(whisper_status, text="The whisper server is responsible for transcribing microphone input to text. This service must be running.")
-
-    # Red dot for Whisper status
-    whisper_dot = tk.Label(footer_frame, text='●', fg='red')
-    whisper_dot.pack(side=tk.LEFT)
-    tt.Tooltip(whisper_dot, text="Whisper Status: Green = Running, Red = Stopped")
-
-    # start whisper container button
-    start_whisper_button = tk.Button(footer_frame, text="Start Whisper", command=lambda: window.start_whisper_container(whisper_dot, app_settings))
-    start_whisper_button.pack(side=tk.RIGHT)
-
-    # start local llm container button
-    start_llm_button = tk.Button(footer_frame, text="Start LLM", command= lambda: window.start_LLM_container(llm_dot, app_settings))
-    start_llm_button.pack(side=tk.RIGHT)
-
-    update_aiscribe_texts(None)
-
-    #stop whisper container button
-    stop_whisper_button = tk.Button(footer_frame, text="Stop Whisper", command=lambda: window.stop_whisper_container(whisper_dot, app_settings))
-    stop_whisper_button.pack(side=tk.RIGHT)
-
-    #stop llm container button
-    stop_llm_button = tk.Button(footer_frame, text="Stop LLM", command=lambda: window.stop_LLM_container(llm_dot, app_settings))
-    stop_llm_button.pack(side=tk.RIGHT)
+update_aiscribe_texts(None)
 
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: pause_button.invoke())
