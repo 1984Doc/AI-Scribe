@@ -53,11 +53,10 @@ app_settings.start()
 #  create our ui elements and settings config
 window = MainWindowUI(root, app_settings)
 settings_window = SettingsWindowUI(app_settings, window)
+app_settings.set_main_window(window)
 
 if app_settings.editable_settings["Use Docker Status Bar"]:
     window.create_docker_status_bar()
-
-
 
 NOTE_CREATION = "Note Creation...Please Wait"
 

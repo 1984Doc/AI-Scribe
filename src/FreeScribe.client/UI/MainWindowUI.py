@@ -2,7 +2,7 @@ import tkinter as tk
 import UI.MainWindow as mw
 import Tooltip as tt
 
-class MainWindowUI():
+class MainWindowUI:
     def __init__(self, root, settings):
         self.root = root
         self.docker_status_bar = None
@@ -10,7 +10,6 @@ class MainWindowUI():
         self.logic = mw.MainWindow() 
 
     def create_docker_status_bar(self):
-        print("Creating Docker Status Bar")
         # Footer frame
         self.docker_status_bar = tk.Frame(self.root, bd=1, relief=tk.SUNKEN)
         self.docker_status_bar.grid(row=4, column=0, columnspan=14, sticky='nsew')
@@ -40,19 +39,19 @@ class MainWindowUI():
         tt.Tooltip(whisper_dot, text="Whisper Status: Green = Running, Red = Stopped")
 
         # start whisper container button
-        start_whisper_button = tk.Button(self.docker_status_bar, text="Start Whisper", command=lambda: self.logic.start_whisper_container(whisper_dot, app_settings))
+        start_whisper_button = tk.Button(self.docker_status_bar, text="Start Whisper", command=lambda: self.logic.start_whisper_container(whisper_dot, self.app_settings))
         start_whisper_button.pack(side=tk.RIGHT)
 
         # start local llm container button
-        start_llm_button = tk.Button(self.docker_status_bar, text="Start LLM", command= lambda: self.logic.start_LLM_container(llm_dot, app_settings))
+        start_llm_button = tk.Button(self.docker_status_bar, text="Start LLM", command= lambda: self.logic.start_LLM_container(llm_dot, self.app_settings))
         start_llm_button.pack(side=tk.RIGHT)
 
         #stop whisper container button
-        stop_whisper_button = tk.Button(self.docker_status_bar, text="Stop Whisper", command=lambda: window.stop_whisper_container(whisper_dot, app_settings))
+        stop_whisper_button = tk.Button(self.docker_status_bar, text="Stop Whisper", command=lambda: self.logic.stop_whisper_container(whisper_dot, self.app_settings))
         stop_whisper_button.pack(side=tk.RIGHT)
 
         #stop llm container button
-        stop_llm_button = tk.Button(self.docker_status_bar, text="Stop LLM", command=lambda: window.stop_LLM_container(llm_dot, app_settings))
+        stop_llm_button = tk.Button(self.docker_status_bar, text="Stop LLM", command=lambda: self.logic.stop_LLM_container(llm_dot, self.app_settings))
         stop_llm_button.pack(side=tk.RIGHT)
 
     def destroy_docker_status_bar(self):

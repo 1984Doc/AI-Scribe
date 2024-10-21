@@ -135,6 +135,18 @@ class SettingsWindowUI:
 
         row_idx = 0
 
+        # create a settings preset dropdown
+        tk.Label(self.basic_settings_frame, text="Settings Preset:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        settings_preset_options = ["JanAI", "ChatGPT", "ClinicianFocus Toolbox","Custom"]
+        self.settings_preset_dropdown = ttk.Combobox(self.basic_settings_frame, values=settings_preset_options, width=15, state="readonly")
+        self.settings_preset_dropdown.current(settings_preset_options.index(self.settings.editable_settings["Preset"]))
+        self.settings_preset_dropdown.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
+
+        load_preset_btn = ttk.Button(self.basic_settings_frame, text="Load", width=5, command=lambda: self.settings.load_settings_preset(self.settings_preset_dropdown.get(), self))
+        load_preset_btn.grid(row=row_idx, column=2, padx=0, pady=5, sticky="w")
+
+        row_idx += 1
+
         tk.Label(self.basic_settings_frame, text="KOBOLDCPP IP:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.koboldcpp_ip_entry = tk.Entry(self.basic_settings_frame, width=25)
         self.koboldcpp_ip_entry.insert(0, self.settings.KOBOLDCPP_IP)
@@ -284,7 +296,6 @@ class SettingsWindowUI:
             self.ssl_enable_var.get(),
             self.ssl_selfcert_var.get(),
             self.api_dropdown.get(),
-
         )
 
         if self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is None:

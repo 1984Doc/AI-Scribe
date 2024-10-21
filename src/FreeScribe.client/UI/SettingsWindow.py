@@ -64,7 +64,7 @@ class SettingsWindow():
     save_settings_to_file():
         Saves the current settings to a JSON file.
     save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, 
-                  settings_window, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
+                  settings_window, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style, preset):
         Saves the current settings, including API keys, IP addresses, and user-defined parameters.
     load_aiscribe_from_file():
         Loads the first AI Scribe text from a file.
@@ -89,6 +89,7 @@ class SettingsWindow():
         self.AISCRIBE = ""
         self.AISCRIBE2 = ""
         self.API_STYLE = "OpenAI"
+        self.main_window = None
 
         self.KOBOLDCPP_ENDPOINT = None
         self.WHISPERAUDIO_ENDPOINT = None
@@ -163,6 +164,7 @@ class SettingsWindow():
             "Whisper Caddy Container Name": "caddy",
             "Auto Shutdown Containers on Exit": True,
             "Use Docker Status Bar": False,
+            "Preset": "Custom",
         }
 
         self.docker_settings = {
@@ -175,7 +177,7 @@ class SettingsWindow():
 
         self.editable_settings_entries = {}
 
-    def load_settings_from_file(self):
+    def load_settings_from_file(self, filename='settings.txt'):
         """
         Loads settings from a JSON file.
 
@@ -186,10 +188,11 @@ class SettingsWindow():
             tuple: A tuple containing the IPs, ports, SSL settings, and API key.
         """
         try:
-            with open('settings.txt', 'r') as file:
+            with open(filename, 'r') as file:
                 try:
                     settings = json.load(file)
                 except json.JSONDecodeError:
+                    print("Error loading settings file. Using default settings.")
                     return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
                            self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
                            self.SSL_SELFCERT, self.API_STYLE
@@ -206,10 +209,16 @@ class SettingsWindow():
                 for key, value in loaded_editable_settings.items():
                     if key in self.editable_settings:
                         self.editable_settings[key] = value
+
+                if self.editable_settings["Use Docker Status Bar"] and self.main_window is not None:
+                    self.main_window.create_docker_status_bar()
+                    
+                print("NOW ENDOPITN ", self.editable_settings["Model Endpoint"])
                 return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
                        self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
                        self.SSL_SELFCERT, self.API_STYLE
         except FileNotFoundError:
+            print("Settings file not found. Using default settings.")
             return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
                    self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
                    self.SSL_SELFCERT, self.API_STYLE
@@ -267,7 +276,7 @@ class SettingsWindow():
         self.OPENAI_API_KEY = openai_api_key
         self.API_STYLE = api_style
 
-        for setting, entry in self.editable_settings_entries.items():
+        for setting, entry in self.editable_settings_entries.items():     
             value = entry.get()
             if setting in ["max_context_length", "max_length", "rep_pen_range", "top_k"]:
                 value = int(value)
@@ -422,7 +431,7 @@ class SettingsWindow():
             models = response.json().get("data", [])  # Extract the 'data' field
             return [model["id"] for model in models]
         except requests.RequestException as e:
-            messagebox.showerror("Error", f"Failed to fetch models: {e}")
+            messagebox.showerror("Error", f"Failed to fetch models: {e}. Please ensure your OpenAI API key is correct.") 
             return ["Failed to load models"]
 
     def update_models_dropdown(self, dropdown):
@@ -435,3 +444,41 @@ class SettingsWindow():
         
         models = self.get_available_models()
         dropdown["values"] = models
+
+    def load_settings_preset(self, preset_name, settings_class):
+        """
+        Load a settings preset from a file.
+
+        This method loads a settings preset from a JSON file with the given name.
+        The settings are then applied to the application settings.
+
+        Parameters:
+            preset_name (str): The name of the settings preset to load.
+
+        Returns:
+            None
+        """
+        self.editable_settings["Preset"] = preset_name
+
+        if preset_name != "Custom":
+            # load the settigns from the json preset file
+            self.load_settings_from_file("presets/" + preset_name + ".json")
+            messagebox.showinfo("Settings Preset", "Settings preset loaded successfully. Closing settings window. Please re-open and set respective API keys.")
+            
+            self.editable_settings["Preset"] = preset_name
+            settings_class.settings_window.destroy()
+            self.save_settings_to_file()
+        else:
+            messagebox.showinfo("Custom Settings", "To use custom settings then please fill in the values and save them.")
+
+    def set_main_window(self, window):
+        """
+        Set the main window instance for the settings.
+
+        This method sets the main window instance for the settings class, allowing
+        the settings to interact with the main window when necessary.
+
+        Parameters:
+            window (MainWindow): The main window instance to set.
+        """
+        self.main_window = window
