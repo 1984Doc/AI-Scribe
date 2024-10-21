@@ -212,8 +212,7 @@ class SettingsWindow():
 
                 if self.editable_settings["Use Docker Status Bar"] and self.main_window is not None:
                     self.main_window.create_docker_status_bar()
-                    
-                print("NOW ENDOPITN ", self.editable_settings["Model Endpoint"])
+
                 return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
                        self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
                        self.SSL_SELFCERT, self.API_STYLE
@@ -482,3 +481,13 @@ class SettingsWindow():
             window (MainWindow): The main window instance to set.
         """
         self.main_window = window
+
+    def audio_callback(indata, frames, time, status):
+    volume_norm = np.linalg.norm(indata) * 10  # Calculate the volume level
+    volume_norm = min(volume_norm, 100)  # Cap the maximum volume at 100
+    update_bar(volume_norm)
+
+    # Update the bar length based on the input level
+    def update_bar(volume, canvas, window):
+        canvas.coords(bar, 10, 10, 10 + volume * 2, 40)  # Adjust the width of the bar
+        window.update_idletasks()  # Update the GUI
