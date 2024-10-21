@@ -147,30 +147,6 @@ class SettingsWindowUI:
 
         row_idx += 1
 
-        tk.Label(self.basic_settings_frame, text="KOBOLDCPP IP:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        self.koboldcpp_ip_entry = tk.Entry(self.basic_settings_frame, width=25)
-        self.koboldcpp_ip_entry.insert(0, self.settings.KOBOLDCPP_IP)
-        self.koboldcpp_ip_entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
-
-        tk.Label(self.basic_settings_frame, text="PORT:").grid(row=row_idx, column=2, padx=0, pady=5, sticky="w")
-        self.koboldcpp_port_entry = tk.Entry(self.basic_settings_frame, width=10)
-        self.koboldcpp_port_entry.insert(0, self.settings.KOBOLDCPP_PORT)
-        self.koboldcpp_port_entry.grid(row=row_idx, column=3, padx=0, pady=5, sticky="w")
-
-        row_idx += 1
-
-        tk.Label(self.basic_settings_frame, text="WHISPERAUDIO IP:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        self.whisperaudio_ip_entry = tk.Entry(self.basic_settings_frame, width=25)
-        self.whisperaudio_ip_entry.insert(0, self.settings.WHISPERAUDIO_IP)
-        self.whisperaudio_ip_entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
-
-        tk.Label(self.basic_settings_frame, text="PORT:").grid(row=row_idx, column=2, padx=0, pady=5, sticky="w")
-        self.whisperaudio_port_entry = tk.Entry(self.basic_settings_frame, width=10)
-        self.whisperaudio_port_entry.insert(0, self.settings.WHISPERAUDIO_PORT)
-        self.whisperaudio_port_entry.grid(row=row_idx, column=3, padx=0, pady=5, sticky="w")
-
-        row_idx += 1
-
         tk.Label(self.basic_settings_frame, text="OpenAI API Key:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.openai_api_key_entry = tk.Entry(self.basic_settings_frame, width=25)
         self.openai_api_key_entry.insert(0, self.settings.OPENAI_API_KEY)
@@ -179,7 +155,7 @@ class SettingsWindowUI:
         row_idx += 1
 
         tk.Label(self.basic_settings_frame, text="API Style:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        api_options = ["OpenAI"]
+        api_options = ["OpenAI", "KoboldCpp"]
         self.api_dropdown = ttk.Combobox(self.basic_settings_frame, values=api_options, width=15, state="readonly")
         self.api_dropdown.current(api_options.index(self.settings.API_STYLE))
         self.api_dropdown.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")

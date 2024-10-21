@@ -92,8 +92,6 @@ class SettingsWindow():
         self.API_STYLE = "OpenAI"
         self.main_window = None
 
-        self.KOBOLDCPP_ENDPOINT = None
-        self.WHISPERAUDIO_ENDPOINT = None
 
         self.basic_settings = {
             "Model",
@@ -103,6 +101,7 @@ class SettingsWindow():
             "Whisper Model",
             "Real Time",
             "Use Docker Status Bar",
+            "Whisper Endpoint",
         }
 
         self.advanced_settings = {
@@ -153,6 +152,7 @@ class SettingsWindow():
             "frmttriminc": False,
             "frmtrmblln": False,
             "Local Whisper": False,
+            "Whisper Endpoint": "https://localhost:2224/whisperaudio",
             "Whisper Server API Key": "None",
             "Whisper Model": "small.en",
             "Real Time": False,
@@ -287,9 +287,6 @@ class SettingsWindow():
         self.AISCRIBE = aiscribe_text
         self.AISCRIBE2 = aiscribe2_text
 
-        self.KOBOLDCPP_ENDPOINT = self.build_url(self.KOBOLDCPP_IP, self.KOBOLDCPP_PORT)
-        self.WHISPERAUDIO_ENDPOINT = self.build_url(self.WHISPERAUDIO_IP, str(self.WHISPERAUDIO_PORT)+"/whisperaudio")
-
         with open('aiscribe.txt', 'w') as f:
             f.write(self.AISCRIBE)
         with open('aiscribe2.txt', 'w') as f:
@@ -372,9 +369,7 @@ class SettingsWindow():
         self.AISCRIBE = self.load_aiscribe_from_file() or "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
         self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
         
-        self.KOBOLDCPP_ENDPOINT = self.build_url(self.KOBOLDCPP_IP, self.KOBOLDCPP_PORT)
-        self.WHISPERAUDIO_ENDPOINT = self.build_url(self.WHISPERAUDIO_IP, str(self.WHISPERAUDIO_PORT)+"/whisperaudio")
-
+  
     def clear_settings_file(self, settings_window):
         """
         Clears the content of settings files and closes the settings window.
