@@ -130,7 +130,7 @@ class SettingsWindowUI:
         Creates the basic settings UI elements.
 
         This method creates and places UI elements for basic settings such as
-        KOBOLDCPP IP, WHISPERAUDIO IP, OpenAI API Key, and SSL settings.
+        OpenAI API Key, and SSL settings.
         """
 
         row_idx = 0
@@ -261,14 +261,10 @@ class SettingsWindowUI:
         `save_settings` method of the `settings` object to save the settings.
         """
         self.settings.save_settings(
-            self.koboldcpp_ip_entry.get(),
-            self.whisperaudio_ip_entry.get(),
             self.openai_api_key_entry.get(),
             self.aiscribe_text.get("1.0", tk.END),
             self.aiscribe2_text.get("1.0", tk.END),
             self.settings_window,
-            self.koboldcpp_port_entry.get(),
-            self.whisperaudio_port_entry.get(),
             self.ssl_enable_var.get(),
             self.ssl_selfcert_var.get(),
             self.api_dropdown.get(),

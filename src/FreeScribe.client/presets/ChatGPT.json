@@ -1,9 +1,7 @@
 {
-  "koboldcpp_ip": "n/a",
-  "whisperaudio_ip": "localhost",
-  "openai_api_key": "ENTER GPT KEY",
+  "openai_api_key": "None",
   "editable_settings": {
-    "Model": "gpt-4",
+    "Model": "gemma-2-2b-it",
     "Model Endpoint": "https://api.openai.com/v1",
     "use_story": 0,
     "use_memory": 0,
@@ -25,6 +23,7 @@
     "frmttriminc": 0,
     "frmtrmblln": 0,
     "Local Whisper": 0,
+    "Whisper Endpoint": "https://localhost:2224/whisperaudio",
     "Whisper Server API Key": "your_api_key",
     "Whisper Model": "small.en",
     "Real Time": 0,
@@ -36,11 +35,10 @@
     "Whisper Container Name": "speech-container",
     "Whisper Caddy Container Name": "caddy",
     "Auto Shutdown Containers on Exit": 1,
-    "Use Docker Status Bar": false
+    "Use Docker Status Bar": 0,
+    "Preset": "Custom"
   },
-  "koboldcpp_port": "n/a",
-  "whisperaudio_port": "2224",
-  "ssl_enable": "1",
+  "ssl_enable": "0",
   "ssl_selfcert": "1",
   "api_style": "OpenAI"
 }

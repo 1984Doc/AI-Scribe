@@ -13,7 +13,7 @@ and Research Students - Software Developer Alex Simko, Pemba Sherpa (F24), and N
 
 This module contains the ApplicationSettings class, which manages the settings for an
 application that involves audio processing and external API interactions, including
-KoboldCPP, WhisperAudio, and OpenAI services.
+WhisperAudio, and OpenAI services.
 
 """
 
@@ -33,14 +33,6 @@ class SettingsWindow():
 
     Attributes
     ----------
-    KOBOLDCPP_IP : str
-        The IP address for the Kobold CPP service.
-    WHISPERAUDIO_IP : str
-        The IP address for the Whisper Audio service.
-    KOBOLDCPP_PORT : str
-        The port for the Kobold CPP service.
-    WHISPERAUDIO_PORT : str
-        The port for the Whisper Audio service.
     SSL_ENABLE : str
         Whether SSL is enabled ('1' for enabled, '0' for disabled).
     SSL_SELFCERT : str
@@ -64,8 +56,8 @@ class SettingsWindow():
         Loads settings from a JSON file and updates the internal state.
     save_settings_to_file():
         Saves the current settings to a JSON file.
-    save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, 
-                  settings_window, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style, preset):
+    save_settings(openai_api_key, aiscribe_text, aiscribe2_text, 
+                  settings_window, ssl_enable, ssl_selfcert, api_style, preset):
         Saves the current settings, including API keys, IP addresses, and user-defined parameters.
     load_aiscribe_from_file():
         Loads the first AI Scribe text from a file.
@@ -80,10 +72,6 @@ class SettingsWindow():
     def __init__(self):
         """Initializes the ApplicationSettings with default values."""
 
-        self.KOBOLDCPP_IP = "192.168.1.195"
-        self.WHISPERAUDIO_IP = "192.168.1.195"
-        self.KOBOLDCPP_PORT = "5001"
-        self.WHISPERAUDIO_PORT = "8000"
         self.SSL_ENABLE = "0"
         self.SSL_SELFCERT = "1"
         self.OPENAI_API_KEY = "None"
@@ -194,14 +182,8 @@ class SettingsWindow():
                     settings = json.load(file)
                 except json.JSONDecodeError:
                     print("Error loading settings file. Using default settings.")
-                    return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
-                           self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
-                           self.SSL_SELFCERT, self.API_STYLE
+                    return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
 
-                self.KOBOLDCPP_IP = settings.get("koboldcpp_ip", self.KOBOLDCPP_IP)
-                self.KOBOLDCPP_PORT = settings.get("koboldcpp_port", self.KOBOLDCPP_PORT)
-                self.WHISPERAUDIO_IP = settings.get("whisperaudio_ip", self.WHISPERAUDIO_IP)
-                self.WHISPERAUDIO_PORT = settings.get("whisperaudio_port", self.WHISPERAUDIO_PORT)
                 self.SSL_ENABLE = settings.get("ssl_enable", self.SSL_ENABLE)
                 self.SSL_SELFCERT = settings.get("ssl_selfcert", self.SSL_SELFCERT)
                 self.OPENAI_API_KEY = settings.get("openai_api_key", self.OPENAI_API_KEY)
@@ -214,14 +196,10 @@ class SettingsWindow():
                 if self.editable_settings["Use Docker Status Bar"] and self.main_window is not None:
                     self.main_window.create_docker_status_bar()
 
-                return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
-                       self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
-                       self.SSL_SELFCERT, self.API_STYLE
+                return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
         except FileNotFoundError:
             print("Settings file not found. Using default settings.")
-            return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
-                   self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
-                   self.SSL_SELFCERT, self.API_STYLE
+            return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
 
     def save_settings_to_file(self):
         """
@@ -234,12 +212,8 @@ class SettingsWindow():
             None
         """
         settings = {
-            "koboldcpp_ip": self.KOBOLDCPP_IP,
-            "whisperaudio_ip": self.WHISPERAUDIO_IP,
             "openai_api_key": self.OPENAI_API_KEY,
             "editable_settings": self.editable_settings,
-            "koboldcpp_port": self.KOBOLDCPP_PORT,
-            "whisperaudio_port": self.WHISPERAUDIO_PORT,
             "ssl_enable": str(self.SSL_ENABLE),
             "ssl_selfcert": str(self.SSL_SELFCERT),
             "api_style": self.API_STYLE
@@ -247,30 +221,22 @@ class SettingsWindow():
         with open('settings.txt', 'w') as file:
             json.dump(settings, file)
 
-    def save_settings(self, koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
-                      koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
+    def save_settings(self, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
+                      ssl_enable, ssl_selfcert, api_style):
         """
         Save the current settings, including IP addresses, API keys, and user-defined parameters.
 
         This method writes the AI Scribe text to separate text files and updates the internal state
         of the Settings instance.
 
-        :param str koboldcpp_ip: The IP address for the KOBOLDCPP server.
-        :param str whisperaudio_ip: The IP address for the WhisperAudio server.
         :param str openai_api_key: The OpenAI API key for authentication.
         :param str aiscribe_text: The text for the first AI Scribe.
         :param str aiscribe2_text: The text for the second AI Scribe.
         :param tk.Toplevel settings_window: The settings window instance to be destroyed after saving.
-        :param str koboldcpp_port: The port for the KOBOLDCPP server.
-        :param str whisperaudio_port: The port for the WhisperAudio server.
         :param int ssl_enable: Flag indicating whether SSL is enabled.
         :param int ssl_selfcert: Flag indicating whether to use a self-signed certificate.
         :param str api_style: The style of API being used.
         """
-        self.KOBOLDCPP_IP = koboldcpp_ip
-        self.WHISPERAUDIO_IP = whisperaudio_ip
-        self.KOBOLDCPP_PORT = koboldcpp_port
-        self.WHISPERAUDIO_PORT = whisperaudio_port
         self.SSL_ENABLE = ssl_enable
         self.SSL_SELFCERT = ssl_selfcert
         self.OPENAI_API_KEY = openai_api_key
