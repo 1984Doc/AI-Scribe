@@ -132,59 +132,76 @@ class SettingsWindowUI:
         This method creates and places UI elements for basic settings such as
         KOBOLDCPP IP, WHISPERAUDIO IP, OpenAI API Key, and SSL settings.
         """
-        tk.Label(self.basic_settings_frame, text="KOBOLDCPP IP:").grid(row=0, column=0, padx=0, pady=5, sticky="w")
+
+        row_idx = 0
+
+        tk.Label(self.basic_settings_frame, text="KOBOLDCPP IP:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.koboldcpp_ip_entry = tk.Entry(self.basic_settings_frame, width=25)
         self.koboldcpp_ip_entry.insert(0, self.settings.KOBOLDCPP_IP)
-        self.koboldcpp_ip_entry.grid(row=0, column=1, padx=0, pady=5, sticky="w")
+        self.koboldcpp_ip_entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
 
-        tk.Label(self.basic_settings_frame, text="PORT:").grid(row=0, column=2, padx=0, pady=5, sticky="w")
+        tk.Label(self.basic_settings_frame, text="PORT:").grid(row=row_idx, column=2, padx=0, pady=5, sticky="w")
         self.koboldcpp_port_entry = tk.Entry(self.basic_settings_frame, width=10)
         self.koboldcpp_port_entry.insert(0, self.settings.KOBOLDCPP_PORT)
-        self.koboldcpp_port_entry.grid(row=0, column=3, padx=0, pady=5, sticky="w")
+        self.koboldcpp_port_entry.grid(row=row_idx, column=3, padx=0, pady=5, sticky="w")
 
-        tk.Label(self.basic_settings_frame, text="WHISPERAUDIO IP:").grid(row=1, column=0, padx=0, pady=5, sticky="w")
+        row_idx += 1
+
+        tk.Label(self.basic_settings_frame, text="WHISPERAUDIO IP:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.whisperaudio_ip_entry = tk.Entry(self.basic_settings_frame, width=25)
         self.whisperaudio_ip_entry.insert(0, self.settings.WHISPERAUDIO_IP)
+        self.whisperaudio_ip_entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
 
-        tk.Label(self.basic_settings_frame, text="PORT:").grid(row=1, column=2, padx=0, pady=5, sticky="w")
+        tk.Label(self.basic_settings_frame, text="PORT:").grid(row=row_idx, column=2, padx=0, pady=5, sticky="w")
         self.whisperaudio_port_entry = tk.Entry(self.basic_settings_frame, width=10)
         self.whisperaudio_port_entry.insert(0, self.settings.WHISPERAUDIO_PORT)
-        self.whisperaudio_port_entry.grid(row=1, column=3, padx=0, pady=5, sticky="w")
+        self.whisperaudio_port_entry.grid(row=row_idx, column=3, padx=0, pady=5, sticky="w")
 
-        tk.Label(self.basic_settings_frame, text="OpenAI API Key:").grid(row=5, column=0, padx=0, pady=5, sticky="w")
+        row_idx += 1
+
+        tk.Label(self.basic_settings_frame, text="OpenAI API Key:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.openai_api_key_entry = tk.Entry(self.basic_settings_frame, width=25)
         self.openai_api_key_entry.insert(0, self.settings.OPENAI_API_KEY)
-        self.openai_api_key_entry.grid(row=5, column=1, padx=0, pady=5, sticky="w")
+        self.openai_api_key_entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
 
-        tk.Label(self.basic_settings_frame, text="API Style:").grid(row=6, column=0, padx=0, pady=5, sticky="w")
+        row_idx += 1
+
+        tk.Label(self.basic_settings_frame, text="API Style:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         api_options = ["OpenAI"]
         self.api_dropdown = ttk.Combobox(self.basic_settings_frame, values=api_options, width=15, state="readonly")
         self.api_dropdown.current(api_options.index(self.settings.API_STYLE))
-        self.api_dropdown.grid(row=6, column=1, padx=0, pady=5, sticky="w")
+        self.api_dropdown.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
+
+        row_idx += 1
 
         self.ssl_enable_var = tk.IntVar(value=int(self.settings.SSL_ENABLE))
-        tk.Label(self.basic_settings_frame, text="Enable SSL:").grid(row=3, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(self.basic_settings_frame, text="Enable SSL:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.ssl_enable_checkbox = tk.Checkbutton(self.basic_settings_frame, variable=self.ssl_enable_var)
-        self.ssl_enable_checkbox.grid(row=3, column=1, padx=0, pady=5, sticky="w")
+        self.ssl_enable_checkbox.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
+
+        row_idx += 1
 
         self.ssl_selfcert_var = tk.IntVar(value=int(self.settings.SSL_SELFCERT))
-        tk.Label(self.basic_settings_frame, text="Self-Signed Cert:").grid(row=4, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(self.basic_settings_frame, text="Self-Signed Cert:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.ssl_selfcert_checkbox = tk.Checkbutton(self.basic_settings_frame, variable=self.ssl_selfcert_var)
-        self.ssl_selfcert_checkbox.grid(row=4, column=1, padx=0, pady=5, sticky="w")
+        self.ssl_selfcert_checkbox.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
 
+        row_idx += 1
 
-        tk.Label(self.basic_settings_frame, text="Models").grid(row=7, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(self.basic_settings_frame, text="Models").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         models_drop_down_options = self.settings.get_available_models() or ["No models available"]
 
         self.models_drop_down = ttk.Combobox(self.basic_settings_frame, values=models_drop_down_options, width=15, state="readonly")
         self.models_drop_down.current(api_options.index(self.settings.API_STYLE))
-        self.models_drop_down.grid(row=7, column=1, padx=0, pady=5, sticky="w")
+        self.models_drop_down.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
         
         refresh_button = ttk.Button(self.basic_settings_frame, text="↻", command=lambda: (self.save_settings(False), self.settings.update_models_dropdown(self.models_drop_down)), width=4)
-        refresh_button.grid(row=7, column=2, columnspan=1, padx=0, pady=5, sticky="w")
+        refresh_button.grid(row=row_idx, column=2, columnspan=1, padx=0, pady=5, sticky="w")
         tt.Tooltip(refresh_button, text="Refresh the list of available models")
 
-        self.create_editable_settings(self.basic_settings_frame, self.settings.basic_settings, start_row=8)
+        row_idx += 1
+
+        self.create_editable_settings(self.basic_settings_frame, self.settings.basic_settings, start_row=row_idx)
 
     def create_advanced_settings(self):
         """
