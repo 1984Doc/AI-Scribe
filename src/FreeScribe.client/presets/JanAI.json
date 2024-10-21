@@ -1,7 +1,7 @@
 {
   "koboldcpp_ip": "192.168.1.195",
   "whisperaudio_ip": "192.168.1.195",
-  "openai_api_key": "***REMOVED***",
+  "openai_api_key": "API KEY..",
   "editable_settings": {
     "Model": "gemma-2-2b-it",
     "Model Endpoint": "http://localhost:1337/v1",
