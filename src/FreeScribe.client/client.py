@@ -175,9 +175,6 @@ def record_audio():
 def is_silent(data, threshold=0.01):
     """Check if audio chunk is silent"""
     max_value = max(abs(np.array(data)))
-    print(max_value< threshold)
-    print(max_value)
-    print(threshold)
     return max_value < threshold
 
 def realtime_text():
