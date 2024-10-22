@@ -153,7 +153,7 @@ def record_audio():
             current_chunk.append(data)
             # Check for silence
             audio_buffer = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768
-            if is_silent(audio_buffer):
+            if is_silent(audio_buffer, app_settings.editable_settings["Silence cut-off"]):
                 silent_duration += CHUNK / RATE
             else:
                 silent_duration = 0
@@ -162,7 +162,7 @@ def record_audio():
                 # Check if the last 1 second of the current_chunk is silent
                 last_second_data = b''.join(current_chunk[-RATE // CHUNK:])
                 last_second_buffer = np.frombuffer(last_second_data, dtype=np.int16).astype(np.float32) / 32768
-                if is_silent(last_second_buffer) and silent_duration >= minimum_silent_duration:
+                if is_silent(last_second_buffer, app_settings.editable_settings["Silence cut-off"]) and silent_duration >= minimum_silent_duration:
                     if app_settings.editable_settings["Real Time"]:
                         audio_queue.put(b''.join(current_chunk))
                     current_chunk = []
@@ -172,9 +172,12 @@ def record_audio():
     audio_queue.put(None)
 
 
-def is_silent(data, threshold=float(app_settings.editable_settings["Silence cut-off"])):
-    max_value = max(data)
-    #print(f"Max audio value: {max_value}")
+def is_silent(data, threshold=0.01):
+    """Check if audio chunk is silent"""
+    max_value = max(abs(np.array(data)))
+    print(max_value< threshold)
+    print(max_value)
+    print(threshold)
     return max_value < threshold
 
 def realtime_text():
@@ -190,7 +193,7 @@ def realtime_text():
             if app_settings.editable_settings["Real Time"] == True:
                 print("Real Time Audio to Text")
                 audio_buffer = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
-                if not is_silent(audio_buffer):
+                if not is_silent(audio_buffer, app_settings.editable_settings["Silence cut-off"]):
                     if app_settings.editable_settings["Local Whisper"] == True:
                         print("Local Real Time Whisper")
                         result = model.transcribe(audio_buffer, fp16=False)
@@ -209,6 +212,7 @@ def realtime_text():
                             files = {'audio': f}
 
                             headers = {
+                                "Authorization": f"Bearer {app_settings.editable_settings['Whisper Server API Key']}",
                                 "X-API-Key": app_settings.editable_settings["Whisper Server API Key"]
                             }
 
