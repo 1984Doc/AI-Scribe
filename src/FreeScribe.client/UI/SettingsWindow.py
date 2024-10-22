@@ -13,29 +13,26 @@ and Research Students - Software Developer Alex Simko, Pemba Sherpa (F24), and N
 
 This module contains the ApplicationSettings class, which manages the settings for an
 application that involves audio processing and external API interactions, including
-KoboldCPP, WhisperAudio, and OpenAI services.
+WhisperAudio, and OpenAI services.
 
 """
 
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox
+import requests
+import numpy as np
+import pyaudio
 
 
-class ApplicationSettings:
+p = pyaudio.PyAudio()
+
+class SettingsWindow():
     """
     Manages application settings related to audio processing and external API services.
 
     Attributes
     ----------
-    KOBOLDCPP_IP : str
-        The IP address for the Kobold CPP service.
-    WHISPERAUDIO_IP : str
-        The IP address for the Whisper Audio service.
-    KOBOLDCPP_PORT : str
-        The port for the Kobold CPP service.
-    WHISPERAUDIO_PORT : str
-        The port for the Whisper Audio service.
     SSL_ENABLE : str
         Whether SSL is enabled ('1' for enabled, '0' for disabled).
     SSL_SELFCERT : str
@@ -59,11 +56,9 @@ class ApplicationSettings:
         Loads settings from a JSON file and updates the internal state.
     save_settings_to_file():
         Saves the current settings to a JSON file.
-    save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, 
-                  settings_window, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
+    save_settings(openai_api_key, aiscribe_text, aiscribe2_text, 
+                  settings_window, ssl_enable, ssl_selfcert, api_style, preset):
         Saves the current settings, including API keys, IP addresses, and user-defined parameters.
-    open_settings_window():
-        Opens the settings window, allowing the user to modify and save application settings.
     load_aiscribe_from_file():
         Loads the first AI Scribe text from a file.
     load_aiscribe2_from_file():
@@ -76,19 +71,15 @@ class ApplicationSettings:
 
     def __init__(self):
         """Initializes the ApplicationSettings with default values."""
-        self.KOBOLDCPP_IP = "192.168.1.195"
-        self.WHISPERAUDIO_IP = "192.168.1.195"
-        self.KOBOLDCPP_PORT = "5001"
-        self.WHISPERAUDIO_PORT = "8000"
+
         self.SSL_ENABLE = "0"
         self.SSL_SELFCERT = "1"
         self.OPENAI_API_KEY = "None"
         self.AISCRIBE = ""
         self.AISCRIBE2 = ""
         self.API_STYLE = "OpenAI"
+        self.main_window = None
 
-        self.KOBOLDCPP_ENDPOINT = None
-        self.WHISPERAUDIO_ENDPOINT = None
 
         self.basic_settings = {
             "Model",
@@ -97,6 +88,8 @@ class ApplicationSettings:
             "Whisper Server API Key",
             "Whisper Model",
             "Real Time",
+            "Use Docker Status Bar",
+            "Whisper Endpoint",
         }
 
         self.advanced_settings = {
@@ -147,6 +140,7 @@ class ApplicationSettings:
             "frmttriminc": False,
             "frmtrmblln": False,
             "Local Whisper": False,
+            "Whisper Endpoint": "https://localhost:2224/whisperaudio",
             "Whisper Server API Key": "None",
             "Whisper Model": "small.en",
             "Real Time": False,
@@ -157,7 +151,9 @@ class ApplicationSettings:
             "LLM Caddy Container Name": "caddy-llm-container",
             "Whisper Container Name": "speech-container",
             "Whisper Caddy Container Name": "caddy",
-            "Auto Shutdown Containers on Exit": True
+            "Auto Shutdown Containers on Exit": True,
+            "Use Docker Status Bar": False,
+            "Preset": "Custom",
         }
 
         self.docker_settings = {
@@ -170,7 +166,7 @@ class ApplicationSettings:
 
         self.editable_settings_entries = {}
 
-    def load_settings_from_file(self):
+    def load_settings_from_file(self, filename='settings.txt'):
         """
         Loads settings from a JSON file.
 
@@ -181,18 +177,13 @@ class ApplicationSettings:
             tuple: A tuple containing the IPs, ports, SSL settings, and API key.
         """
         try:
-            with open('settings.txt', 'r') as file:
+            with open(filename, 'r') as file:
                 try:
                     settings = json.load(file)
                 except json.JSONDecodeError:
-                    return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
-                           self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
-                           self.SSL_SELFCERT, self.API_STYLE
+                    print("Error loading settings file. Using default settings.")
+                    return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
 
-                self.KOBOLDCPP_IP = settings.get("koboldcpp_ip", self.KOBOLDCPP_IP)
-                self.KOBOLDCPP_PORT = settings.get("koboldcpp_port", self.KOBOLDCPP_PORT)
-                self.WHISPERAUDIO_IP = settings.get("whisperaudio_ip", self.WHISPERAUDIO_IP)
-                self.WHISPERAUDIO_PORT = settings.get("whisperaudio_port", self.WHISPERAUDIO_PORT)
                 self.SSL_ENABLE = settings.get("ssl_enable", self.SSL_ENABLE)
                 self.SSL_SELFCERT = settings.get("ssl_selfcert", self.SSL_SELFCERT)
                 self.OPENAI_API_KEY = settings.get("openai_api_key", self.OPENAI_API_KEY)
@@ -201,13 +192,14 @@ class ApplicationSettings:
                 for key, value in loaded_editable_settings.items():
                     if key in self.editable_settings:
                         self.editable_settings[key] = value
-                return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
-                       self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
-                       self.SSL_SELFCERT, self.API_STYLE
+
+                if self.editable_settings["Use Docker Status Bar"] and self.main_window is not None:
+                    self.main_window.create_docker_status_bar()
+
+                return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
         except FileNotFoundError:
-            return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
-                   self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
-                   self.SSL_SELFCERT, self.API_STYLE
+            print("Settings file not found. Using default settings.")
+            return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
 
     def save_settings_to_file(self):
         """
@@ -220,12 +212,8 @@ class ApplicationSettings:
             None
         """
         settings = {
-            "koboldcpp_ip": self.KOBOLDCPP_IP,
-            "whisperaudio_ip": self.WHISPERAUDIO_IP,
             "openai_api_key": self.OPENAI_API_KEY,
             "editable_settings": self.editable_settings,
-            "koboldcpp_port": self.KOBOLDCPP_PORT,
-            "whisperaudio_port": self.WHISPERAUDIO_PORT,
             "ssl_enable": str(self.SSL_ENABLE),
             "ssl_selfcert": str(self.SSL_SELFCERT),
             "api_style": self.API_STYLE
@@ -233,36 +221,28 @@ class ApplicationSettings:
         with open('settings.txt', 'w') as file:
             json.dump(settings, file)
 
-    def save_settings(self, koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
-                      koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
+    def save_settings(self, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
+                      ssl_enable, ssl_selfcert, api_style):
         """
         Save the current settings, including IP addresses, API keys, and user-defined parameters.
 
         This method writes the AI Scribe text to separate text files and updates the internal state
         of the Settings instance.
 
-        :param str koboldcpp_ip: The IP address for the KOBOLDCPP server.
-        :param str whisperaudio_ip: The IP address for the WhisperAudio server.
         :param str openai_api_key: The OpenAI API key for authentication.
         :param str aiscribe_text: The text for the first AI Scribe.
         :param str aiscribe2_text: The text for the second AI Scribe.
         :param tk.Toplevel settings_window: The settings window instance to be destroyed after saving.
-        :param str koboldcpp_port: The port for the KOBOLDCPP server.
-        :param str whisperaudio_port: The port for the WhisperAudio server.
         :param int ssl_enable: Flag indicating whether SSL is enabled.
         :param int ssl_selfcert: Flag indicating whether to use a self-signed certificate.
         :param str api_style: The style of API being used.
         """
-        self.KOBOLDCPP_IP = koboldcpp_ip
-        self.WHISPERAUDIO_IP = whisperaudio_ip
-        self.KOBOLDCPP_PORT = koboldcpp_port
-        self.WHISPERAUDIO_PORT = whisperaudio_port
         self.SSL_ENABLE = ssl_enable
         self.SSL_SELFCERT = ssl_selfcert
         self.OPENAI_API_KEY = openai_api_key
         self.API_STYLE = api_style
 
-        for setting, entry in self.editable_settings_entries.items():
+        for setting, entry in self.editable_settings_entries.items():     
             value = entry.get()
             if setting in ["max_context_length", "max_length", "rep_pen_range", "top_k"]:
                 value = int(value)
@@ -273,183 +253,11 @@ class ApplicationSettings:
         self.AISCRIBE = aiscribe_text
         self.AISCRIBE2 = aiscribe2_text
 
-        self.KOBOLDCPP_ENDPOINT = self.build_url(self.KOBOLDCPP_IP, self.KOBOLDCPP_PORT)
-        self.WHISPERAUDIO_ENDPOINT = self.build_url(self.WHISPERAUDIO_IP, str(self.WHISPERAUDIO_PORT)+"/whisperaudio")
-
         with open('aiscribe.txt', 'w') as f:
             f.write(self.AISCRIBE)
         with open('aiscribe2.txt', 'w') as f:
             f.write(self.AISCRIBE2)
-        
-        settings_window.destroy()
-
-    def open_settings_window(self):
-        """
-        Open the settings window, allowing the user to modify and save application settings.
-
-        This method creates a new window with various input fields for changing
-        settings related to KOBOLDCPP, WhisperAudio, OpenAI API, and more.
-        """
-        settings_window = tk.Toplevel()
-        settings_window.title("Settings")
-        settings_window.resizable(True, True)
-        settings_window.grab_set()
-
-        main_frame = tk.Frame(settings_window)
-        main_frame.pack(expand=True, fill='both')
-
-        notebook = ttk.Notebook(main_frame)
-        notebook.pack(expand=True, fill='both')
-
-        basic_frame = ttk.Frame(notebook)
-        advanced_frame = ttk.Frame(notebook)
-        docker_settings_frame = ttk.Frame(notebook) 
-
-        notebook.add(basic_frame, text="Basic Settings")
-        notebook.add(advanced_frame, text="Advanced Settings")
-        notebook.add(docker_settings_frame, text="Docker Settings")
-
-        def add_scrollbar_to_frame(frame):
-            """
-            Add a vertical scrollbar to the given frame.
-
-            :param ttk.Frame frame: The frame to which the scrollbar will be added.
-            :returns: The frame containing the scrollable content.
-            :rtype: ttk.Frame
-            """
-            canvas = tk.Canvas(frame)
-            scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
-            scrollable_frame = ttk.Frame(canvas)
-
-            scrollable_frame.bind(
-                "<Configure>",
-                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-            )
-
-            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-            canvas.configure(yscrollcommand=scrollbar.set)
-
-            canvas.pack(side="left", fill="both", expand=True)
-            scrollbar.pack(side="right", fill="y")
-
-            return scrollable_frame
-
-        basic_settings_frame = add_scrollbar_to_frame(basic_frame)
-        advanced_settings_frame = add_scrollbar_to_frame(advanced_frame)
-
-        tk.Label(basic_settings_frame, text="KOBOLDCPP IP:").grid(row=0, column=0, padx=0, pady=5, sticky="w")
-        koboldcpp_ip_entry = tk.Entry(basic_settings_frame, width=25)
-        koboldcpp_ip_entry.insert(0, self.KOBOLDCPP_IP)
-        koboldcpp_ip_entry.grid(row=0, column=1, padx=0, pady=5, sticky="w")
-
-        tk.Label(basic_settings_frame, text="PORT:").grid(row=0, column=2, padx=0, pady=5, sticky="w")
-        koboldcpp_port_entry = tk.Entry(basic_settings_frame, width=10)
-        koboldcpp_port_entry.insert(0, self.KOBOLDCPP_PORT)
-        koboldcpp_port_entry.grid(row=0, column=3, padx=0, pady=5, sticky="w")
-
-        tk.Label(basic_settings_frame, text="WHISPERAUDIO IP:").grid(row=1, column=0, padx=0, pady=5, sticky="w")
-        whisperaudio_ip_entry = tk.Entry(basic_settings_frame, width=25)
-        whisperaudio_ip_entry.insert(0, self.WHISPERAUDIO_IP)
-        whisperaudio_ip_entry.grid(row=1, column=1, padx=0, pady=5, sticky="w")
-
-        tk.Label(basic_settings_frame, text="PORT:").grid(row=1, column=2, padx=0, pady=5, sticky="w")
-        whisperaudio_port_entry = tk.Entry(basic_settings_frame, width=10)
-        whisperaudio_port_entry.insert(0, self.WHISPERAUDIO_PORT)
-        whisperaudio_port_entry.grid(row=1, column=3, padx=0, pady=5, sticky="w")
-
-        tk.Label(basic_settings_frame, text="OpenAI API Key:").grid(row=5, column=0, padx=0, pady=5, sticky="w")
-        openai_api_key_entry = tk.Entry(basic_settings_frame, width=25)
-        openai_api_key_entry.insert(0, self.OPENAI_API_KEY)
-        openai_api_key_entry.grid(row=5, column=1, padx=0, pady=5, sticky="w")
-
-        tk.Label(basic_settings_frame, text="API Style:").grid(row=6, column=0, padx=0, pady=5, sticky="w")
-        api_options = ["OpenAI"]
-        dropdown = ttk.Combobox(basic_settings_frame, values=api_options, width=15, state="readonly")
-        dropdown.current(api_options.index(self.API_STYLE))
-        dropdown.grid(row=6, column=1, padx=0, pady=5, sticky="w")
-
-        ssl_enable_var = tk.IntVar(value=self.SSL_ENABLE)
-        tk.Label(basic_settings_frame, text="Enable SSL:").grid(row=3, column=0, padx=0, pady=5, sticky="w")
-        ssl_enable_checkbox = tk.Checkbutton(basic_settings_frame, variable=ssl_enable_var)
-        ssl_enable_checkbox.grid(row=3, column=1, padx=0, pady=5, sticky="w")
-
-        ssl_selfcert_var = tk.IntVar(value=self.SSL_SELFCERT)
-        tk.Label(basic_settings_frame, text="Self-Signed Cert:").grid(row=4, column=0, padx=0, pady=5, sticky="w")
-        ssl_selfcert_checkbox = tk.Checkbutton(basic_settings_frame, variable=ssl_selfcert_var)
-        ssl_selfcert_checkbox.grid(row=4, column=1, padx=0, pady=5, sticky="w")
-
-        adv_row_counter = 1
-        basic_row_counter = 7
-        docker_row_counter = 1
-
-        for setting, value in self.editable_settings.items():
-            row_counter = None
-            frame = None
-            
-            if setting in self.basic_settings:
-                row_counter = basic_row_counter
-                frame = basic_settings_frame
-                basic_row_counter += 1
-            elif setting in self.advanced_settings:
-                row_counter = adv_row_counter
-                frame = advanced_settings_frame
-                adv_row_counter += 1
-            elif setting in self.docker_settings:
-                row_counter = docker_row_counter
-                frame = docker_settings_frame
-                docker_row_counter += 1
-
-            tk.Label(frame, text=f"{setting}:").grid(row=row_counter, column=0, padx=0, pady=5, sticky="w")
-            
-            # Check if the value is a boolean
-            if value in [True, False]:
-                var = tk.IntVar(value=int(value))  # Convert boolean to int for checkbox
-                checkbox = tk.Checkbutton(frame, variable=var)
-                checkbox.grid(row=row_counter, column=1, padx=0, pady=5, sticky="w")
-                self.editable_settings_entries[setting] = var
-            else:
-                entry = tk.Entry(frame)
-                entry.insert(0, str(value))  # Ensure the value is a string
-                entry.grid(row=row_counter, column=1, padx=0, pady=5, sticky="w")
-                self.editable_settings_entries[setting] = entry
-
-        # make a ai scribe edit text box
-        tk.Label(advanced_settings_frame, text="Pre Prompting").grid(row=adv_row_counter, column=0, padx=0, pady=5, sticky="w")
-        aiscribe_text = tk.Text(advanced_settings_frame, height=10, width=25)
-        aiscribe_text.insert(tk.END, self.AISCRIBE)
-        aiscribe_text.grid(row=adv_row_counter, column=1, columnspan=2, padx=0, pady=5, sticky="w")
-
-        adv_row_counter += 1
-
-        # make a ai scribe2 edit text box
-        tk.Label(advanced_settings_frame, text="Post Prompting").grid(row=adv_row_counter, column=0, padx=0, pady=5, sticky="w")
-        aiscribe2_text = tk.Text(advanced_settings_frame, height=10, width=25)
-        aiscribe2_text.insert(tk.END, self.AISCRIBE2)
-        aiscribe2_text.grid(row=adv_row_counter, column=1, columnspan=2, padx=0, pady=5, sticky="w")
-
-
-        tk.Button(main_frame, text="Save", command=lambda: self.save_settings(
-            koboldcpp_ip_entry.get(),
-            whisperaudio_ip_entry.get(),
-            openai_api_key_entry.get(),
-            aiscribe_text.get("1.0", tk.END),
-            aiscribe2_text.get("1.0", tk.END),
-            settings_window,
-            koboldcpp_port_entry.get(),
-            whisperaudio_port_entry.get(),
-            ssl_enable_var.get(),
-            ssl_selfcert_var.get(),
-            dropdown.get()
-        ), width=10).pack(side="right", padx=2, pady=5)
-
-        default_button = tk.Button(main_frame, text="Default", width=10, command=lambda: self.clear_settings_file(settings_window))
-        default_button.pack(side="right", padx=2, pady=5)
-
-        close_button = tk.Button(main_frame, text="Close", width=10, command=settings_window.destroy)
-        close_button.pack(side="right", padx=2, pady=5)
-
-        # DOCKER SETTINGS
-       
+      
     def load_aiscribe_from_file(self):
         """
         Load the AI Scribe text from a file.
@@ -527,9 +335,7 @@ class ApplicationSettings:
         self.AISCRIBE = self.load_aiscribe_from_file() or "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
         self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
         
-        self.KOBOLDCPP_ENDPOINT = self.build_url(self.KOBOLDCPP_IP, self.KOBOLDCPP_PORT)
-        self.WHISPERAUDIO_ENDPOINT = self.build_url(self.WHISPERAUDIO_IP, str(self.WHISPERAUDIO_PORT)+"/whisperaudio")
-
+  
     def clear_settings_file(self, settings_window):
         """
         Clears the content of settings files and closes the settings window.
@@ -562,3 +368,78 @@ class ApplicationSettings:
         except Exception as e:
             # Print any exception that occurs during file handling or window destruction.
             print(f"Error clearing settings files: {e}")
+
+    def get_available_models(self):
+        """
+        Returns a list of available models for the user to choose from.
+
+        This method returns a list of available models that can be used with the AI Scribe
+        service. The list includes the default model, `gpt-4`, as well as any other models
+        that may be added in the future.
+
+        Returns:
+            list: A list of available models for the user to choose from.
+        """
+        
+        headers = {
+            "Authorization": f"Bearer {self.OPENAI_API_KEY}",
+            "X-API-Key": self.OPENAI_API_KEY
+        }
+
+        try:
+            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=1000)
+            response.raise_for_status()  # Raise an error for bad responses
+            models = response.json().get("data", [])  # Extract the 'data' field
+            return [model["id"] for model in models]
+        except requests.RequestException as e:
+            messagebox.showerror("Error", f"Failed to fetch models: {e}. Please ensure your OpenAI API key is correct.") 
+            return ["Failed to load models"]
+
+    def update_models_dropdown(self, dropdown):
+        """
+        Updates the models dropdown with the available models.
+
+        This method fetches the available models from the AI Scribe service and updates
+        the dropdown widget in the settings window with the new list of models.
+        """
+        
+        models = self.get_available_models()
+        dropdown["values"] = models
+
+    def load_settings_preset(self, preset_name, settings_class):
+        """
+        Load a settings preset from a file.
+
+        This method loads a settings preset from a JSON file with the given name.
+        The settings are then applied to the application settings.
+
+        Parameters:
+            preset_name (str): The name of the settings preset to load.
+
+        Returns:
+            None
+        """
+        self.editable_settings["Preset"] = preset_name
+
+        if preset_name != "Custom":
+            # load the settigns from the json preset file
+            self.load_settings_from_file("presets/" + preset_name + ".json")
+            messagebox.showinfo("Settings Preset", "Settings preset loaded successfully. Closing settings window. Please re-open and set respective API keys.")
+            
+            self.editable_settings["Preset"] = preset_name
+            settings_class.settings_window.destroy()
+            self.save_settings_to_file()
+        else:
+            messagebox.showinfo("Custom Settings", "To use custom settings then please fill in the values and save them.")
+
+    def set_main_window(self, window):
+        """
+        Set the main window instance for the settings.
+
+        This method sets the main window instance for the settings class, allowing
+        the settings to interact with the main window when necessary.
+
+        Parameters:
+            window (MainWindow): The main window instance to set.
+        """
+        self.main_window = window

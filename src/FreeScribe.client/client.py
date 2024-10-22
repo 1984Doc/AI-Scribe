@@ -1,6 +1,15 @@
-# Copyright (c) 2023 Braedon Hendy
-# This software is released under the GNU General Public License v3.0
-# Contributors: Kevin Lai
+"""
+This software is released under the AGPL-3.0 license
+Copyright (c) 2023-2024 Braedon Hendy
+
+Further updates and packaging added in 2024 through the ClinicianFOCUS initiative, 
+a collaboration with Dr. Braedon Hendy and Conestoga College Institute of Applied 
+Learning and Technology as part of the CNERG+ applied research project, 
+Unburdening Primary Healthcare: An Open-Source AI Clinician Partner Platform". 
+Prof. Michael Yingbull (PI), Dr. Braedon Hendy (Partner), 
+and Research Students - Software Developer Alex Simko, Pemba Sherpa (F24), and Naitik Patel.
+
+"""
 
 import tkinter as tk
 from tkinter import scrolledtext, ttk, filedialog
@@ -24,21 +33,30 @@ import re
 import speech_recognition as sr # python package is named speechrecognition
 import time
 import queue
-import ApplicationSettings_client as settings
 from ContainerManager import ContainerManager
 import atexit
 import asyncio
 from UI.MainWindow import MainWindow
+from UI.MainWindowUI import MainWindowUI
+from UI.SettingsWindowUI import SettingsWindowUI
+from UI.SettingsWindow import SettingsWindow
 
 
 # GUI Setup
 root = tk.Tk()
 root.title("AI Medical Scribe")
 
-# settings window
-app_settings = settings.ApplicationSettings()
+# settings logic
+app_settings = SettingsWindow()
 app_settings.start()
 
+#  create our ui elements and settings config
+window = MainWindowUI(root, app_settings)
+settings_window = SettingsWindowUI(app_settings, window)
+app_settings.set_main_window(window)
+
+if app_settings.editable_settings["Use Docker Status Bar"]:
+    window.create_docker_status_bar()
 
 NOTE_CREATION = "Note Creation...Please Wait"
 
@@ -103,7 +121,7 @@ def threaded_realtime_text():
     thread.start()
 
 def threaded_handle_message(formatted_message):
-    thread = threading.Thread(target=handle_message, args=(formatted_message,))
+    thread = threading.Thread(target=show_edit_transcription_popup, args=(formatted_message,))
     thread.start()
 
 def threaded_send_audio_to_server():
@@ -195,9 +213,9 @@ def realtime_text():
                             }
 
                             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers,files=files, verify=False)
+                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=False)
                             else:
-                                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers,files=files)
+                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files)
                             if response.status_code == 200:
                                 text = response.json()['text']
                                 update_gui(text)
@@ -252,15 +270,6 @@ def clear_all_text_fields():
     response_display.configure(state='normal')
     response_display.delete("1.0", tk.END)
     response_display.configure(state='disabled')
-
-def toggle_gpt_button():
-    global is_gpt_button_active
-    if is_gpt_button_active:
-        gpt_button.config(bg="gray85", text="KoboldCpp")
-        is_gpt_button_active = False
-    else:
-        gpt_button.config(bg="red", text="Custom Endpoint")
-        is_gpt_button_active = True
 
 def toggle_aiscribe():
     global use_aiscribe
@@ -358,10 +367,10 @@ def send_audio_to_server():
             # Check for SSL and self-signed certificate settings
             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
                 # Send the request without verifying the SSL certificate
-                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers, files=files, verify=False)
+                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=False)
             else:
                 # Send the request with the audio file and headers/authorization
-                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT,headers=headers, files=files)
+                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files)
             
             # On successful response (status code 200)
             if response.status_code == 200:
@@ -384,20 +393,7 @@ def send_and_receive():
         formatted_message = user_message
     threaded_handle_message(formatted_message)
 
-def handle_message(formatted_message):
-    if is_gpt_button_active:
-        show_edit_transcription_popup(formatted_message)
-    else:
-        prompt = get_prompt(formatted_message)
-        if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-            response = requests.post(f"{app_settings.KOBOLDCPP_ENDPOINT}/api/v1/generate", json=prompt, verify=False)
-        else:
-            response = requests.post(f"{app_settings.KOBOLDCPP_ENDPOINT}/api/v1/generate", json=prompt)
-        if response.status_code == 200:
-            results = response.json()['results']
-            response_text = results[0]['text']
-            response_text = response_text.replace("  ", " ").strip()
-            update_gui_with_response(response_text)
+        
 
 def display_text(text):
     response_display.configure(state='normal')
@@ -464,6 +460,18 @@ def send_text_to_chatgpt(edited_text):
             response_data = response.json()
             response_text = (response_data['choices'][0]['message']['content'])
             update_gui_with_response(response_text)
+        elif app_settings.API_STYLE == "KoboldCpp":
+            prompt = get_prompt(edited_text)
+            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
+                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=False)
+            else:
+                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt)
+            if response.status_code == 200:
+                results = response.json()['results']
+                response_text = results[0]['text']
+                response_text = response_text.replace("  ", " ").strip()
+                update_gui_with_response(response_text)
+
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err}")
         display_text(f"HTTP error occurred: {http_err}")
@@ -554,7 +562,6 @@ def toggle_view():
         send_button.grid_remove()
         clear_button.grid_remove()
         toggle_button.grid_remove()
-        gpt_button.grid_remove()
         settings_button.grid_remove()
         upload_button.grid_remove()
         response_display.grid_remove()
@@ -580,7 +587,6 @@ def toggle_view():
         send_button.grid()
         clear_button.grid()
         toggle_button.grid()
-        gpt_button.grid()
         settings_button.grid()
         upload_button.grid()
         response_display.grid()
@@ -652,35 +658,32 @@ root.grid_rowconfigure(4, weight=0)
 user_input = scrolledtext.ScrolledText(root, height=12)
 user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
-mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=10)
+mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
 mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
 
-send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=10)
+send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=11)
 send_button.grid(row=1, column=2, pady=5, sticky='nsew')
 
-pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=10)
+pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=11)
 pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
 
-clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=10)
+clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=11)
 clear_button.grid(row=1, column=4, pady=5, sticky='nsew')
 
-toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=10)
+toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=11)
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
 
-gpt_button = tk.Button(root, text="KoboldCpp", command=toggle_gpt_button, height=2, width=13)
-gpt_button.grid(row=1, column=6, pady=5, sticky='nsew')
+settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=11)
+settings_button.grid(row=1, column=6, pady=5, sticky='nsew')
 
-settings_button = tk.Button(root, text="Settings", command=app_settings.open_settings_window, height=2, width=10)
-settings_button.grid(row=1, column=7, pady=5, sticky='nsew')
+upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=11)
+upload_button.grid(row=1, column=7, pady=5, sticky='nsew')
 
-upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=10)
-upload_button.grid(row=1, column=8, pady=5, sticky='nsew')
-
-switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=10)
-switch_view_button.grid(row=1, column=9, pady=5, sticky='nsew')
+switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=11)
+switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
-blinking_circle_canvas.grid(row=1, column=10, pady=5)
+blinking_circle_canvas.grid(row=1, column=9, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 
 response_display = scrolledtext.ScrolledText(root, height=12, state='disabled')
@@ -701,54 +704,7 @@ combobox.current(0)
 combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
 combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
 
-window = MainWindow()
-
-if window.container_manager.client is not None:
-    # Footer frame
-    footer_frame = tk.Frame(root, bd=1, relief=tk.SUNKEN)
-    footer_frame.grid(row=4, column=0, columnspan=14, sticky='nsew')
-
-    # Docker status bar for llm and whisper containers
-    docker_status = tk.Label(footer_frame, text="Docker Containers: ")
-    docker_status.pack(side=tk.LEFT)
-
-    # LLM Container Status
-    llm_status = tk.Label(footer_frame, text="LLM Container Status:", padx=10)
-    llm_status.pack(side=tk.LEFT)
-    tt.Tooltip(llm_status, text="The LLM container is essential for generating responses and creating the SOAP notes. This service must be running.")
-
-    # Red dot for LLM status
-    llm_dot = tk.Label(footer_frame, text='●', fg='red')
-    llm_dot.pack(side=tk.LEFT)
-    tt.Tooltip(llm_dot, text="LLM Container Status: Green = Running, Red = Stopped")
-
-    # Whisper Server Status
-    whisper_status = tk.Label(footer_frame, text="Whisper Server Status:", padx=10)
-    whisper_status.pack(side=tk.LEFT)
-    tt.Tooltip(whisper_status, text="The whisper server is responsible for transcribing microphone input to text. This service must be running.")
-
-    # Red dot for Whisper status
-    whisper_dot = tk.Label(footer_frame, text='●', fg='red')
-    whisper_dot.pack(side=tk.LEFT)
-    tt.Tooltip(whisper_dot, text="Whisper Status: Green = Running, Red = Stopped")
-
-    # start whisper container button
-    start_whisper_button = tk.Button(footer_frame, text="Start Whisper", command=lambda: window.start_whisper_container(whisper_dot, app_settings))
-    start_whisper_button.pack(side=tk.RIGHT)
-
-    # start local llm container button
-    start_llm_button = tk.Button(footer_frame, text="Start LLM", command= lambda: window.start_LLM_container(llm_dot, app_settings))
-    start_llm_button.pack(side=tk.RIGHT)
-
-    update_aiscribe_texts(None)
-
-    #stop whisper container button
-    stop_whisper_button = tk.Button(footer_frame, text="Stop Whisper", command=lambda: window.stop_whisper_container(whisper_dot, app_settings))
-    stop_whisper_button.pack(side=tk.RIGHT)
-
-    #stop llm container button
-    stop_llm_button = tk.Button(footer_frame, text="Stop LLM", command=lambda: window.stop_LLM_container(llm_dot, app_settings))
-    stop_llm_button.pack(side=tk.RIGHT)
+update_aiscribe_texts(None)
 
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: pause_button.invoke())
