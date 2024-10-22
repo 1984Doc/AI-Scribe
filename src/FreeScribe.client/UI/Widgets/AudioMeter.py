@@ -54,7 +54,8 @@ class AudioMeter(tk.Frame):
         self.width = width
         self.height = height
         self.running = False
-        self.threshold = threshold  # Default threshold value - adjusted for int16 audio values
+        self.threshold = threshold
+        self.destroyed = False  # Add flag to track widget destruction
         self.setup_audio()
         self.create_widgets()
         
@@ -70,15 +71,20 @@ class AudioMeter(tk.Frame):
         :param event: The event that triggered the cleanup (default is None).
         :type event: tkinter.Event
         """
-        if self.running:
+        if not self.destroyed:  # Only cleanup once
+            self.destroyed = True
             self.running = False
-            if self.monitoring_thread:
-                self.monitoring_thread.join(timeout=1.0)  # Wait for thread to finish
-            if self.stream:
+            
+            # Stop audio first
+            if hasattr(self, 'stream') and self.stream:
                 self.stream.stop_stream()
                 self.stream.close()
-            if self.p:
+            if hasattr(self, 'p') and self.p:
                 self.p.terminate()
+                
+            # Then wait for thread
+            if hasattr(self, 'monitoring_thread') and self.monitoring_thread:
+                self.monitoring_thread.join(timeout=1.0)
 
     def destroy(self):
         """
@@ -204,23 +210,18 @@ class AudioMeter(tk.Frame):
         This method reads audio data from the stream, calculates the maximum
         audio level, and updates the meter display on the main thread.
         """
-        while self.running:
+        while self.running and not self.destroyed:  # Check destroyed flag
             try:
-                # Read audio data
                 data = self.stream.read(self.CHUNK, exception_on_overflow=False)
-                # Convert to integers
                 audio_data = struct.unpack(f'{self.CHUNK}h', data)
-
-                # Get max value
                 max_value = max(abs(np.array(audio_data)))
-
-                # Scale to 0-380 for display
                 level = min(380, int((max_value / 32767) * 380))
                 
-                # Update meter on main thread
-                self.master.after(0, self.update_meter_display, level)
+                # Only schedule update if not destroyed
+                if not self.destroyed:
+                    self.master.after(0, self.update_meter_display, level)
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"Error in audio monitoring: {e}")
                 break
     
     def update_meter_display(self, level):
@@ -233,18 +234,22 @@ class AudioMeter(tk.Frame):
         :param level: The current audio level to display.
         :type level: int
         """
-        # Update meter position
-        self.canvas.coords(
-            self.level_meter,
-            0, 5,
-            level, 25
-        )
-        
-        # Color logic
-        if level < 120:
-            color = 'green'
-        elif level < 250:
-            color = 'yellow'
-        else:
-            color = 'red'
-        self.canvas.itemconfig(self.level_meter, fill=color)
+        if not self.destroyed and self.winfo_exists():
+            try:
+                self.canvas.coords(
+                    self.level_meter,
+                    0, 5,
+                    level, 25
+                )
+                
+                # Color logic
+                if level < 120:
+                    color = 'green'
+                elif level < 250:
+                    color = 'yellow'
+                else:
+                    color = 'red'
+                self.canvas.itemconfig(self.level_meter, fill=color)
+            except tk.TclError:
+                # Widget was destroyed during update
+                self.cleanup()
