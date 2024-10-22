@@ -1,4 +1,6 @@
 """
+src/FreeScribe.client/UI/Widgets/AudioMeter.py
+
 This software is released under the AGPL-3.0 license
 Copyright (c) 2023-2024 Braedon Hendy
 
