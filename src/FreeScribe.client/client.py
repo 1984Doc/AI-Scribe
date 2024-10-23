@@ -184,8 +184,12 @@ def realtime_text():
         is_realtimeactive = True
         model = None
         if app_settings.editable_settings["Real Time"]:
-            model_name = app_settings.editable_settings["Whisper Model"].strip()
-            model = whisper.load_model(model_name)
+            try:
+                model_name = app_settings.editable_settings["Whisper Model"].strip()
+                model = whisper.load_model(model_name)
+            except Exception as e:
+                messagebox.showerror("Model Error", f"Error loading model: {e}")
+                
         while True:
             audio_data = audio_queue.get()
             if audio_data is None:

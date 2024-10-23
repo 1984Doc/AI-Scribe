@@ -205,6 +205,7 @@ class SettingsWindowUI:
 
         tk.Label(self.advanced_settings_frame, text="Whisper Audio Cutoff").grid(row=row_idx, column=0, padx=0, pady=0, sticky="w")
 
+        # Create audio meter for silence cut-off, used for setting microphone cutoff in Whisper
         self.cutoff_slider = AudioMeter(self.advanced_settings_frame, width=150, height=50, threshold=self.settings.editable_settings["Silence cut-off"] * 32768)
         self.cutoff_slider.grid(row=row_idx, column=1, padx=0, pady=0, sticky="w")
 
