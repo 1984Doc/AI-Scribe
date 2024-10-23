@@ -41,9 +41,6 @@ from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 
-print("Starting AI Medical Scribe...")
-print("Loading...")
-
 # GUI Setup
 root = tk.Tk()
 root.title("AI Medical Scribe")
