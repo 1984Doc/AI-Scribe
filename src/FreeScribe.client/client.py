@@ -41,7 +41,6 @@ from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 
-
 # GUI Setup
 root = tk.Tk()
 root.title("AI Medical Scribe")
@@ -81,7 +80,6 @@ CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
-
 
 
 def get_prompt(formatted_message):
@@ -141,48 +139,57 @@ def toggle_pause():
 
 def record_audio():
     global is_paused, frames, audio_queue
-    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK, input_device_index=1)
     current_chunk = []
     silent_duration = 0
     minimum_silent_duration = int(app_settings.editable_settings["Real Time Silence Length"])
     minimum_audio_duration = int(app_settings.editable_settings["Real Time Audio Length"])
+    print("Recording...")
     while is_recording:
         if not is_paused:
             data = stream.read(CHUNK, exception_on_overflow=False)
             frames.append(data)
-            current_chunk.append(data)
             # Check for silence
             audio_buffer = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768
-            if is_silent(audio_buffer):
+            if is_silent(audio_buffer, app_settings.editable_settings["Silence cut-off"]):
                 silent_duration += CHUNK / RATE
             else:
+                current_chunk.append(data)
                 silent_duration = 0
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
             if len(current_chunk) >= minimum_audio_duration * RATE // CHUNK:
+                print("Audio Chunk Ready")
                 # Check if the last 1 second of the current_chunk is silent
                 last_second_data = b''.join(current_chunk[-RATE // CHUNK:])
                 last_second_buffer = np.frombuffer(last_second_data, dtype=np.int16).astype(np.float32) / 32768
-                if is_silent(last_second_buffer) and silent_duration >= minimum_silent_duration:
-                    if app_settings.editable_settings["Real Time"]:
-                        audio_queue.put(b''.join(current_chunk))
-                    current_chunk = []
-                    silent_duration = 0
+                if app_settings.editable_settings["Real Time"]:
+                    print("Audio Chunk Sent")
+                    audio_queue.put(b''.join(current_chunk))
+                current_chunk = []
+                silent_duration = 0
     stream.stop_stream()
     stream.close()
     audio_queue.put(None)
 
 
-def is_silent(data, threshold=float(app_settings.editable_settings["Silence cut-off"])):
-    max_value = max(data)
-    #print(f"Max audio value: {max_value}")
+def is_silent(data, threshold=0.01):
+    """Check if audio chunk is silent"""
+    data_array = np.array(data)
+    max_value = max(abs(data_array))
     return max_value < threshold
 
 def realtime_text():
-    global frames, is_realtimeactive
+    global frames, is_realtimeactive, audio_queue
     if not is_realtimeactive:
         is_realtimeactive = True
-        model_name = app_settings.editable_settings["Whisper Model"].strip()
-        model = whisper.load_model(model_name)
+        model = None
+        if app_settings.editable_settings["Real Time"]:
+            try:
+                model_name = app_settings.editable_settings["Whisper Model"].strip()
+                model = whisper.load_model(model_name)
+            except Exception as e:
+                messagebox.showerror("Model Error", f"Error loading model: {e}")
+                
         while True:
             audio_data = audio_queue.get()
             if audio_data is None:
@@ -209,7 +216,7 @@ def realtime_text():
                             files = {'audio': f}
 
                             headers = {
-                                "X-API-Key": app_settings.editable_settings["Whisper Server API Key"]
+                                "Authorization": "Bearer "+app_settings.editable_settings["Whisper Server API Key"]
                             }
 
                             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
@@ -705,6 +712,7 @@ combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
 combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
 
 update_aiscribe_texts(None)
+
 
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: pause_button.invoke())

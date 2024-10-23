@@ -23,6 +23,7 @@ import json
 import tkinter as tk
 from tkinter import ttk, messagebox
 import Tooltip as tt
+from UI.Widgets.AudioMeter import AudioMeter
 
 
 class SettingsWindowUI:
@@ -200,15 +201,27 @@ class SettingsWindowUI:
         """
         self.create_editable_settings(self.advanced_settings_frame, self.settings.advanced_settings)
 
-        tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=len(self.settings.advanced_settings), column=0, padx=0, pady=5, sticky="w")
+        row_idx = len(self.settings.advanced_settings)
+
+        tk.Label(self.advanced_settings_frame, text="Whisper Audio Cutoff").grid(row=row_idx, column=0, padx=0, pady=0, sticky="w")
+
+        # Create audio meter for silence cut-off, used for setting microphone cutoff in Whisper
+        self.cutoff_slider = AudioMeter(self.advanced_settings_frame, width=150, height=50, threshold=self.settings.editable_settings["Silence cut-off"] * 32768)
+        self.cutoff_slider.grid(row=row_idx, column=1, padx=0, pady=0, sticky="w")
+
+        row_idx += 1
+
+        tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.aiscribe_text = tk.Text(self.advanced_settings_frame, height=10, width=25)
         self.aiscribe_text.insert(tk.END, self.settings.AISCRIBE)
-        self.aiscribe_text.grid(row=len(self.settings.advanced_settings), column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        self.aiscribe_text.grid(row=row_idx, column=1, columnspan=2, padx=0, pady=5, sticky="w")
 
-        tk.Label(self.advanced_settings_frame, text="Post Prompting").grid(row=len(self.settings.advanced_settings)+1, column=0, padx=0, pady=5, sticky="w")
+        row_idx += 1
+
+        tk.Label(self.advanced_settings_frame, text="Post Prompting").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.aiscribe2_text = tk.Text(self.advanced_settings_frame, height=10, width=25)
         self.aiscribe2_text.insert(tk.END, self.settings.AISCRIBE2)
-        self.aiscribe2_text.grid(row=len(self.settings.advanced_settings)+1, column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        self.aiscribe2_text.grid(row=row_idx, column=1, columnspan=2, padx=0, pady=5, sticky="w")
 
     def create_docker_settings(self):
         """
@@ -260,6 +273,7 @@ class SettingsWindowUI:
         This method retrieves the values from the UI elements and calls the
         `save_settings` method of the `settings` object to save the settings.
         """
+
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
             self.aiscribe_text.get("1.0", tk.END),
@@ -268,6 +282,7 @@ class SettingsWindowUI:
             self.ssl_enable_var.get(),
             self.ssl_selfcert_var.get(),
             self.api_dropdown.get(),
+            self.cutoff_slider.threshold / 32768,
         )
 
         if self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is None:
@@ -286,3 +301,4 @@ class SettingsWindowUI:
         to reset the settings to their default values.
         """
         self.settings.clear_settings_file(self.settings_window)
+

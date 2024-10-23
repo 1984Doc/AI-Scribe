@@ -25,7 +25,8 @@ Section "MainSection" SEC01
     SetOutPath "$INSTDIR"
 
     ; Add files to the installer
-    File /r "..\dist\freescribe-client.exe"
+    File /r "..\dist\freescribe-client\freescribe-client.exe"
+    File /r "..\dist\freescribe-client\_internal"
 
     ; add presets
     CreateDirectory "$INSTDIR\presets"

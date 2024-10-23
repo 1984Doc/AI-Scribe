@@ -114,7 +114,6 @@ class SettingsWindow():
             "frmtrmblln",
             "Real Time Audio Length",
             "Real Time Silence Length",
-            "Silence cut-off"
         }
 
         self.editable_settings = {
@@ -146,7 +145,7 @@ class SettingsWindow():
             "Real Time": False,
             "Real Time Audio Length": 5,
             "Real Time Silence Length": 1,
-            "Silence cut-off": 0.01,
+            "Silence cut-off": 0.015,
             "LLM Container Name": "llm-container-1",
             "LLM Caddy Container Name": "caddy-llm-container",
             "Whisper Container Name": "speech-container",
@@ -222,7 +221,7 @@ class SettingsWindow():
             json.dump(settings, file)
 
     def save_settings(self, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
-                      ssl_enable, ssl_selfcert, api_style):
+                      ssl_enable, ssl_selfcert, api_style, silence_cutoff):
         """
         Save the current settings, including IP addresses, API keys, and user-defined parameters.
 
@@ -241,6 +240,8 @@ class SettingsWindow():
         self.SSL_SELFCERT = ssl_selfcert
         self.OPENAI_API_KEY = openai_api_key
         self.API_STYLE = api_style
+
+        self.editable_settings["Silence cut-off"] = silence_cutoff
 
         for setting, entry in self.editable_settings_entries.items():     
             value = entry.get()
