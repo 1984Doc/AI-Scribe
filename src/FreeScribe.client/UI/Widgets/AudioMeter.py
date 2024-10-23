@@ -191,10 +191,10 @@ class AudioMeter(tk.Frame):
             self.running = True
             self.stream = self.p.open(
                 format=self.FORMAT,
-                channels=self.CHANNELS,
+                channels=1,
                 rate=self.RATE,
                 input=True,
-                frames_per_buffer=self.CHUNK
+                frames_per_buffer=self.CHUNK,
             )
             self.monitoring_thread = Thread(target=self.update_meter)
             self.monitoring_thread.start()
