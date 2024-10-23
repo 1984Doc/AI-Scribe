@@ -41,7 +41,6 @@ from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 
-
 # GUI Setup
 root = tk.Tk()
 root.title("AI Medical Scribe")
@@ -83,7 +82,6 @@ CHANNELS = 1
 RATE = 16000
 
 
-
 def get_prompt(formatted_message):
 
     sampler_order = app_settings.editable_settings["sampler_order"]
@@ -121,7 +119,7 @@ def threaded_realtime_text():
     thread.start()
 
 def threaded_handle_message(formatted_message):
-    thread = threading.Thread(target=handle_message, args=(formatted_message,))
+    thread = threading.Thread(target=show_edit_transcription_popup, args=(formatted_message,))
     thread.start()
 
 def threaded_send_audio_to_server():
@@ -141,48 +139,57 @@ def toggle_pause():
 
 def record_audio():
     global is_paused, frames, audio_queue
-    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK, input_device_index=1)
     current_chunk = []
     silent_duration = 0
     minimum_silent_duration = int(app_settings.editable_settings["Real Time Silence Length"])
     minimum_audio_duration = int(app_settings.editable_settings["Real Time Audio Length"])
+    print("Recording...")
     while is_recording:
         if not is_paused:
             data = stream.read(CHUNK, exception_on_overflow=False)
             frames.append(data)
-            current_chunk.append(data)
             # Check for silence
             audio_buffer = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768
-            if is_silent(audio_buffer):
+            if is_silent(audio_buffer, app_settings.editable_settings["Silence cut-off"]):
                 silent_duration += CHUNK / RATE
             else:
+                current_chunk.append(data)
                 silent_duration = 0
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
             if len(current_chunk) >= minimum_audio_duration * RATE // CHUNK:
+                print("Audio Chunk Ready")
                 # Check if the last 1 second of the current_chunk is silent
                 last_second_data = b''.join(current_chunk[-RATE // CHUNK:])
                 last_second_buffer = np.frombuffer(last_second_data, dtype=np.int16).astype(np.float32) / 32768
-                if is_silent(last_second_buffer) and silent_duration >= minimum_silent_duration:
-                    if app_settings.editable_settings["Real Time"]:
-                        audio_queue.put(b''.join(current_chunk))
-                    current_chunk = []
-                    silent_duration = 0
+                if app_settings.editable_settings["Real Time"]:
+                    print("Audio Chunk Sent")
+                    audio_queue.put(b''.join(current_chunk))
+                current_chunk = []
+                silent_duration = 0
     stream.stop_stream()
     stream.close()
     audio_queue.put(None)
 
 
-def is_silent(data, threshold=float(app_settings.editable_settings["Silence cut-off"])):
-    max_value = max(data)
-    #print(f"Max audio value: {max_value}")
+def is_silent(data, threshold=0.01):
+    """Check if audio chunk is silent"""
+    data_array = np.array(data)
+    max_value = max(abs(data_array))
     return max_value < threshold
 
 def realtime_text():
-    global frames, is_realtimeactive
+    global frames, is_realtimeactive, audio_queue
     if not is_realtimeactive:
         is_realtimeactive = True
-        model_name = app_settings.editable_settings["Whisper Model"].strip()
-        model = whisper.load_model(model_name)
+        model = None
+        if app_settings.editable_settings["Real Time"]:
+            try:
+                model_name = app_settings.editable_settings["Whisper Model"].strip()
+                model = whisper.load_model(model_name)
+            except Exception as e:
+                messagebox.showerror("Model Error", f"Error loading model: {e}")
+                
         while True:
             audio_data = audio_queue.get()
             if audio_data is None:
@@ -209,13 +216,13 @@ def realtime_text():
                             files = {'audio': f}
 
                             headers = {
-                                "X-API-Key": app_settings.editable_settings["Whisper Server API Key"]
+                                "Authorization": "Bearer "+app_settings.editable_settings["Whisper Server API Key"]
                             }
 
                             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers,files=files, verify=False)
+                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=False)
                             else:
-                                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers,files=files)
+                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files)
                             if response.status_code == 200:
                                 text = response.json()['text']
                                 update_gui(text)
@@ -270,15 +277,6 @@ def clear_all_text_fields():
     response_display.configure(state='normal')
     response_display.delete("1.0", tk.END)
     response_display.configure(state='disabled')
-
-def toggle_gpt_button():
-    global is_gpt_button_active
-    if is_gpt_button_active:
-        gpt_button.config(bg="gray85", text="KoboldCpp")
-        is_gpt_button_active = False
-    else:
-        gpt_button.config(bg="red", text="Custom Endpoint")
-        is_gpt_button_active = True
 
 def toggle_aiscribe():
     global use_aiscribe
@@ -376,10 +374,10 @@ def send_audio_to_server():
             # Check for SSL and self-signed certificate settings
             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
                 # Send the request without verifying the SSL certificate
-                response = requests.post(WHISPERAUDIO_ENDPOINT, headers=headers, files=files, verify=False)
+                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=False)
             else:
                 # Send the request with the audio file and headers/authorization
-                response = requests.post(WHISPERAUDIO_ENDPOINT,headers=headers, files=files)
+                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files)
             
             # On successful response (status code 200)
             if response.status_code == 200:
@@ -402,20 +400,7 @@ def send_and_receive():
         formatted_message = user_message
     threaded_handle_message(formatted_message)
 
-def handle_message(formatted_message):
-    if is_gpt_button_active:
-        show_edit_transcription_popup(formatted_message)
-    else:
-        prompt = get_prompt(formatted_message)
-        if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-            response = requests.post(f"{app_settings.KOBOLDCPP_ENDPOINT}/api/v1/generate", json=prompt, verify=False)
-        else:
-            response = requests.post(f"{app_settings.KOBOLDCPP_ENDPOINT}/api/v1/generate", json=prompt)
-        if response.status_code == 200:
-            results = response.json()['results']
-            response_text = results[0]['text']
-            response_text = response_text.replace("  ", " ").strip()
-            update_gui_with_response(response_text)
+        
 
 def display_text(text):
     response_display.configure(state='normal')
@@ -482,6 +467,18 @@ def send_text_to_chatgpt(edited_text):
             response_data = response.json()
             response_text = (response_data['choices'][0]['message']['content'])
             update_gui_with_response(response_text)
+        elif app_settings.API_STYLE == "KoboldCpp":
+            prompt = get_prompt(edited_text)
+            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
+                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=False)
+            else:
+                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt)
+            if response.status_code == 200:
+                results = response.json()['results']
+                response_text = results[0]['text']
+                response_text = response_text.replace("  ", " ").strip()
+                update_gui_with_response(response_text)
+
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err}")
         display_text(f"HTTP error occurred: {http_err}")
@@ -572,7 +569,6 @@ def toggle_view():
         send_button.grid_remove()
         clear_button.grid_remove()
         toggle_button.grid_remove()
-        gpt_button.grid_remove()
         settings_button.grid_remove()
         upload_button.grid_remove()
         response_display.grid_remove()
@@ -598,7 +594,6 @@ def toggle_view():
         send_button.grid()
         clear_button.grid()
         toggle_button.grid()
-        gpt_button.grid()
         settings_button.grid()
         upload_button.grid()
         response_display.grid()
@@ -670,35 +665,32 @@ root.grid_rowconfigure(4, weight=0)
 user_input = scrolledtext.ScrolledText(root, height=12)
 user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
-mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=10)
+mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
 mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
 
-send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=10)
+send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=11)
 send_button.grid(row=1, column=2, pady=5, sticky='nsew')
 
-pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=10)
+pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=11)
 pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
 
-clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=10)
+clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=11)
 clear_button.grid(row=1, column=4, pady=5, sticky='nsew')
 
-toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=10)
+toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=11)
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
 
-gpt_button = tk.Button(root, text="KoboldCpp", command=toggle_gpt_button, height=2, width=13)
-gpt_button.grid(row=1, column=6, pady=5, sticky='nsew')
+settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=11)
+settings_button.grid(row=1, column=6, pady=5, sticky='nsew')
 
-settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=10)
-settings_button.grid(row=1, column=7, pady=5, sticky='nsew')
+upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=11)
+upload_button.grid(row=1, column=7, pady=5, sticky='nsew')
 
-upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=10)
-upload_button.grid(row=1, column=8, pady=5, sticky='nsew')
-
-switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=10)
-switch_view_button.grid(row=1, column=9, pady=5, sticky='nsew')
+switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=11)
+switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
-blinking_circle_canvas.grid(row=1, column=10, pady=5)
+blinking_circle_canvas.grid(row=1, column=9, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 
 response_display = scrolledtext.ScrolledText(root, height=12, state='disabled')
@@ -720,6 +712,7 @@ combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
 combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
 
 update_aiscribe_texts(None)
+
 
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: pause_button.invoke())

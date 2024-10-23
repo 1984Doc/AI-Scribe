@@ -13,7 +13,7 @@ and Research Students - Software Developer Alex Simko, Pemba Sherpa (F24), and N
 
 This module contains the ApplicationSettings class, which manages the settings for an
 application that involves audio processing and external API interactions, including
-KoboldCPP, WhisperAudio, and OpenAI services.
+WhisperAudio, and OpenAI services.
 
 """
 
@@ -33,14 +33,6 @@ class SettingsWindow():
 
     Attributes
     ----------
-    KOBOLDCPP_IP : str
-        The IP address for the Kobold CPP service.
-    WHISPERAUDIO_IP : str
-        The IP address for the Whisper Audio service.
-    KOBOLDCPP_PORT : str
-        The port for the Kobold CPP service.
-    WHISPERAUDIO_PORT : str
-        The port for the Whisper Audio service.
     SSL_ENABLE : str
         Whether SSL is enabled ('1' for enabled, '0' for disabled).
     SSL_SELFCERT : str
@@ -64,8 +56,8 @@ class SettingsWindow():
         Loads settings from a JSON file and updates the internal state.
     save_settings_to_file():
         Saves the current settings to a JSON file.
-    save_settings(koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, 
-                  settings_window, koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style, preset):
+    save_settings(openai_api_key, aiscribe_text, aiscribe2_text, 
+                  settings_window, ssl_enable, ssl_selfcert, api_style, preset):
         Saves the current settings, including API keys, IP addresses, and user-defined parameters.
     load_aiscribe_from_file():
         Loads the first AI Scribe text from a file.
@@ -80,10 +72,6 @@ class SettingsWindow():
     def __init__(self):
         """Initializes the ApplicationSettings with default values."""
 
-        self.KOBOLDCPP_IP = "192.168.1.195"
-        self.WHISPERAUDIO_IP = "192.168.1.195"
-        self.KOBOLDCPP_PORT = "5001"
-        self.WHISPERAUDIO_PORT = "8000"
         self.SSL_ENABLE = "0"
         self.SSL_SELFCERT = "1"
         self.OPENAI_API_KEY = "None"
@@ -92,8 +80,6 @@ class SettingsWindow():
         self.API_STYLE = "OpenAI"
         self.main_window = None
 
-        self.KOBOLDCPP_ENDPOINT = None
-        self.WHISPERAUDIO_ENDPOINT = None
 
         self.basic_settings = {
             "Model",
@@ -103,6 +89,7 @@ class SettingsWindow():
             "Whisper Model",
             "Real Time",
             "Use Docker Status Bar",
+            "Whisper Endpoint",
         }
 
         self.advanced_settings = {
@@ -127,7 +114,6 @@ class SettingsWindow():
             "frmtrmblln",
             "Real Time Audio Length",
             "Real Time Silence Length",
-            "Silence cut-off"
         }
 
         self.editable_settings = {
@@ -153,12 +139,13 @@ class SettingsWindow():
             "frmttriminc": False,
             "frmtrmblln": False,
             "Local Whisper": False,
+            "Whisper Endpoint": "https://localhost:2224/whisperaudio",
             "Whisper Server API Key": "None",
             "Whisper Model": "small.en",
             "Real Time": False,
             "Real Time Audio Length": 5,
             "Real Time Silence Length": 1,
-            "Silence cut-off": 0.01,
+            "Silence cut-off": 0.015,
             "LLM Container Name": "llm-container-1",
             "LLM Caddy Container Name": "caddy-llm-container",
             "Whisper Container Name": "speech-container",
@@ -194,14 +181,8 @@ class SettingsWindow():
                     settings = json.load(file)
                 except json.JSONDecodeError:
                     print("Error loading settings file. Using default settings.")
-                    return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
-                           self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
-                           self.SSL_SELFCERT, self.API_STYLE
+                    return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
 
-                self.KOBOLDCPP_IP = settings.get("koboldcpp_ip", self.KOBOLDCPP_IP)
-                self.KOBOLDCPP_PORT = settings.get("koboldcpp_port", self.KOBOLDCPP_PORT)
-                self.WHISPERAUDIO_IP = settings.get("whisperaudio_ip", self.WHISPERAUDIO_IP)
-                self.WHISPERAUDIO_PORT = settings.get("whisperaudio_port", self.WHISPERAUDIO_PORT)
                 self.SSL_ENABLE = settings.get("ssl_enable", self.SSL_ENABLE)
                 self.SSL_SELFCERT = settings.get("ssl_selfcert", self.SSL_SELFCERT)
                 self.OPENAI_API_KEY = settings.get("openai_api_key", self.OPENAI_API_KEY)
@@ -214,14 +195,10 @@ class SettingsWindow():
                 if self.editable_settings["Use Docker Status Bar"] and self.main_window is not None:
                     self.main_window.create_docker_status_bar()
 
-                return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
-                       self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
-                       self.SSL_SELFCERT, self.API_STYLE
+                return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
         except FileNotFoundError:
             print("Settings file not found. Using default settings.")
-            return self.KOBOLDCPP_IP, self.WHISPERAUDIO_IP, self.OPENAI_API_KEY, \
-                   self.KOBOLDCPP_PORT, self.WHISPERAUDIO_PORT, self.SSL_ENABLE, \
-                   self.SSL_SELFCERT, self.API_STYLE
+            return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
 
     def save_settings_to_file(self):
         """
@@ -234,12 +211,8 @@ class SettingsWindow():
             None
         """
         settings = {
-            "koboldcpp_ip": self.KOBOLDCPP_IP,
-            "whisperaudio_ip": self.WHISPERAUDIO_IP,
             "openai_api_key": self.OPENAI_API_KEY,
             "editable_settings": self.editable_settings,
-            "koboldcpp_port": self.KOBOLDCPP_PORT,
-            "whisperaudio_port": self.WHISPERAUDIO_PORT,
             "ssl_enable": str(self.SSL_ENABLE),
             "ssl_selfcert": str(self.SSL_SELFCERT),
             "api_style": self.API_STYLE
@@ -247,34 +220,28 @@ class SettingsWindow():
         with open('settings.txt', 'w') as file:
             json.dump(settings, file)
 
-    def save_settings(self, koboldcpp_ip, whisperaudio_ip, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
-                      koboldcpp_port, whisperaudio_port, ssl_enable, ssl_selfcert, api_style):
+    def save_settings(self, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
+                      ssl_enable, ssl_selfcert, api_style, silence_cutoff):
         """
         Save the current settings, including IP addresses, API keys, and user-defined parameters.
 
         This method writes the AI Scribe text to separate text files and updates the internal state
         of the Settings instance.
 
-        :param str koboldcpp_ip: The IP address for the KOBOLDCPP server.
-        :param str whisperaudio_ip: The IP address for the WhisperAudio server.
         :param str openai_api_key: The OpenAI API key for authentication.
         :param str aiscribe_text: The text for the first AI Scribe.
         :param str aiscribe2_text: The text for the second AI Scribe.
         :param tk.Toplevel settings_window: The settings window instance to be destroyed after saving.
-        :param str koboldcpp_port: The port for the KOBOLDCPP server.
-        :param str whisperaudio_port: The port for the WhisperAudio server.
         :param int ssl_enable: Flag indicating whether SSL is enabled.
         :param int ssl_selfcert: Flag indicating whether to use a self-signed certificate.
         :param str api_style: The style of API being used.
         """
-        self.KOBOLDCPP_IP = koboldcpp_ip
-        self.WHISPERAUDIO_IP = whisperaudio_ip
-        self.KOBOLDCPP_PORT = koboldcpp_port
-        self.WHISPERAUDIO_PORT = whisperaudio_port
         self.SSL_ENABLE = ssl_enable
         self.SSL_SELFCERT = ssl_selfcert
         self.OPENAI_API_KEY = openai_api_key
         self.API_STYLE = api_style
+
+        self.editable_settings["Silence cut-off"] = silence_cutoff
 
         for setting, entry in self.editable_settings_entries.items():     
             value = entry.get()
@@ -286,9 +253,6 @@ class SettingsWindow():
 
         self.AISCRIBE = aiscribe_text
         self.AISCRIBE2 = aiscribe2_text
-
-        self.KOBOLDCPP_ENDPOINT = self.build_url(self.KOBOLDCPP_IP, self.KOBOLDCPP_PORT)
-        self.WHISPERAUDIO_ENDPOINT = self.build_url(self.WHISPERAUDIO_IP, str(self.WHISPERAUDIO_PORT)+"/whisperaudio")
 
         with open('aiscribe.txt', 'w') as f:
             f.write(self.AISCRIBE)
@@ -372,9 +336,7 @@ class SettingsWindow():
         self.AISCRIBE = self.load_aiscribe_from_file() or "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
         self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
         
-        self.KOBOLDCPP_ENDPOINT = self.build_url(self.KOBOLDCPP_IP, self.KOBOLDCPP_PORT)
-        self.WHISPERAUDIO_ENDPOINT = self.build_url(self.WHISPERAUDIO_IP, str(self.WHISPERAUDIO_PORT)+"/whisperaudio")
-
+  
     def clear_settings_file(self, settings_window):
         """
         Clears the content of settings files and closes the settings window.

@@ -23,6 +23,7 @@ import json
 import tkinter as tk
 from tkinter import ttk, messagebox
 import Tooltip as tt
+from UI.Widgets.AudioMeter import AudioMeter
 
 
 class SettingsWindowUI:
@@ -130,7 +131,7 @@ class SettingsWindowUI:
         Creates the basic settings UI elements.
 
         This method creates and places UI elements for basic settings such as
-        KOBOLDCPP IP, WHISPERAUDIO IP, OpenAI API Key, and SSL settings.
+        OpenAI API Key, and SSL settings.
         """
 
         row_idx = 0
@@ -147,30 +148,6 @@ class SettingsWindowUI:
 
         row_idx += 1
 
-        tk.Label(self.basic_settings_frame, text="KOBOLDCPP IP:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        self.koboldcpp_ip_entry = tk.Entry(self.basic_settings_frame, width=25)
-        self.koboldcpp_ip_entry.insert(0, self.settings.KOBOLDCPP_IP)
-        self.koboldcpp_ip_entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
-
-        tk.Label(self.basic_settings_frame, text="PORT:").grid(row=row_idx, column=2, padx=0, pady=5, sticky="w")
-        self.koboldcpp_port_entry = tk.Entry(self.basic_settings_frame, width=10)
-        self.koboldcpp_port_entry.insert(0, self.settings.KOBOLDCPP_PORT)
-        self.koboldcpp_port_entry.grid(row=row_idx, column=3, padx=0, pady=5, sticky="w")
-
-        row_idx += 1
-
-        tk.Label(self.basic_settings_frame, text="WHISPERAUDIO IP:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        self.whisperaudio_ip_entry = tk.Entry(self.basic_settings_frame, width=25)
-        self.whisperaudio_ip_entry.insert(0, self.settings.WHISPERAUDIO_IP)
-        self.whisperaudio_ip_entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
-
-        tk.Label(self.basic_settings_frame, text="PORT:").grid(row=row_idx, column=2, padx=0, pady=5, sticky="w")
-        self.whisperaudio_port_entry = tk.Entry(self.basic_settings_frame, width=10)
-        self.whisperaudio_port_entry.insert(0, self.settings.WHISPERAUDIO_PORT)
-        self.whisperaudio_port_entry.grid(row=row_idx, column=3, padx=0, pady=5, sticky="w")
-
-        row_idx += 1
-
         tk.Label(self.basic_settings_frame, text="OpenAI API Key:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.openai_api_key_entry = tk.Entry(self.basic_settings_frame, width=25)
         self.openai_api_key_entry.insert(0, self.settings.OPENAI_API_KEY)
@@ -179,7 +156,7 @@ class SettingsWindowUI:
         row_idx += 1
 
         tk.Label(self.basic_settings_frame, text="API Style:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        api_options = ["OpenAI"]
+        api_options = ["OpenAI", "KoboldCpp"]
         self.api_dropdown = ttk.Combobox(self.basic_settings_frame, values=api_options, width=15, state="readonly")
         self.api_dropdown.current(api_options.index(self.settings.API_STYLE))
         self.api_dropdown.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
@@ -224,15 +201,27 @@ class SettingsWindowUI:
         """
         self.create_editable_settings(self.advanced_settings_frame, self.settings.advanced_settings)
 
-        tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=len(self.settings.advanced_settings), column=0, padx=0, pady=5, sticky="w")
+        row_idx = len(self.settings.advanced_settings)
+
+        tk.Label(self.advanced_settings_frame, text="Whisper Audio Cutoff").grid(row=row_idx, column=0, padx=0, pady=0, sticky="w")
+
+        # Create audio meter for silence cut-off, used for setting microphone cutoff in Whisper
+        self.cutoff_slider = AudioMeter(self.advanced_settings_frame, width=150, height=50, threshold=self.settings.editable_settings["Silence cut-off"] * 32768)
+        self.cutoff_slider.grid(row=row_idx, column=1, padx=0, pady=0, sticky="w")
+
+        row_idx += 1
+
+        tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.aiscribe_text = tk.Text(self.advanced_settings_frame, height=10, width=25)
         self.aiscribe_text.insert(tk.END, self.settings.AISCRIBE)
-        self.aiscribe_text.grid(row=len(self.settings.advanced_settings), column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        self.aiscribe_text.grid(row=row_idx, column=1, columnspan=2, padx=0, pady=5, sticky="w")
 
-        tk.Label(self.advanced_settings_frame, text="Post Prompting").grid(row=len(self.settings.advanced_settings)+1, column=0, padx=0, pady=5, sticky="w")
+        row_idx += 1
+
+        tk.Label(self.advanced_settings_frame, text="Post Prompting").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         self.aiscribe2_text = tk.Text(self.advanced_settings_frame, height=10, width=25)
         self.aiscribe2_text.insert(tk.END, self.settings.AISCRIBE2)
-        self.aiscribe2_text.grid(row=len(self.settings.advanced_settings)+1, column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        self.aiscribe2_text.grid(row=row_idx, column=1, columnspan=2, padx=0, pady=5, sticky="w")
 
     def create_docker_settings(self):
         """
@@ -284,18 +273,16 @@ class SettingsWindowUI:
         This method retrieves the values from the UI elements and calls the
         `save_settings` method of the `settings` object to save the settings.
         """
+
         self.settings.save_settings(
-            self.koboldcpp_ip_entry.get(),
-            self.whisperaudio_ip_entry.get(),
             self.openai_api_key_entry.get(),
             self.aiscribe_text.get("1.0", tk.END),
             self.aiscribe2_text.get("1.0", tk.END),
             self.settings_window,
-            self.koboldcpp_port_entry.get(),
-            self.whisperaudio_port_entry.get(),
             self.ssl_enable_var.get(),
             self.ssl_selfcert_var.get(),
             self.api_dropdown.get(),
+            self.cutoff_slider.threshold / 32768,
         )
 
         if self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is None:
@@ -314,3 +301,4 @@ class SettingsWindowUI:
         to reset the settings to their default values.
         """
         self.settings.clear_settings_file(self.settings_window)
+

@@ -88,7 +88,11 @@ class ContainerManager:
             container = self.client.containers.get(container_name)
             status = container.status
 
+<<<<<<< HEAD
             return status == "running"
+=======
+            return status == 'running'
+>>>>>>> 99db3024f470dbf25141168c65459a147f19530c
 
         except docker.errors.NotFound:
             print(f"Container {container_name} not found.")
