@@ -123,7 +123,7 @@ class AudioMeter(tk.Frame):
         # Add threshold slider - adjusted range for int16 audio values
         self.threshold_slider = tk.Scale(
             self.slider_frame,
-            from_=250,
+            from_=100,
             to=32767,  # Max value for 16-bit audio
             orient='horizontal',
             command=self.update_threshold,
