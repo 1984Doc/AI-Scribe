@@ -71,20 +71,23 @@ class AudioMeter(tk.Frame):
         :param event: The event that triggered the cleanup (default is None).
         :type event: tkinter.Event
         """
-        if not self.destroyed:  # Only cleanup once
-            self.destroyed = True
-            self.running = False
+        
+        if self.destroyed:
+            return
+
+        self.destroyed = True
+        self.running = False
+        
+        # Stop audio first
+        if hasattr(self, 'stream') and self.stream:
+            self.stream.stop_stream()
+            self.stream.close()
+        if hasattr(self, 'p') and self.p:
+            self.p.terminate()
             
-            # Stop audio first
-            if hasattr(self, 'stream') and self.stream:
-                self.stream.stop_stream()
-                self.stream.close()
-            if hasattr(self, 'p') and self.p:
-                self.p.terminate()
-                
-            # Then wait for thread
-            if hasattr(self, 'monitoring_thread') and self.monitoring_thread:
-                self.monitoring_thread.join(timeout=1.0)
+        # Then wait for thread
+        if hasattr(self, 'monitoring_thread') and self.monitoring_thread:
+            self.monitoring_thread.join(timeout=1.0)
 
     def destroy(self):
         """
