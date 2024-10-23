@@ -152,12 +152,12 @@ def record_audio():
         if not is_paused:
             data = stream.read(CHUNK, exception_on_overflow=False)
             frames.append(data)
-            current_chunk.append(data)
             # Check for silence
             audio_buffer = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768
             if is_silent(audio_buffer, app_settings.editable_settings["Silence cut-off"]):
                 silent_duration += CHUNK / RATE
             else:
+                current_chunk.append(data)
                 silent_duration = 0
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
             if len(current_chunk) >= minimum_audio_duration * RATE // CHUNK:

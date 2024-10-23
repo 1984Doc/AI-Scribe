@@ -123,7 +123,7 @@ class AudioMeter(tk.Frame):
         # Add threshold slider - adjusted range for int16 audio values
         self.threshold_slider = tk.Scale(
             self.slider_frame,
-            from_=0,
+            from_=250,
             to=32767,  # Max value for 16-bit audio
             orient='horizontal',
             command=self.update_threshold,
@@ -173,7 +173,7 @@ class AudioMeter(tk.Frame):
 
         # Update threshold line position
         # Scale the threshold value to canvas width
-        scaled_position = (float(value) / 32767) * 380
+        scaled_position = (float(value) / 32767) * self.width
         self.canvas.coords(
             self.threshold_line,
             scaled_position, 0,
@@ -191,7 +191,7 @@ class AudioMeter(tk.Frame):
             self.running = True
             self.stream = self.p.open(
                 format=self.FORMAT,
-                channels=1,
+                channels=self.CHANNELS,
                 rate=self.RATE,
                 input=True,
                 frames_per_buffer=self.CHUNK,
@@ -215,7 +215,7 @@ class AudioMeter(tk.Frame):
                 data = self.stream.read(self.CHUNK, exception_on_overflow=False)
                 audio_data = struct.unpack(f'{self.CHUNK}h', data)
                 max_value = max(abs(np.array(audio_data)))
-                level = min(380, int((max_value / 32767) * 380))
+                level = min(self.width, int((max_value / 32767) * self.width))
                 
                 # Only schedule update if not destroyed
                 if not self.destroyed:
