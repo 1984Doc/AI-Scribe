@@ -88,7 +88,6 @@ class SettingsWindow():
             "Whisper Server API Key",
             "Whisper Model",
             "Real Time",
-            "Use Docker Status Bar",
             "Whisper Endpoint",
         }
 
@@ -160,7 +159,8 @@ class SettingsWindow():
             "LLM Caddy Container Name",
             "Whisper Container Name",
             "Whisper Caddy Container Name",
-            "Auto Shutdown Containers on Exit"
+            "Auto Shutdown Containers on Exit",
+            "Use Docker Status Bar",
         }
 
         self.editable_settings_entries = {}
