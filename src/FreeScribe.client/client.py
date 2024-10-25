@@ -578,15 +578,19 @@ def toggle_view():
         mic_button.grid(row=0, column=0, pady=5)
         pause_button.grid(row=0, column=1, pady=5)
         switch_view_button.grid(row=0, column=2, pady=5)
+        switch_view_button.config(text="Maximize View")
         blinking_circle_canvas.grid(row=0, column=3, pady=5)
         combobox.grid(row=1, column=0, columnspan=3, pady=5)
         root.attributes('-topmost', True)
         root.minsize(300, 100)
         current_view = "minimal"
+        window.destroy_docker_status_bar()
+
     else:
-        mic_button.config(width=10, height=2)
-        pause_button.config(width=10, height=2)
-        switch_view_button.config(width=10, height=2)
+        mic_button.config(width=11, height=2)
+        pause_button.config(width=11, height=2)
+        switch_view_button.config(width=11, height=2)
+        switch_view_button.config(text="Minimize View")
         user_input.grid()
         send_button.grid()
         clear_button.grid()
@@ -599,12 +603,13 @@ def toggle_view():
         copy_response_display_button.grid()
         mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
         pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
-        switch_view_button.grid(row=1, column=9, pady=5, sticky='nsew')
-        blinking_circle_canvas.grid(row=1, column=10, pady=5)
+        switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
+        blinking_circle_canvas.grid(row=1, column=9, pady=5)
         combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
         root.attributes('-topmost', False)
         root.minsize(900, 400)
         current_view = "full"
+        window.create_docker_status_bar()
 
 def copy_text(widget):
     text = widget.get("1.0", tk.END)
@@ -683,7 +688,7 @@ settings_button.grid(row=1, column=6, pady=5, sticky='nsew')
 upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=11)
 upload_button.grid(row=1, column=7, pady=5, sticky='nsew')
 
-switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=11)
+switch_view_button = tk.Button(root, text="Minimize View", command=toggle_view, height=2, width=11)
 switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
@@ -727,7 +732,9 @@ p.terminate()
 def on_exit():
     # Create a pop up that says yes or no with tkinter messagebox to option to close the docker containers
 
-    main_window = MainWindow()
+    global window
+
+    main_window = window.logic
 
     if main_window.container_manager is not None and app_settings.editable_settings["Auto Shutdown Containers on Exit"] is True:
         main_window.container_manager.stop_container(app_settings.editable_settings["LLM Container Name"])
