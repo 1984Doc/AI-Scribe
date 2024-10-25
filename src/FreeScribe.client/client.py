@@ -278,7 +278,7 @@ def clear_all_text_fields():
 def toggle_aiscribe():
     global use_aiscribe
     use_aiscribe = not use_aiscribe
-    toggle_button.config(text="AISCRIBE ON" if use_aiscribe else "AISCRIBE OFF")
+    toggle_button.config(text="AI Scribe\nON" if use_aiscribe else "AI Scribe\nOFF")
 
 def send_audio_to_server():
     """
@@ -680,7 +680,7 @@ pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
 clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=11)
 clear_button.grid(row=1, column=4, pady=5, sticky='nsew')
 
-toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=11)
+toggle_button = tk.Button(root, text="AI Scribe\nON", command=toggle_aiscribe, height=2, width=11)
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
 
 settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=11)
