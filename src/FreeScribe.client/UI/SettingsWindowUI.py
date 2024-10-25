@@ -74,6 +74,8 @@ class SettingsWindowUI:
         """
         self.settings_window = tk.Toplevel()
         self.settings_window.title("Settings")
+        self.settings_window.geometry("600x450")  # Set initial window size
+        self.settings_window.minsize(600, 450)    # Set minimum window size
         self.settings_window.resizable(True, True)
         self.settings_window.grab_set()
 
@@ -128,69 +130,102 @@ class SettingsWindowUI:
 
     def create_basic_settings(self):
         """
-        Creates the basic settings UI elements.
-
-        This method creates and places UI elements for basic settings such as
-        OpenAI API Key, and SSL settings.
+        Creates the basic settings UI elements in a two-column layout.
+        Settings alternate between left and right columns for even distribution.
         """
-
-        row_idx = 0
-
-        # create a settings preset dropdown
-        tk.Label(self.basic_settings_frame, text="Settings Preset:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        settings_preset_options = ["JanAI", "ChatGPT", "ClinicianFocus Toolbox","Custom"]
-        self.settings_preset_dropdown = ttk.Combobox(self.basic_settings_frame, values=settings_preset_options, width=15, state="readonly")
-        self.settings_preset_dropdown.current(settings_preset_options.index(self.settings.editable_settings["Preset"]))
-        self.settings_preset_dropdown.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
-
-        load_preset_btn = ttk.Button(self.basic_settings_frame, text="Load", width=5, command=lambda: self.settings.load_settings_preset(self.settings_preset_dropdown.get(), self))
-        load_preset_btn.grid(row=row_idx, column=2, padx=0, pady=5, sticky="w")
-
-        row_idx += 1
-
-        tk.Label(self.basic_settings_frame, text="OpenAI API Key:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        self.openai_api_key_entry = tk.Entry(self.basic_settings_frame, width=25)
-        self.openai_api_key_entry.insert(0, self.settings.OPENAI_API_KEY)
-        self.openai_api_key_entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
-
-        row_idx += 1
-
-        tk.Label(self.basic_settings_frame, text="API Style:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        api_options = ["OpenAI", "KoboldCpp"]
-        self.api_dropdown = ttk.Combobox(self.basic_settings_frame, values=api_options, width=15, state="readonly")
-        self.api_dropdown.current(api_options.index(self.settings.API_STYLE))
-        self.api_dropdown.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
-
-        row_idx += 1
-
-        self.ssl_enable_var = tk.IntVar(value=int(self.settings.SSL_ENABLE))
-        tk.Label(self.basic_settings_frame, text="Enable SSL:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        self.ssl_enable_checkbox = tk.Checkbutton(self.basic_settings_frame, variable=self.ssl_enable_var)
-        self.ssl_enable_checkbox.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
-
-        row_idx += 1
-
-        self.ssl_selfcert_var = tk.IntVar(value=int(self.settings.SSL_SELFCERT))
-        tk.Label(self.basic_settings_frame, text="Self-Signed Cert:").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        self.ssl_selfcert_checkbox = tk.Checkbutton(self.basic_settings_frame, variable=self.ssl_selfcert_var)
-        self.ssl_selfcert_checkbox.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
-
-        row_idx += 1
-
-        tk.Label(self.basic_settings_frame, text="Models").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        models_drop_down_options = self.settings.get_available_models() or ["No models available"]
-
-        self.models_drop_down = ttk.Combobox(self.basic_settings_frame, values=models_drop_down_options, width=15, state="readonly")
-        self.models_drop_down.current(api_options.index(self.settings.API_STYLE))
-        self.models_drop_down.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
+        # Create left and right frames for the two columns
+        left_frame = ttk.Frame(self.basic_settings_frame)
+        left_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
         
-        refresh_button = ttk.Button(self.basic_settings_frame, text="↻", command=lambda: (self.save_settings(False), self.settings.update_models_dropdown(self.models_drop_down)), width=4)
-        refresh_button.grid(row=row_idx, column=2, columnspan=1, padx=0, pady=5, sticky="w")
+        right_frame = ttk.Frame(self.basic_settings_frame)
+        right_frame.grid(row=0, column=1, padx=10, pady=5, sticky="nw")
+
+        left_row = 0
+        right_row = 0
+
+        # 1. Settings Preset (Left Column)
+        tk.Label(left_frame, text="Settings Preset:").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
+        settings_preset_options = ["JanAI", "ChatGPT", "ClinicianFocus Toolbox", "Custom"]
+        self.settings_preset_dropdown = ttk.Combobox(left_frame, values=settings_preset_options, width=15, state="readonly")
+        self.settings_preset_dropdown.current(settings_preset_options.index(self.settings.editable_settings["Preset"]))
+        self.settings_preset_dropdown.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
+
+        load_preset_btn = ttk.Button(left_frame, text="Load", width=5, 
+                                    command=lambda: self.settings.load_settings_preset(self.settings_preset_dropdown.get(), self))
+        load_preset_btn.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
+        left_row += 1
+
+        # 2. OpenAI API Key (Right Column)
+        tk.Label(right_frame, text="OpenAI API Key:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
+        self.openai_api_key_entry = tk.Entry(right_frame, width=25)
+        self.openai_api_key_entry.insert(0, self.settings.OPENAI_API_KEY)
+        self.openai_api_key_entry.grid(row=right_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        right_row += 1
+
+        # 3. API Style (Left Column)
+        tk.Label(left_frame, text="API Style:").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
+        api_options = ["OpenAI", "KoboldCpp"]
+        self.api_dropdown = ttk.Combobox(left_frame, values=api_options, width=15, state="readonly")
+        self.api_dropdown.current(api_options.index(self.settings.API_STYLE))
+        self.api_dropdown.grid(row=left_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        left_row += 1
+
+        # 4. Enable SSL (Right Column)
+        self.ssl_enable_var = tk.IntVar(value=int(self.settings.SSL_ENABLE))
+        tk.Label(right_frame, text="Enable SSL:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
+        self.ssl_enable_checkbox = tk.Checkbutton(right_frame, variable=self.ssl_enable_var)
+        self.ssl_enable_checkbox.grid(row=right_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        right_row += 1
+
+        # 5. Models (Left Column)
+        tk.Label(left_frame, text="Models").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
+        models_drop_down_options = self.settings.get_available_models() or ["No models available"]
+        self.models_drop_down = ttk.Combobox(left_frame, values=models_drop_down_options, width=15, state="readonly")
+        self.models_drop_down.current(api_options.index(self.settings.API_STYLE))
+        self.models_drop_down.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
+        
+        refresh_button = ttk.Button(left_frame, text="↻", 
+                                command=lambda: (self.save_settings(False), 
+                                                self.settings.update_models_dropdown(self.models_drop_down)), 
+                                width=4)
+        refresh_button.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
         tt.Tooltip(refresh_button, text="Refresh the list of available models")
+        left_row += 1
 
-        row_idx += 1
+        # 6. Self-Signed Cert (Right Column)
+        self.ssl_selfcert_var = tk.IntVar(value=int(self.settings.SSL_SELFCERT))
+        tk.Label(right_frame, text="Self-Signed Cert:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
+        self.ssl_selfcert_checkbox = tk.Checkbutton(right_frame, variable=self.ssl_selfcert_var)
+        self.ssl_selfcert_checkbox.grid(row=right_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        right_row += 1
 
-        self.create_editable_settings(self.basic_settings_frame, self.settings.basic_settings, start_row=row_idx)
+
+        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.basic_settings)
+
+    def create_editable_settings_col(self, left_frame, right_frame, left_row, right_row, settings_set):
+        # Add remaining editable settings alternating between columns
+          for idx, setting_name in enumerate(settings_set):
+            target_frame = left_frame if idx % 2 == 0 else right_frame
+            target_row = left_row if idx % 2 == 0 else right_row
+            
+            tk.Label(target_frame, text=f"{setting_name}:").grid(row=target_row, column=0, padx=0, pady=5, sticky="w")
+            
+            value = self.settings.editable_settings[setting_name]
+            if value in [True, False]:
+                var = tk.IntVar(value=int(value))
+                checkbox = tk.Checkbutton(target_frame, variable=var)
+                checkbox.grid(row=target_row, column=1, padx=0, pady=5, sticky="w")
+                self.settings.editable_settings_entries[setting_name] = var
+            else:
+                entry = tk.Entry(target_frame)
+                entry.insert(0, str(value))
+                entry.grid(row=target_row, column=1, padx=0, pady=5, sticky="w")
+                self.settings.editable_settings_entries[setting_name] = entry
+            
+            if idx % 2 == 0:
+                left_row += 1
+            else:
+                right_row += 1
 
     def create_advanced_settings(self):
         """
@@ -199,7 +234,17 @@ class SettingsWindowUI:
         This method creates and places UI elements for advanced settings such as
         editable settings, pre-prompting, and post-prompting text areas.
         """
-        self.create_editable_settings(self.advanced_settings_frame, self.settings.advanced_settings)
+        # Create left and right frames for the two columns
+        left_frame = ttk.Frame(self.advanced_settings_frame)
+        left_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+        
+        right_frame = ttk.Frame(self.advanced_settings_frame)
+        right_frame.grid(row=0, column=1, padx=10, pady=5, sticky="nw")
+
+        left_row = 0
+        right_row = 0
+
+        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.advanced_settings)
 
         row_idx = len(self.settings.advanced_settings)
 
@@ -212,16 +257,20 @@ class SettingsWindowUI:
         row_idx += 1
 
         tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        self.aiscribe_text = tk.Text(self.advanced_settings_frame, height=10, width=25)
+        row_idx += 1
+
+        self.aiscribe_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.aiscribe_text.insert(tk.END, self.settings.AISCRIBE)
-        self.aiscribe_text.grid(row=row_idx, column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        self.aiscribe_text.grid(row=row_idx, column=0, columnspan=2, padx=0, pady=5, sticky="w")
 
         row_idx += 1
 
         tk.Label(self.advanced_settings_frame, text="Post Prompting").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        self.aiscribe2_text = tk.Text(self.advanced_settings_frame, height=10, width=25)
+
+        row_idx += 1
+        self.aiscribe2_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.aiscribe2_text.insert(tk.END, self.settings.AISCRIBE2)
-        self.aiscribe2_text.grid(row=row_idx, column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        self.aiscribe2_text.grid(row=row_idx, column=0, columnspan=2, padx=0, pady=5, sticky="w")
 
     def create_docker_settings(self):
         """
