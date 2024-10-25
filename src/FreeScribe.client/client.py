@@ -664,6 +664,7 @@ root.grid_rowconfigure(2, weight=1)
 root.grid_rowconfigure(3, weight=0)
 root.grid_rowconfigure(4, weight=0)
 
+
 user_input = scrolledtext.ScrolledText(root, height=12)
 user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
@@ -685,7 +686,7 @@ toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
 settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=11)
 settings_button.grid(row=1, column=6, pady=5, sticky='nsew')
 
-upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=11)
+upload_button = tk.Button(root, text="Upload\nRecording", command=upload_file, height=2, width=11)
 upload_button.grid(row=1, column=7, pady=5, sticky='nsew')
 
 switch_view_button = tk.Button(root, text="Minimize View", command=toggle_view, height=2, width=11)
@@ -697,6 +698,10 @@ circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 
 response_display = scrolledtext.ScrolledText(root, height=12, state='disabled')
 response_display.grid(row=2, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
+
+# Add label for response display
+response_label = tk.Label(root, text="AI Response")
+response_label.grid(row=2, column=1, columnspan=9, padx=5, sticky='sw')
 
 copy_user_input_button = tk.Button(root, text="Copy", command=lambda: copy_text(user_input), height=2, width=10)
 copy_user_input_button.grid(row=0, column=10, pady=5, padx=5, sticky='ew')
