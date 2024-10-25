@@ -29,6 +29,9 @@ class MainWindowUI:
         Adds start and stop buttons for each container and tooltips for their status.
         """
         
+        if self.docker_status_bar is not None:
+            return
+
         # Create the frame for the Docker status bar, placed at the bottom of the window
         self.docker_status_bar = tk.Frame(self.root, bd=1, relief=tk.SUNKEN)
         self.docker_status_bar.grid(row=4, column=0, columnspan=14, sticky='nsew')
@@ -81,4 +84,6 @@ class MainWindowUI:
         """
         Destroy the Docker status bar if it exists.
         """
-        self.docker_status_bar.destroy()
+        if self.docker_status_bar is not None:
+            self.docker_status_bar.destroy()
+            self.docker_status_bar = None
