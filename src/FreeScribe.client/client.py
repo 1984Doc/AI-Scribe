@@ -699,10 +699,6 @@ circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 response_display = scrolledtext.ScrolledText(root, height=12, state='disabled')
 response_display.grid(row=2, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
-# Add label for response display
-response_label = tk.Label(root, text="AI Response")
-response_label.grid(row=2, column=1, columnspan=9, padx=5, sticky='sw')
-
 copy_user_input_button = tk.Button(root, text="Copy", command=lambda: copy_text(user_input), height=2, width=10)
 copy_user_input_button.grid(row=0, column=10, pady=5, padx=5, sticky='ew')
 
