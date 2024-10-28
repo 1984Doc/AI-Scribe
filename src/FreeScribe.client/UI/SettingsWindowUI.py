@@ -236,7 +236,7 @@ class SettingsWindowUI:
             # Show the custom model entry below the dropdown
             self.custom_model_entry.grid(row=self.models_drop_down.grid_info()['row'], 
                         column=1, padx=0, pady=5, sticky="w")
-            self.models_drop_down.set("Please choose one!")
+            self.models_drop_down.set("Select a Model")
             self.models_drop_down.grid_remove()
         elif self.models_drop_down.get() != "Custom" and self.custom_model_entry.grid_info() != {}:
             # Hide the custom model entry
@@ -246,7 +246,7 @@ class SettingsWindowUI:
 
     def get_selected_model(self):
         """Returns the selected model, either from dropdown or custom entry"""
-        if self.models_drop_down.get() == "Custom":
+        if self.models_drop_down.get() == "Custom" or self.models_drop_down.get() == "Select a Model":
             return self.custom_model_entry.get()
         return self.models_drop_down.get()
 
@@ -381,7 +381,7 @@ class SettingsWindowUI:
         `save_settings` method of the `settings` object to save the settings.
         """
 
-        self.settings.editable_settings["Models"] = self.get_selected_model()
+        self.settings.editable_settings["Model"] = self.get_selected_model()
 
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
