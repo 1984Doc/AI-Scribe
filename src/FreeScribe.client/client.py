@@ -129,16 +129,16 @@ def threaded_send_audio_to_server():
     thread.start()
 
 
-DEFUALT_PAUSE_BUTTON_COLOUR = None
+DEFAULT_PAUSE_BUTTON_COLOUR = None
 def toggle_pause():
-    global is_paused, DEFUALT_PAUSE_BUTTON_COLOUR
+    global is_paused, DEFAULT_PAUSE_BUTTON_COLOUR
     is_paused = not is_paused
 
     if is_paused:
-        DEFUALT_PAUSE_BUTTON_COLOUR = pause_button.cget('background')
+        DEFAULT_PAUSE_BUTTON_COLOUR = pause_button.cget('background')
         pause_button.config(text="Resume", bg="red")
     else:
-        pause_button.config(text="Pause", bg=DEFUALT_PAUSE_BUTTON_COLOUR)
+        pause_button.config(text="Pause", bg=DEFAULT_PAUSE_BUTTON_COLOUR)
 
 def record_audio():
     global is_paused, frames, audio_queue
