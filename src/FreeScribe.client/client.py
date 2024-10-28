@@ -698,7 +698,7 @@ root.grid_rowconfigure(4, weight=0)
 
 
 user_input = CustomTextBox(root, height=12)
-user_input.grid(row=0, column=1, columnspan=8, padx=5, pady=15, sticky='nsew')
+user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
 
 # Insert placeholder text
@@ -739,7 +739,7 @@ circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 
 
 response_display = CustomTextBox(root, height=13, state="disabled")
-response_display.grid(row=2, column=1, columnspan=8, padx=5, pady=15, sticky='nsew')
+response_display.grid(row=2, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
 # Insert placeholder text
 response_display.scrolled_text.configure(state='normal')
