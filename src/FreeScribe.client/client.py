@@ -129,15 +129,16 @@ def threaded_send_audio_to_server():
     thread.start()
 
 
-
+DEFUALT_PAUSE_BUTTON_COLOUR = None
 def toggle_pause():
-    global is_paused
+    global is_paused, DEFUALT_PAUSE_BUTTON_COLOUR
     is_paused = not is_paused
 
     if is_paused:
+        DEFUALT_PAUSE_BUTTON_COLOUR = pause_button.cget('background')
         pause_button.config(text="Resume", bg="red")
     else:
-        pause_button.config(text="Pause", bg="gray85")
+        pause_button.config(text="Pause", bg=DEFUALT_PAUSE_BUTTON_COLOUR)
 
 def record_audio():
     global is_paused, frames, audio_queue
@@ -247,8 +248,10 @@ def save_audio():
         else:
             threaded_send_audio_to_server()
 
+DEFUALT_BUTTON_COLOUR = None
+
 def toggle_recording():
-    global is_recording, recording_thread
+    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR
     if not is_recording:
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
@@ -261,14 +264,15 @@ def toggle_recording():
         is_recording = True
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
-        mic_button.config(bg="red", text="Mic ON")
+        DEFUALT_BUTTON_COLOUR = mic_button.cget('background')
+        mic_button.config(bg="red", text="Stop\nRecording")
         start_flashing()
     else:
         is_recording = False
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
         save_audio()
-        mic_button.config(bg="gray85", text="Mic OFF")
+        mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
 
 def clear_all_text_fields():
     user_input.scrolled_text.configure(state='normal')
@@ -709,34 +713,42 @@ user_input.scrolled_text.config(fg='grey')
 user_input.scrolled_text.bind("<FocusIn>", lambda event: remove_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
 user_input.scrolled_text.bind("<FocusOut>", lambda event: add_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
 
-mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
+mic_button = tk.Button(root, text="Start\nRecording", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
 mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
+tt.Tooltip(mic_button, "Alt+R to toggle recording, Begins recording for transcriptions")
 
-send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=11)
+send_button = tk.Button(root, text="Generate Note", command=send_and_flash, height=2, width=11)
 send_button.grid(row=1, column=3, pady=5, sticky='nsew')
+tt.Tooltip(send_button, "Alt+G to send and receive, Generates a note from the transcript of the conversation")
 
 pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=11)
 pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
+tt.Tooltip(pause_button, "Alt+P to pause, Pauses the recording")
 
 clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=11)
 clear_button.grid(row=1, column=4, pady=5, sticky='nsew')
+tt.Tooltip(clear_button, "Clears both text fields")
 
 toggle_button = tk.Button(root, text="AI Scribe\nON", command=toggle_aiscribe, height=2, width=11)
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
+tt.Tooltip(toggle_button, "Toggles AI Scribe on and off, when off it will not request a note from the AI.")
 
 settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=11)
 settings_button.grid(row=1, column=6, pady=5, sticky='nsew')
+tt.Tooltip(settings_button, "Opens the settings window")
 
 upload_button = tk.Button(root, text="Upload\nRecording", command=upload_file, height=2, width=11)
 upload_button.grid(row=1, column=7, pady=5, sticky='nsew')
+tt.Tooltip(upload_button, "Upload a recording for transcription")
 
 switch_view_button = tk.Button(root, text="Minimize View", command=toggle_view, height=2, width=11)
 switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
+tt.Tooltip(switch_view_button, "Toggles between a minimal and full view")
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
 blinking_circle_canvas.grid(row=1, column=9, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
-
+tt.Tooltip(blinking_circle_canvas, "Flashing circle indicates recording in progress")
 
 response_display = CustomTextBox(root, height=13, state="disabled")
 response_display.grid(row=2, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
