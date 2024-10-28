@@ -254,6 +254,7 @@ def toggle_recording():
             user_input.insert(tk.END, "Recording")
         response_display.configure(state='normal')
         response_display.delete("1.0", tk.END)
+        response_display.configure(fg='black')
         response_display.configure(state='disabled')
         is_recording = True
         recording_thread = threading.Thread(target=record_audio)
@@ -270,9 +271,13 @@ def toggle_recording():
 def clear_all_text_fields():
     user_input.configure(state='normal')
     user_input.delete("1.0", tk.END)
+    user_input.focus_set()
+    root.focus_set()
     stop_flashing()
     response_display.configure(state='normal')
     response_display.delete("1.0", tk.END)
+    response_display.insert(tk.END, "Medical Note")
+    response_display.config(fg='grey')
     response_display.configure(state='disabled')
 
 def toggle_aiscribe():
@@ -403,10 +408,18 @@ def display_text(text):
     response_display.configure(state='normal')
     response_display.delete("1.0", tk.END)
     response_display.insert(tk.END, f"{text}\n")
+    response_display.configure(fg='black')
     response_display.configure(state='disabled')
 
+IS_FIRST_LOG = True
 def update_gui_with_response(response_text):
-    global response_history, user_message
+    global response_history, user_message, IS_FIRST_LOG
+
+    if IS_FIRST_LOG:
+        timestamp_listbox.delete(0, tk.END)
+        timestamp_listbox.config(fg='black')
+        IS_FIRST_LOG = False
+
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     response_history.insert(0, (timestamp, user_message, response_text))
 
@@ -420,17 +433,24 @@ def update_gui_with_response(response_text):
     stop_flashing()
 
 def show_response(event):
+    global IS_FIRST_LOG
+
+    if IS_FIRST_LOG:
+        return
+
     selection = event.widget.curselection()
     if selection:
         index = selection[0]
         transcript_text = response_history[index][1]
         response_text = response_history[index][2]
         user_input.configure(state='normal')
+        user_input.config(fg='black')
         user_input.delete("1.0", tk.END)
         user_input.insert(tk.END, transcript_text)
         response_display.configure(state='normal')
         response_display.delete('1.0', tk.END)
         response_display.insert('1.0', response_text)
+        response_display.config(fg='black')
         response_display.configure(state='disabled')
         pyperclip.copy(response_text)
 
@@ -615,6 +635,16 @@ def copy_text(widget):
     text = widget.get("1.0", tk.END)
     pyperclip.copy(text)
 
+def add_placeholder(event, text_widget, placeholder_text="Text box"):
+    if text_widget.get("1.0", "end-1c") == "":
+        text_widget.insert("1.0", placeholder_text)
+        text_widget.config(fg='grey')
+
+def remove_placeholder(event, text_widget, placeholder_text="Text box"):
+    if text_widget.get("1.0", "end-1c") == placeholder_text:
+        text_widget.delete("1.0", "end")
+        text_widget.config(fg='black')
+
 def get_dropdown_values_and_mapping():
     options = []
     mapping = {}
@@ -668,6 +698,17 @@ root.grid_rowconfigure(4, weight=0)
 user_input = scrolledtext.ScrolledText(root, height=12)
 user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
+user_input = scrolledtext.ScrolledText(root, height=12)
+user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
+
+# Insert placeholder text
+user_input.insert("1.0", "Transcript of Conversation")
+user_input.config(fg='grey')
+
+# Bind events to remove or add the placeholder with arguments
+user_input.bind("<FocusIn>", lambda event: remove_placeholder(event, user_input, "Transcript of Conversation"))
+user_input.bind("<FocusOut>", lambda event: add_placeholder(event, user_input, "Transcript of Conversation"))
+
 mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
 mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
 
@@ -699,6 +740,12 @@ circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 response_display = scrolledtext.ScrolledText(root, height=12, state='disabled')
 response_display.grid(row=2, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
+# Insert placeholder text
+response_display.configure(state='normal')
+response_display.insert("1.0", "Medical Note")
+response_display.config(fg='grey')
+response_display.configure(state='disabled')
+
 copy_user_input_button = tk.Button(root, text="Copy", command=lambda: copy_text(user_input), height=2, width=10)
 copy_user_input_button.grid(row=0, column=10, pady=5, padx=5, sticky='ew')
 
@@ -708,6 +755,8 @@ copy_response_display_button.grid(row=2, column=10, pady=5, padx=5, sticky='ew')
 timestamp_listbox = tk.Listbox(root, height=30)
 timestamp_listbox.grid(row=0, column=11, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
+timestamp_listbox.insert(tk.END, "Medical Note History")
+timestamp_listbox.config(fg='grey')
 
 combobox = ttk.Combobox(root, values=dropdown_values, width=35, state="readonly")
 combobox.current(0)
