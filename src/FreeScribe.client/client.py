@@ -724,10 +724,6 @@ toggle_button = tk.Button(root, text="AI Scribe\nON", command=toggle_aiscribe, h
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
 tt.Tooltip(toggle_button, "Toggles AI Scribe on and off, when off it will not request a note from the AI.")
 
-settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=11)
-settings_button.grid(row=1, column=6, pady=5, sticky='nsew')
-tt.Tooltip(settings_button, "Opens the settings window")
-
 upload_button = tk.Button(root, text="Upload\nRecording", command=upload_file, height=2, width=11)
 upload_button.grid(row=1, column=7, pady=5, sticky='nsew')
 tt.Tooltip(upload_button, "Upload a recording for transcription")
