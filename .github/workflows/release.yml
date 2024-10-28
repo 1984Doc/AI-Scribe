@@ -32,11 +32,11 @@ jobs:
       - name: Check if alpha release
         id: check_alpha
         run: |
-          if "${{ github.ref }}" -like "*.alpha"; then
-            echo "::set-output name=is_alpha::true"
-          else
-            echo "::set-output name=is_alpha::false"
-          fi
+          if ("${{ github.ref }}" -like "*.alpha") {
+            echo "is_alpha=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "is_alpha=false" >> $env:GITHUB_OUTPUT
+          }
         shell: pwsh
 
       - name: create release
