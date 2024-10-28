@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import messagebox
 import UI.MainWindow as mw
 import Tooltip as tt
 
@@ -28,6 +29,9 @@ class MainWindowUI:
         Create a Docker status bar to display the status of the LLM and Whisper containers.
         Adds start and stop buttons for each container and tooltips for their status.
         """
+        if self.logic.container_manager.client is None:
+            print("Docker client not initialized, removing status bar.")
+            return
         
         if self.docker_status_bar is not None:
             return
@@ -87,3 +91,32 @@ class MainWindowUI:
         if self.docker_status_bar is not None:
             self.docker_status_bar.destroy()
             self.docker_status_bar = None
+
+    def load_main_window(self):
+        """
+        Load the main window of the application.
+        This method initializes the main window components, including the menu bar.
+        """
+        self._create_menu_bar()
+
+    def _create_menu_bar(self):
+        """
+        Private method to create menu bar.
+        Create a menu bar with a Help menu.
+        This method sets up the menu bar at the top of the main window and adds a Help menu with an About option.
+        """
+        menu_bar = tk.Menu(self.root)
+        self.root.config(menu=menu_bar)
+
+        # Add Help menu
+        help_menu = tk.Menu(menu_bar, tearoff=0)
+        menu_bar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="About", command=self._show_help_about)
+
+    def _show_help_about(self):
+        """
+        Private method to display help/about information.
+        Display help information in a message box.
+        This method shows a message box with information about the application when the About option is selected from the Help menu.
+        """
+        messagebox.showinfo("Help", "This is the help information for the application.")

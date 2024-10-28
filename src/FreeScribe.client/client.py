@@ -701,6 +701,8 @@ root.grid_rowconfigure(3, weight=0)
 root.grid_rowconfigure(4, weight=0)
 
 
+window.load_main_window()
+
 user_input = CustomTextBox(root, height=12)
 user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
