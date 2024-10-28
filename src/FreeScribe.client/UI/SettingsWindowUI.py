@@ -245,7 +245,7 @@ class SettingsWindowUI:
 
     def get_selected_model(self):
         """Returns the selected model, either from dropdown or custom entry"""
-        if self.models_drop_down.get() == "Custom" or self.models_drop_down.get() == "Select a Model":
+        if self.models_drop_down.get() in ["Custom", "Select a Model"]:
             return self.custom_model_entry.get()
         return self.models_drop_down.get()
 
