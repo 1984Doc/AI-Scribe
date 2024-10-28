@@ -392,7 +392,7 @@ class SettingsWindow():
             response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0)
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
-            available_models = [model["name"] for model in models]
+            available_models = [model["id"] for model in models]
             available_models.append("Custom")
             return available_models
         except requests.RequestException as e:
@@ -406,9 +406,11 @@ class SettingsWindow():
         This method fetches the available models from the AI Scribe service and updates
         the dropdown widget in the settings window with the new list of models.
         """
-        
+        dropdown["values"] = []
+        dropdown.set("Loading models...")
         models = self.get_available_models()
         dropdown["values"] = models
+        dropdown.set(models[0])
 
     def load_settings_preset(self, preset_name, settings_class):
         """
