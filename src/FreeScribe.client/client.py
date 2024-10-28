@@ -706,8 +706,8 @@ user_input.scrolled_text.insert("1.0", "Transcript of Conversation")
 user_input.scrolled_text.config(fg='grey')
 
 # Bind events to remove or add the placeholder with arguments
-user_input.scrolled_text.bind("<FocusIn>", lambda event: remove_placeholder(event, user_input, "Transcript of Conversation"))
-user_input.scrolled_text.bind("<FocusOut>", lambda event: add_placeholder(event, user_input, "Transcript of Conversation"))
+user_input.scrolled_text.bind("<FocusIn>", lambda event: remove_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
+user_input.scrolled_text.bind("<FocusOut>", lambda event: add_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
 
 mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
 mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
