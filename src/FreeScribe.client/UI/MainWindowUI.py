@@ -4,6 +4,7 @@ import UI.MainWindow as mw
 import Tooltip as tt
 import markdown as md
 from tkinterhtml import HtmlFrame
+from UI.SettingsWindowUI import SettingsWindowUI
 
 class MainWindowUI:
     """
@@ -25,6 +26,7 @@ class MainWindowUI:
         self.docker_status_bar = None  # Docker status bar frame
         self.app_settings = settings  # Application settings
         self.logic = mw.MainWindow()  # Logic to control the container behavior
+        self.setting_window = SettingsWindowUI(self.app_settings, self)  # Settings window
 
     def create_docker_status_bar(self):
         """
@@ -114,7 +116,7 @@ class MainWindowUI:
 
     def _create_settings_menu(self):
         # Add Settings menu
-        self.menu_bar.add_command(label="Settings", command=self._open_settings_window)
+        self.menu_bar.add_command(label="Settings", command=self.setting_window.open_settings_window)
 
     def _create_help_menu(self):
         # Add Help menu

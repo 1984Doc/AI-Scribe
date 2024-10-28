@@ -53,7 +53,7 @@ app_settings.start()
 
 #  create our ui elements and settings config
 window = MainWindowUI(root, app_settings)
-settings_window = SettingsWindowUI(app_settings, window)
+
 app_settings.set_main_window(window)
 
 if app_settings.editable_settings["Use Docker Status Bar"]:
@@ -573,17 +573,6 @@ def flash_circle():
 def send_and_flash():
     start_flashing()
     send_and_receive()
-
-def clear_settings_file(settings_window):
-    try:
-        open('settings.txt', 'w').close()  # This opens the files and immediately closes it, clearing its contents.
-        open('aiscribe.txt', 'w').close()
-        open('aiscribe2.txt', 'w').close()
-        messagebox.showinfo("Settings Reset", "Settings have been reset. Please restart.")
-        print("Settings file cleared.")
-        settings_window.destroy()
-    except Exception as e:
-        print(f"Error clearing settings files: {e}")
 
 def toggle_view():
     global current_view
