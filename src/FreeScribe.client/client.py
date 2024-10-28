@@ -628,7 +628,7 @@ def toggle_view():
         # copy_user_input_button.grid()
         # copy_response_display_button.grid()
         mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
-        pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
+        pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
         switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
         blinking_circle_canvas.grid(row=1, column=9, pady=5)
         combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
