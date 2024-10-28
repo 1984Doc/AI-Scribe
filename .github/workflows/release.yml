@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*.*.*"
+      - "v*.*.*.alpha"
 
 jobs:
   build-windows:
@@ -21,12 +22,22 @@ jobs:
           pip install -r client_requirements.txt
       - name: Run PyInstaller
         run: |
-          pyinstaller --onefile --add-data ".\src\FreeScribe.client\whisper-assets:whisper\assets" --name freescribe-client .\src\FreeScribe.client\client.py
+          pyinstaller --add-data ".\src\FreeScribe.client\whisper-assets:whisper\assets" --name freescribe-client --noconsole .\src\FreeScribe.client\client.py
 
       - name: Set up NSIS
         uses: joncloud/makensis-action@1c9f4bf2ea0c771147db31a2f3a7f5d8705c0105 # v4.1 commit hash
         with:
           script-file: .\scripts\install.nsi
+
+      - name: Check if alpha release
+        id: check_alpha
+        run: |
+          if "${{ github.ref }}" -like "*.alpha"; then
+            echo "::set-output name=is_alpha::true"
+          else
+            echo "::set-output name=is_alpha::false"
+          fi
+        shell: pwsh
 
       - name: create release
         id: create_release
@@ -37,19 +48,12 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
-            This is a automated release completed by GitHub Actions.
+            ## What's Changed
+            ${{ steps.changelog.outputs.CHANGELOG }}
+
+            For full changelog, see [the commits since last release](${{ github.server_url }}/${{ github.repository }}/compare/${{ steps.changelog.last_tag }}...${{ github.ref }})
           draft: false
-          prerelease: false
-      - name: Upload EXE
-        id: upload-client
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: dist/freescribe-client.exe
-          asset_name: freescribe-client.exe
-          asset_content_type: application/octet-stream
+          prerelease: ${{ steps.check_alpha.outputs.is_alpha == 'true' }}
 
       - name: Upload Installer
         id: upload-installer

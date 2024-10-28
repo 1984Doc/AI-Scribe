@@ -1,9 +1,19 @@
-# Copyright (c) 2023 Braedon Hendy
-# This software is released under the GNU General Public License v3.0
-# Contributors: Kevin Lai
+"""
+This software is released under the AGPL-3.0 license
+Copyright (c) 2023-2024 Braedon Hendy
+
+Further updates and packaging added in 2024 through the ClinicianFOCUS initiative, 
+a collaboration with Dr. Braedon Hendy and Conestoga College Institute of Applied 
+Learning and Technology as part of the CNERG+ applied research project, 
+Unburdening Primary Healthcare: An Open-Source AI Clinician Partner Platform". 
+Prof. Michael Yingbull (PI), Dr. Braedon Hendy (Partner), 
+and Research Students - Software Developer Alex Simko, Pemba Sherpa (F24), and Naitik Patel.
+
+"""
 
 import tkinter as tk
 from tkinter import scrolledtext, ttk, filedialog
+import Tooltip as tt
 import requests
 import pyperclip
 import wave
@@ -23,16 +33,31 @@ import re
 import speech_recognition as sr # python package is named speechrecognition
 import time
 import queue
-import ApplicationSettings_client as settings
+from ContainerManager import ContainerManager
+import atexit
+import asyncio
+from UI.MainWindow import MainWindow
+from UI.MainWindowUI import MainWindowUI
+from UI.SettingsWindowUI import SettingsWindowUI
+from UI.SettingsWindow import SettingsWindow
+from UI.Widgets.CustomTextBox import CustomTextBox
+from tkinterhtml import HtmlFrame
 
 # GUI Setup
 root = tk.Tk()
 root.title("AI Medical Scribe")
 
-# settings window
-app_settings = settings.ApplicationSettings()
+# settings logic
+app_settings = SettingsWindow()
 app_settings.start()
 
+#  create our ui elements and settings config
+window = MainWindowUI(root, app_settings)
+settings_window = SettingsWindowUI(app_settings, window)
+app_settings.set_main_window(window)
+
+if app_settings.editable_settings["Use Docker Status Bar"]:
+    window.create_docker_status_bar()
 
 NOTE_CREATION = "Note Creation...Please Wait"
 
@@ -57,7 +82,6 @@ CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
-
 
 
 def get_prompt(formatted_message):
@@ -97,7 +121,7 @@ def threaded_realtime_text():
     thread.start()
 
 def threaded_handle_message(formatted_message):
-    thread = threading.Thread(target=handle_message, args=(formatted_message,))
+    thread = threading.Thread(target=show_edit_transcription_popup, args=(formatted_message,))
     thread.start()
 
 def threaded_send_audio_to_server():
@@ -105,19 +129,20 @@ def threaded_send_audio_to_server():
     thread.start()
 
 
-
+DEFUALT_PAUSE_BUTTON_COLOUR = None
 def toggle_pause():
-    global is_paused
+    global is_paused, DEFUALT_PAUSE_BUTTON_COLOUR
     is_paused = not is_paused
 
     if is_paused:
+        DEFUALT_PAUSE_BUTTON_COLOUR = pause_button.cget('background')
         pause_button.config(text="Resume", bg="red")
     else:
-        pause_button.config(text="Pause", bg="gray85")
+        pause_button.config(text="Pause", bg=DEFUALT_PAUSE_BUTTON_COLOUR)
 
 def record_audio():
     global is_paused, frames, audio_queue
-    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK, input_device_index=1)
     current_chunk = []
     silent_duration = 0
     minimum_silent_duration = int(app_settings.editable_settings["Real Time Silence Length"])
@@ -126,39 +151,45 @@ def record_audio():
         if not is_paused:
             data = stream.read(CHUNK, exception_on_overflow=False)
             frames.append(data)
-            current_chunk.append(data)
             # Check for silence
             audio_buffer = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768
-            if is_silent(audio_buffer):
+            if is_silent(audio_buffer, app_settings.editable_settings["Silence cut-off"]):
                 silent_duration += CHUNK / RATE
             else:
+                current_chunk.append(data)
                 silent_duration = 0
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
             if len(current_chunk) >= minimum_audio_duration * RATE // CHUNK:
                 # Check if the last 1 second of the current_chunk is silent
                 last_second_data = b''.join(current_chunk[-RATE // CHUNK:])
                 last_second_buffer = np.frombuffer(last_second_data, dtype=np.int16).astype(np.float32) / 32768
-                if is_silent(last_second_buffer) and silent_duration >= minimum_silent_duration:
-                    if app_settings.editable_settings["Real Time"]:
-                        audio_queue.put(b''.join(current_chunk))
-                    current_chunk = []
-                    silent_duration = 0
+                if app_settings.editable_settings["Real Time"]:
+                    audio_queue.put(b''.join(current_chunk))
+                current_chunk = []
+                silent_duration = 0
     stream.stop_stream()
     stream.close()
     audio_queue.put(None)
 
 
-def is_silent(data, threshold=float(app_settings.editable_settings["Silence cut-off"])):
-    max_value = max(data)
-    #print(f"Max audio value: {max_value}")
+def is_silent(data, threshold=0.01):
+    """Check if audio chunk is silent"""
+    data_array = np.array(data)
+    max_value = max(abs(data_array))
     return max_value < threshold
 
 def realtime_text():
-    global frames, is_realtimeactive
+    global frames, is_realtimeactive, audio_queue
     if not is_realtimeactive:
         is_realtimeactive = True
-        model_name = app_settings.editable_settings["Whisper Model"].strip()
-        model = whisper.load_model(model_name)
+        model = None
+        if app_settings.editable_settings["Real Time"]:
+            try:
+                model_name = app_settings.editable_settings["Whisper Model"].strip()
+                model = whisper.load_model(model_name)
+            except Exception as e:
+                messagebox.showerror("Model Error", f"Error loading model: {e}")
+                
         while True:
             audio_data = audio_queue.get()
             if audio_data is None:
@@ -185,13 +216,13 @@ def realtime_text():
                             files = {'audio': f}
 
                             headers = {
-                                "X-API-Key": app_settings.editable_settings["Whisper Server API Key"]
+                                "Authorization": "Bearer "+app_settings.editable_settings["Whisper Server API Key"]
                             }
 
                             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers,files=files, verify=False)
+                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=False)
                             else:
-                                response = requests.post(app_settings.WHISPERAUDIO_ENDPOINT, headers=headers,files=files)
+                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files)
                             if response.status_code == 200:
                                 text = response.json()['text']
                                 update_gui(text)
@@ -200,8 +231,8 @@ def realtime_text():
         is_realtimeactive = False
 
 def update_gui(text):
-    user_input.insert(tk.END, text + '\n')
-    user_input.see(tk.END)
+    user_input.scrolled_text.insert(tk.END, text + '\n')
+    user_input.scrolled_text.see(tk.END)
 
 def save_audio():
     global frames
@@ -217,49 +248,48 @@ def save_audio():
         else:
             threaded_send_audio_to_server()
 
+DEFUALT_BUTTON_COLOUR = None
+
 def toggle_recording():
-    global is_recording, recording_thread
+    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR
     if not is_recording:
-        user_input.configure(state='normal')
-        user_input.delete("1.0", tk.END)
+        user_input.scrolled_text.configure(state='normal')
+        user_input.scrolled_text.delete("1.0", tk.END)
         if not app_settings.editable_settings["Real Time"]:
-            user_input.insert(tk.END, "Recording")
-        response_display.configure(state='normal')
-        response_display.delete("1.0", tk.END)
-        response_display.configure(state='disabled')
+            user_input.scrolled_text.insert(tk.END, "Recording")
+        response_display.scrolled_text.configure(state='normal')
+        response_display.scrolled_text.delete("1.0", tk.END)
+        response_display.scrolled_text.configure(fg='black')
+        response_display.scrolled_text.configure(state='disabled')
         is_recording = True
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
-        mic_button.config(bg="red", text="Mic ON")
+        DEFUALT_BUTTON_COLOUR = mic_button.cget('background')
+        mic_button.config(bg="red", text="Stop\nRecording")
         start_flashing()
     else:
         is_recording = False
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
         save_audio()
-        mic_button.config(bg="gray85", text="Mic OFF")
+        mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
 
 def clear_all_text_fields():
-    user_input.configure(state='normal')
-    user_input.delete("1.0", tk.END)
+    user_input.scrolled_text.configure(state='normal')
+    user_input.scrolled_text.delete("1.0", tk.END)
+    user_input.scrolled_text.focus_set()
+    root.focus_set()
     stop_flashing()
-    response_display.configure(state='normal')
-    response_display.delete("1.0", tk.END)
-    response_display.configure(state='disabled')
-
-def toggle_gpt_button():
-    global is_gpt_button_active
-    if is_gpt_button_active:
-        gpt_button.config(bg="gray85", text="KoboldCpp")
-        is_gpt_button_active = False
-    else:
-        gpt_button.config(bg="red", text="Custom Endpoint")
-        is_gpt_button_active = True
+    response_display.scrolled_text.configure(state='normal')
+    response_display.scrolled_text.delete("1.0", tk.END)
+    response_display.scrolled_text.insert(tk.END, "Medical Note")
+    response_display.scrolled_text.config(fg='grey')
+    response_display.scrolled_text.configure(state='disabled')
 
 def toggle_aiscribe():
     global use_aiscribe
     use_aiscribe = not use_aiscribe
-    toggle_button.config(text="AISCRIBE ON" if use_aiscribe else "AISCRIBE OFF")
+    toggle_button.config(text="AI Scribe\nON" if use_aiscribe else "AI Scribe\nOFF")
 
 def send_audio_to_server():
     """
@@ -297,11 +327,11 @@ def send_audio_to_server():
         print("Using Local Whisper for transcription.")
 
         # Configure the user input widget to be editable and clear its content
-        user_input.configure(state='normal')
-        user_input.delete("1.0", tk.END)
+        user_input.scrolled_text.configure(state='normal')
+        user_input.scrolled_text.delete("1.0", tk.END)
 
         # Display a message indicating that audio to text processing is in progress
-        user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
+        user_input.scrolled_text.insert(tk.END, "Audio to Text Processing...Please Wait")
 
         # Load the specified Whisper model
         model_name = app_settings.editable_settings["Whisper Model"].strip()
@@ -316,9 +346,9 @@ def send_audio_to_server():
         transcribed_text = result["text"]
 
         # Update the user input widget with the transcribed text
-        user_input.configure(state='normal')
-        user_input.delete("1.0", tk.END)
-        user_input.insert(tk.END, transcribed_text)
+        user_input.scrolled_text.configure(state='normal')
+        user_input.scrolled_text.delete("1.0", tk.END)
+        user_input.scrolled_text.insert(tk.END, transcribed_text)
 
         # Send the transcribed text and receive a response
         send_and_receive()
@@ -327,11 +357,11 @@ def send_audio_to_server():
         print("Using Remote Whisper for transcription.")
 
         # Configure the user input widget to be editable and clear its content
-        user_input.configure(state='normal')
-        user_input.delete("1.0", tk.END)
+        user_input.scrolled_text.configure(state='normal')
+        user_input.scrolled_text.delete("1.0", tk.END)
 
         # Display a message indicating that audio to text processing is in progress
-        user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
+        user_input.scrolled_text.insert(tk.END, "Audio to Text Processing...Please Wait")
 
         # Determine the file to send for transcription
         if uploaded_file_path:
@@ -352,25 +382,25 @@ def send_audio_to_server():
             # Check for SSL and self-signed certificate settings
             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
                 # Send the request without verifying the SSL certificate
-                response = requests.post(WHISPERAUDIO_ENDPOINT, headers=headers, files=files, verify=False)
+                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=False)
             else:
                 # Send the request with the audio file and headers/authorization
-                response = requests.post(WHISPERAUDIO_ENDPOINT,headers=headers, files=files)
+                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files)
             
             # On successful response (status code 200)
             if response.status_code == 200:
                 # Update the UI with the transcribed text
                 transcribed_text = response.json()['text']
-                user_input.configure(state='normal')
-                user_input.delete("1.0", tk.END)
-                user_input.insert(tk.END, transcribed_text)
+                user_input.scrolled_text.configure(state='normal')
+                user_input.scrolled_text.delete("1.0", tk.END)
+                user_input.scrolled_text.insert(tk.END, transcribed_text)
 
                 # Send the transcribed text and receive a response
                 send_and_receive()
 
 def send_and_receive():
     global use_aiscribe, user_message
-    user_message = user_input.get("1.0", tk.END).strip()
+    user_message = user_input.scrolled_text.get("1.0", tk.END).strip()
     display_text(NOTE_CREATION)
     if use_aiscribe:
         formatted_message = f'{AISCRIBE} [{user_message}] {AISCRIBE2}'
@@ -378,29 +408,24 @@ def send_and_receive():
         formatted_message = user_message
     threaded_handle_message(formatted_message)
 
-def handle_message(formatted_message):
-    if is_gpt_button_active:
-        show_edit_transcription_popup(formatted_message)
-    else:
-        prompt = get_prompt(formatted_message)
-        if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-            response = requests.post(f"{app_settings.KOBOLDCPP_ENDPOINT}/api/v1/generate", json=prompt, verify=False)
-        else:
-            response = requests.post(f"{app_settings.KOBOLDCPP_ENDPOINT}/api/v1/generate", json=prompt)
-        if response.status_code == 200:
-            results = response.json()['results']
-            response_text = results[0]['text']
-            response_text = response_text.replace("  ", " ").strip()
-            update_gui_with_response(response_text)
+        
 
 def display_text(text):
-    response_display.configure(state='normal')
-    response_display.delete("1.0", tk.END)
-    response_display.insert(tk.END, f"{text}\n")
-    response_display.configure(state='disabled')
+    response_display.scrolled_text.configure(state='normal')
+    response_display.scrolled_text.delete("1.0", tk.END)
+    response_display.scrolled_text.insert(tk.END, f"{text}\n")
+    response_display.scrolled_text.configure(fg='black')
+    response_display.scrolled_text.configure(state='disabled')
 
+IS_FIRST_LOG = True
 def update_gui_with_response(response_text):
-    global response_history, user_message
+    global response_history, user_message, IS_FIRST_LOG
+
+    if IS_FIRST_LOG:
+        timestamp_listbox.delete(0, tk.END)
+        timestamp_listbox.config(fg='black')
+        IS_FIRST_LOG = False
+
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     response_history.insert(0, (timestamp, user_message, response_text))
 
@@ -414,18 +439,25 @@ def update_gui_with_response(response_text):
     stop_flashing()
 
 def show_response(event):
+    global IS_FIRST_LOG
+
+    if IS_FIRST_LOG:
+        return
+
     selection = event.widget.curselection()
     if selection:
         index = selection[0]
         transcript_text = response_history[index][1]
         response_text = response_history[index][2]
-        user_input.configure(state='normal')
-        user_input.delete("1.0", tk.END)
-        user_input.insert(tk.END, transcript_text)
-        response_display.configure(state='normal')
-        response_display.delete('1.0', tk.END)
-        response_display.insert('1.0', response_text)
-        response_display.configure(state='disabled')
+        user_input.scrolled_text.configure(state='normal')
+        user_input.scrolled_text.config(fg='black')
+        user_input.scrolled_text.delete("1.0", tk.END)
+        user_input.scrolled_text.insert(tk.END, transcript_text)
+        response_display.scrolled_text.configure(state='normal')
+        response_display.scrolled_text.delete('1.0', tk.END)
+        response_display.scrolled_text.insert('1.0', response_text)
+        response_display.scrolled_text.config(fg='black')
+        response_display.scrolled_text.configure(state='disabled')
         pyperclip.copy(response_text)
 
 def send_text_to_chatgpt(edited_text):
@@ -458,6 +490,18 @@ def send_text_to_chatgpt(edited_text):
             response_data = response.json()
             response_text = (response_data['choices'][0]['message']['content'])
             update_gui_with_response(response_text)
+        elif app_settings.API_STYLE == "KoboldCpp":
+            prompt = get_prompt(edited_text)
+            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
+                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=False)
+            else:
+                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt)
+            if response.status_code == 200:
+                results = response.json()['results']
+                response_text = results[0]['text']
+                response_text = response_text.replace("  ", " ").strip()
+                update_gui_with_response(response_text)
+
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err}")
         display_text(f"HTTP error occurred: {http_err}")
@@ -548,51 +592,64 @@ def toggle_view():
         send_button.grid_remove()
         clear_button.grid_remove()
         toggle_button.grid_remove()
-        gpt_button.grid_remove()
         settings_button.grid_remove()
         upload_button.grid_remove()
         response_display.grid_remove()
         timestamp_listbox.grid_remove()
-        copy_user_input_button.grid_remove()
-        copy_response_display_button.grid_remove()
+        # copy_user_input_button.grid_remove()
+        # copy_response_display_button.grid_remove()
         mic_button.config(width=10, height=1)
         pause_button.config(width=10, height=1)
         switch_view_button.config(width=10, height=1)
         mic_button.grid(row=0, column=0, pady=5)
         pause_button.grid(row=0, column=1, pady=5)
         switch_view_button.grid(row=0, column=2, pady=5)
+        switch_view_button.config(text="Maximize View")
         blinking_circle_canvas.grid(row=0, column=3, pady=5)
         combobox.grid(row=1, column=0, columnspan=3, pady=5)
         root.attributes('-topmost', True)
         root.minsize(300, 100)
         current_view = "minimal"
+        window.destroy_docker_status_bar()
+
     else:
-        mic_button.config(width=10, height=2)
-        pause_button.config(width=10, height=2)
-        switch_view_button.config(width=10, height=2)
+        mic_button.config(width=11, height=2)
+        pause_button.config(width=11, height=2)
+        switch_view_button.config(width=11, height=2)
+        switch_view_button.config(text="Minimize View")
         user_input.grid()
         send_button.grid()
         clear_button.grid()
         toggle_button.grid()
-        gpt_button.grid()
         settings_button.grid()
         upload_button.grid()
         response_display.grid()
         timestamp_listbox.grid()
-        copy_user_input_button.grid()
-        copy_response_display_button.grid()
+        # copy_user_input_button.grid()
+        # copy_response_display_button.grid()
         mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
         pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
-        switch_view_button.grid(row=1, column=9, pady=5, sticky='nsew')
-        blinking_circle_canvas.grid(row=1, column=10, pady=5)
+        switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
+        blinking_circle_canvas.grid(row=1, column=9, pady=5)
         combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
         root.attributes('-topmost', False)
         root.minsize(900, 400)
         current_view = "full"
+        window.create_docker_status_bar()
 
 def copy_text(widget):
     text = widget.get("1.0", tk.END)
     pyperclip.copy(text)
+
+def add_placeholder(event, text_widget, placeholder_text="Text box"):
+    if text_widget.get("1.0", "end-1c") == "":
+        text_widget.insert("1.0", placeholder_text)
+        text_widget.config(fg='grey')
+
+def remove_placeholder(event, text_widget, placeholder_text="Text box"):
+    if text_widget.get("1.0", "end-1c") == placeholder_text:
+        text_widget.delete("1.0", "end")
+        text_widget.config(fg='black')
 
 def get_dropdown_values_and_mapping():
     options = []
@@ -635,66 +692,86 @@ root.grid_columnconfigure(8, weight=1)
 root.grid_columnconfigure(9, weight=1)
 root.grid_columnconfigure(10, weight=1)
 root.grid_columnconfigure(11, weight=1)
-root.grid_columnconfigure(12, weight=1)
-root.grid_columnconfigure(13, weight=1, minsize=10)
+root.grid_columnconfigure(12, weight=1, minsize=10)
 root.grid_rowconfigure(0, weight=1)
 root.grid_rowconfigure(1, weight=0)
 root.grid_rowconfigure(2, weight=1)
 root.grid_rowconfigure(3, weight=0)
+root.grid_rowconfigure(4, weight=0)
 
-user_input = scrolledtext.ScrolledText(root, height=12)
+
+user_input = CustomTextBox(root, height=12)
 user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
-mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=10)
+
+# Insert placeholder text
+user_input.scrolled_text.insert("1.0", "Transcript of Conversation")
+user_input.scrolled_text.config(fg='grey')
+
+# Bind events to remove or add the placeholder with arguments
+user_input.scrolled_text.bind("<FocusIn>", lambda event: remove_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
+user_input.scrolled_text.bind("<FocusOut>", lambda event: add_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
+
+mic_button = tk.Button(root, text="Start\nRecording", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
 mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
+tt.Tooltip(mic_button, "Alt+R to toggle recording, Begins recording for transcriptions")
 
-send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=10)
-send_button.grid(row=1, column=2, pady=5, sticky='nsew')
+send_button = tk.Button(root, text="Generate Note", command=send_and_flash, height=2, width=11)
+send_button.grid(row=1, column=3, pady=5, sticky='nsew')
+tt.Tooltip(send_button, "Alt+G to send and receive, Generates a note from the transcript of the conversation")
 
-pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=10)
-pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
+pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=11)
+pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
+tt.Tooltip(pause_button, "Alt+P to pause, Pauses the recording")
 
-clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=10)
+clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=11)
 clear_button.grid(row=1, column=4, pady=5, sticky='nsew')
+tt.Tooltip(clear_button, "Clears both text fields")
 
-toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=10)
+toggle_button = tk.Button(root, text="AI Scribe\nON", command=toggle_aiscribe, height=2, width=11)
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
+tt.Tooltip(toggle_button, "Toggles AI Scribe on and off, when off it will not request a note from the AI.")
 
-gpt_button = tk.Button(root, text="KoboldCpp", command=toggle_gpt_button, height=2, width=13)
-gpt_button.grid(row=1, column=6, pady=5, sticky='nsew')
+settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=11)
+settings_button.grid(row=1, column=6, pady=5, sticky='nsew')
+tt.Tooltip(settings_button, "Opens the settings window")
 
-settings_button = tk.Button(root, text="Settings", command=app_settings.open_settings_window, height=2, width=10)
-settings_button.grid(row=1, column=7, pady=5, sticky='nsew')
+upload_button = tk.Button(root, text="Upload\nRecording", command=upload_file, height=2, width=11)
+upload_button.grid(row=1, column=7, pady=5, sticky='nsew')
+tt.Tooltip(upload_button, "Upload a recording for transcription")
 
-upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=10)
-upload_button.grid(row=1, column=8, pady=5, sticky='nsew')
-
-switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=10)
-switch_view_button.grid(row=1, column=9, pady=5, sticky='nsew')
+switch_view_button = tk.Button(root, text="Minimize View", command=toggle_view, height=2, width=11)
+switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
+tt.Tooltip(switch_view_button, "Toggles between a minimal and full view")
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
-blinking_circle_canvas.grid(row=1, column=10, pady=5)
+blinking_circle_canvas.grid(row=1, column=9, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
+tt.Tooltip(blinking_circle_canvas, "Flashing circle indicates recording in progress")
 
-response_display = scrolledtext.ScrolledText(root, height=12, state='disabled')
+response_display = CustomTextBox(root, height=13, state="disabled")
 response_display.grid(row=2, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
-copy_user_input_button = tk.Button(root, text="Copy", command=lambda: copy_text(user_input), height=2, width=10)
-copy_user_input_button.grid(row=0, column=10, pady=5, padx=5, sticky='ew')
+# Insert placeholder text
+response_display.scrolled_text.configure(state='normal')
+response_display.scrolled_text.insert("1.0", "Medical Note")
+response_display.scrolled_text.config(fg='grey')
+response_display.scrolled_text.configure(state='disabled')
 
-copy_response_display_button = tk.Button(root, text="Copy", command=lambda: copy_text(response_display), height=2, width=10)
-copy_response_display_button.grid(row=2, column=10, pady=5, padx=5, sticky='ew')
 
 timestamp_listbox = tk.Listbox(root, height=30)
-timestamp_listbox.grid(row=0, column=11, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
+timestamp_listbox.grid(row=0, column=10, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
+timestamp_listbox.insert(tk.END, "Medical Note History")
+timestamp_listbox.config(fg='grey')
 
 combobox = ttk.Combobox(root, values=dropdown_values, width=35, state="readonly")
 combobox.current(0)
 combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
-combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
+# combobox.grid(row=3, column=4, columnspan=3, pady=10, padx=10, sticky='nsew')
 
 update_aiscribe_texts(None)
+
 
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: pause_button.invoke())
@@ -708,3 +785,18 @@ root.minsize(900, 400)
 root.mainloop()
 
 p.terminate()
+
+def on_exit():
+    # Create a pop up that says yes or no with tkinter messagebox to option to close the docker containers
+
+    global window
+
+    main_window = window.logic
+
+    if main_window.container_manager is not None and app_settings.editable_settings["Auto Shutdown Containers on Exit"] is True:
+        main_window.container_manager.stop_container(app_settings.editable_settings["LLM Container Name"])
+        main_window.container_manager.stop_container(app_settings.editable_settings["LLM Caddy Container Name"])
+        main_window.container_manager.stop_container(app_settings.editable_settings["Whisper Container Name"])
+        main_window.container_manager.stop_container(app_settings.editable_settings["Whisper Caddy Container Name"])
+
+atexit.register(on_exit)
