@@ -38,7 +38,10 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
-            This is a automated release completed by GitHub Actions.
+            ## What's Changed
+            ${{ steps.changelog.outputs.CHANGELOG }}
+
+            For full changelog, see [the commits since last release](${{ github.server_url }}/${{ github.repository }}/compare/${{ steps.changelog.last_tag }}...${{ github.ref }})
           draft: false
           prerelease: false
 
