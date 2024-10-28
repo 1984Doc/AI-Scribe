@@ -34,7 +34,7 @@ class ContainerManager:
         try:
             self.client = docker.from_env()
         except docker.errors.DockerException as e:
-            client = None
+            self.client = None
 
     def start_container(self, container_name):
         """
