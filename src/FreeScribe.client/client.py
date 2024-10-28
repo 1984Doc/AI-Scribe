@@ -696,10 +696,8 @@ root.grid_rowconfigure(4, weight=0)
 
 
 user_input = scrolledtext.ScrolledText(root, height=12)
-user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
+user_input.grid(row=0, column=1, columnspan=8, padx=5, pady=15, sticky='nsew')
 
-user_input = scrolledtext.ScrolledText(root, height=12)
-user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
 # Insert placeholder text
 user_input.insert("1.0", "Transcript of Conversation")
@@ -738,7 +736,7 @@ blinking_circle_canvas.grid(row=1, column=9, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 
 response_display = scrolledtext.ScrolledText(root, height=12, state='disabled')
-response_display.grid(row=2, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
+response_display.grid(row=2, column=1, columnspan=8, padx=5, pady=15, sticky='nsew')
 
 # Insert placeholder text
 response_display.configure(state='normal')
@@ -747,13 +745,13 @@ response_display.config(fg='grey')
 response_display.configure(state='disabled')
 
 copy_user_input_button = tk.Button(root, text="Copy", command=lambda: copy_text(user_input), height=2, width=10)
-copy_user_input_button.grid(row=0, column=10, pady=5, padx=5, sticky='ew')
+copy_user_input_button.grid(row=0, column=9, pady=5, padx=5, sticky='ew')
 
 copy_response_display_button = tk.Button(root, text="Copy", command=lambda: copy_text(response_display), height=2, width=10)
-copy_response_display_button.grid(row=2, column=10, pady=5, padx=5, sticky='ew')
+copy_response_display_button.grid(row=2, column=9, pady=5, padx=5, sticky='ew')
 
 timestamp_listbox = tk.Listbox(root, height=30)
-timestamp_listbox.grid(row=0, column=11, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
+timestamp_listbox.grid(row=0, column=10, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
 timestamp_listbox.insert(tk.END, "Medical Note History")
 timestamp_listbox.config(fg='grey')
