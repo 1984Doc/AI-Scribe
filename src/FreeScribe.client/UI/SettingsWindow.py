@@ -392,10 +392,12 @@ class SettingsWindow():
             response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0)
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
-            return [model["id"] for model in models]
+            available_models = [model["name"] for model in models]
+            available_models.append("Custom")
+            return available_models
         except requests.RequestException as e:
-            messagebox.showerror("Error", f"Failed to fetch models: {e}. Please ensure your OpenAI API key is correct.") 
-            return ["Failed to load models"]
+            # messagebox.showerror("Error", f"Failed to fetch models: {e}. Please ensure your OpenAI API key is correct.") 
+            return ["Failed to load models", "Custom"]
 
     def update_models_dropdown(self, dropdown):
         """

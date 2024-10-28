@@ -202,14 +202,21 @@ class SettingsWindowUI:
 
         # 5. Models (Left Column)
         tk.Label(left_frame, text="Models").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-        models_drop_down_options = self.settings.get_available_models() or ["No models available"]
+        models_drop_down_options = self.settings.get_available_models() or ["No models available", "Custom"]
         self.models_drop_down = ttk.Combobox(left_frame, values=models_drop_down_options, width=15, state="readonly")
         self.models_drop_down.current(api_options.index(self.settings.API_STYLE))
         self.models_drop_down.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
+        self.models_drop_down.bind('<<ComboboxSelected>>', self.on_model_selection_change)
+
+        # Create custom model entry (initially hidden)
+        self.custom_model_entry = tk.Entry(left_frame, width=15)
+
         
         refresh_button = ttk.Button(left_frame, text="↻", 
                                 command=lambda: (self.save_settings(False), 
-                                                self.settings.update_models_dropdown(self.models_drop_down)), 
+                                                self.settings.update_models_dropdown(self.models_drop_down),
+                                                
+                                                self.on_model_selection_change(None)), 
                                 width=4)
         refresh_button.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
         tt.Tooltip(refresh_button, text="Refresh the list of available models")
@@ -224,6 +231,25 @@ class SettingsWindowUI:
         
         self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.llm_settings)
  
+    def on_model_selection_change(self, event):
+        if self.models_drop_down.get() == "Custom" and self.custom_model_entry.grid_info() == {}:
+            # Show the custom model entry below the dropdown
+            self.custom_model_entry.grid(row=self.models_drop_down.grid_info()['row'], 
+                        column=1, padx=0, pady=5, sticky="w")
+            self.models_drop_down.set("Please choose one!")
+            self.models_drop_down.grid_remove()
+        elif self.models_drop_down.get() != "Custom" and self.custom_model_entry.grid_info() != {}:
+            # Hide the custom model entry
+            self.models_drop_down.grid(row=self.custom_model_entry.grid_info()['row'], 
+                        column=1, padx=0, pady=5, sticky="w")
+            self.custom_model_entry.grid_remove()
+
+    def get_selected_model(self):
+        """Returns the selected model, either from dropdown or custom entry"""
+        if self.models_drop_down.get() == "Custom":
+            return self.custom_model_entry.get()
+        return self.models_drop_down.get()
+
     def create_editable_settings_col(self, left_frame, right_frame, left_row, right_row, settings_set):
         # Add remaining editable settings alternating between columns
         for idx, setting_name in enumerate(settings_set):
@@ -355,6 +381,8 @@ class SettingsWindowUI:
         `save_settings` method of the `settings` object to save the settings.
         """
 
+        self.settings.editable_settings["Models"] = self.get_selected_model()
+
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
             self.aiscribe_text.get("1.0", tk.END),
@@ -382,4 +410,5 @@ class SettingsWindowUI:
         to reset the settings to their default values.
         """
         self.settings.clear_settings_file(self.settings_window)
+
 
