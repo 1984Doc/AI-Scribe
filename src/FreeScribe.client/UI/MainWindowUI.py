@@ -37,7 +37,7 @@ class MainWindowUI:
         self.docker_status_bar.grid(row=4, column=0, columnspan=14, sticky='nsew')
 
         # Add a label to indicate Docker container status section
-        docker_status = tk.Label(self.docker_status_bar, text="Docker Containers: ")
+        docker_status = tk.Label(self.docker_status_bar, text="Docker Container Status:", padx=10)
         docker_status.pack(side=tk.LEFT)
 
         # Add LLM container status label
@@ -79,6 +79,29 @@ class MainWindowUI:
         # Stop button for LLM container with a command to invoke the stop method from logic
         stop_llm_button = tk.Button(self.docker_status_bar, text="Stop LLM", command=lambda: self.logic.stop_LLM_container(llm_dot, self.app_settings))
         stop_llm_button.pack(side=tk.RIGHT)
+
+        if self.logic.container_manager.client is not None:
+            self.enable_docker_ui()
+        else:
+            docker_status.config(text="(Docker not found)")
+            tt.Tooltip(docker_status, text="Docker is not installed or running on this system. Please ensure it is running before using its functionality")
+            self.disable_docker_ui()
+
+    def disable_docker_ui(self):
+        """
+        Disable the Docker status bar UI elements.
+        """
+        if self.docker_status_bar is not None:
+            for child in self.docker_status_bar.winfo_children():
+                child.configure(state='disabled')
+
+    def enable_docker_ui(self):
+        """
+        Enable the Docker status bar UI elements.
+        """
+        if self.docker_status_bar is not None:
+            for child in self.docker_status_bar.winfo_children():
+                child.configure(state='normal')
 
     def destroy_docker_status_bar(self):
         """
