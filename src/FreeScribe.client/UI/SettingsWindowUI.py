@@ -75,7 +75,7 @@ class SettingsWindowUI:
         self.settings_window = tk.Toplevel()
         self.settings_window.title("Settings")
         self.settings_window.geometry("600x450")  # Set initial window size
-        self.settings_window.minsize(600, 450)    # Set minimum window size
+        self.settings_window.minsize(600, 500)    # Set minimum window size
         self.settings_window.resizable(True, True)
         self.settings_window.grab_set()
 
@@ -85,18 +85,23 @@ class SettingsWindowUI:
         self.notebook = ttk.Notebook(self.main_frame)
         self.notebook.pack(expand=True, fill='both')
 
-        self.basic_frame = ttk.Frame(self.notebook)
+        self.llm_settings_frame = ttk.Frame(self.notebook)
+        self.whisper_settings_frame = ttk.Frame(self.notebook)
         self.advanced_frame = ttk.Frame(self.notebook)
         self.docker_settings_frame = ttk.Frame(self.notebook)
 
-        self.notebook.add(self.basic_frame, text="Basic Settings")
+        self.notebook.add(self.llm_settings_frame, text="AI Settings")
+        self.notebook.add(self.whisper_settings_frame, text="Whisper Settings")
         self.notebook.add(self.advanced_frame, text="Advanced Settings")
         self.notebook.add(self.docker_settings_frame, text="Docker Settings")
 
-        self.basic_settings_frame = self.add_scrollbar_to_frame(self.basic_frame)
+        self.llm_settings_frame = self.add_scrollbar_to_frame(self.llm_settings_frame)
+        self.whisper_settings_frame = self.add_scrollbar_to_frame(self.whisper_settings_frame)
         self.advanced_settings_frame = self.add_scrollbar_to_frame(self.advanced_frame)
 
-        self.create_basic_settings()
+        # self.create_basic_settings()
+        self.create_llm_settings()
+        self.create_whisper_settings()
         self.create_advanced_settings()
         self.create_docker_settings()
         self.create_buttons()
@@ -128,30 +133,48 @@ class SettingsWindowUI:
 
         return scrollable_frame
 
-    def create_basic_settings(self):
+    def create_whisper_settings(self):
         """
-        Creates the basic settings UI elements in a two-column layout.
+        Creates the Whisper settings UI elements in a two-column layout.
         Settings alternate between left and right columns for even distribution.
         """
-        # Create left and right frames for the two columns
-        left_frame = ttk.Frame(self.basic_settings_frame)
+
+        left_frame = ttk.Frame(self.whisper_settings_frame)
         left_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
-        
-        right_frame = ttk.Frame(self.basic_settings_frame)
+
+        right_frame = ttk.Frame(self.whisper_settings_frame)
         right_frame.grid(row=0, column=1, padx=10, pady=5, sticky="nw")
 
         left_row = 0
         right_row = 0
 
-        # 1. Settings Preset (Left Column)
-        tk.Label(left_frame, text="Settings Preset:").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-        settings_preset_options = ["JanAI", "ChatGPT", "ClinicianFocus Toolbox", "Custom"]
-        self.settings_preset_dropdown = ttk.Combobox(left_frame, values=settings_preset_options, width=15, state="readonly")
-        self.settings_preset_dropdown.current(settings_preset_options.index(self.settings.editable_settings["Preset"]))
-        self.settings_preset_dropdown.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
+
+        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.whisper_settings)
+
+    def create_llm_settings(self):
+        """
+        Creates the LLM settings UI elements in a two-column layout.
+        Settings alternate between left and right columns for even distribution.
+        """
+        # Create left and right frames for the two columns
+        left_frame = ttk.Frame(self.llm_settings_frame)
+        left_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+        
+        right_frame = ttk.Frame(self.llm_settings_frame)
+        right_frame.grid(row=0, column=1, padx=10, pady=5, sticky="nw")
+
+        left_row = 0
+        right_row = 0
+
+        # 1. LLM Preset (Left Column)
+        tk.Label(left_frame, text="LLM Preset:").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
+        llm_preset_options = ["JanAI", "ChatGPT", "ClinicianFocus Toolbox", "Custom"]
+        self.llm_preset_dropdown = ttk.Combobox(left_frame, values=llm_preset_options, width=15, state="readonly")
+        self.llm_preset_dropdown.current(llm_preset_options.index(self.settings.editable_settings["Preset"]))
+        self.llm_preset_dropdown.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
 
         load_preset_btn = ttk.Button(left_frame, text="Load", width=5, 
-                                    command=lambda: self.settings.load_settings_preset(self.settings_preset_dropdown.get(), self))
+                                    command=lambda: self.settings.load_settings_preset(self.llm_preset_dropdown.get(), self))
         load_preset_btn.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
         left_row += 1
 
@@ -198,13 +221,12 @@ class SettingsWindowUI:
         self.ssl_selfcert_checkbox = tk.Checkbutton(right_frame, variable=self.ssl_selfcert_var)
         self.ssl_selfcert_checkbox.grid(row=right_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
         right_row += 1
-
-
-        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.basic_settings)
-
+        
+        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.llm_settings)
+ 
     def create_editable_settings_col(self, left_frame, right_frame, left_row, right_row, settings_set):
         # Add remaining editable settings alternating between columns
-          for idx, setting_name in enumerate(settings_set):
+        for idx, setting_name in enumerate(settings_set):
             target_frame = left_frame if idx % 2 == 0 else right_frame
             target_row = left_row if idx % 2 == 0 else right_row
             
@@ -227,6 +249,8 @@ class SettingsWindowUI:
             else:
                 right_row += 1
 
+        return left_row, right_row
+
     def create_advanced_settings(self):
         """
         Creates the advanced settings UI elements.
@@ -244,14 +268,22 @@ class SettingsWindowUI:
         left_row = 0
         right_row = 0
 
-        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.advanced_settings)
+        left_row, right_row = self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.advanced_settings)
 
-        row_idx = len(self.settings.advanced_settings)
+        target_frame = None
+        row_idx = None
 
-        tk.Label(self.advanced_settings_frame, text="Whisper Audio Cutoff").grid(row=row_idx, column=0, padx=0, pady=0, sticky="w")
+        if left_row > right_row:
+            target_frame = right_frame
+            row_idx = right_row
+        else:
+            target_frame = left_frame
+            row_idx = left_row
+
+        tk.Label(target_frame, text="Whisper Audio Cutoff").grid(row=row_idx, column=0, padx=0, pady=0, sticky="w")
 
         # Create audio meter for silence cut-off, used for setting microphone cutoff in Whisper
-        self.cutoff_slider = AudioMeter(self.advanced_settings_frame, width=150, height=50, threshold=self.settings.editable_settings["Silence cut-off"] * 32768)
+        self.cutoff_slider = AudioMeter(target_frame, width=150, height=50, threshold=self.settings.editable_settings["Silence cut-off"] * 32768)
         self.cutoff_slider.grid(row=row_idx, column=1, padx=0, pady=0, sticky="w")
 
         row_idx += 1

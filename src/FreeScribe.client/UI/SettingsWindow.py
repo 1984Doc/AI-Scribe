@@ -81,13 +81,15 @@ class SettingsWindow():
         self.main_window = None
 
 
-        self.basic_settings = {
-            "Model Endpoint",
+        self.whisper_settings = {
             "Local Whisper",
             "Whisper Server API Key",
             "Whisper Model",
             "Real Time",
             "Whisper Endpoint",
+        }
+        self.llm_settings = {
+            "Model Endpoint",
         }
 
         self.advanced_settings = {
