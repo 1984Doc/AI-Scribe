@@ -713,10 +713,10 @@ mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_re
 mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
 
 send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=11)
-send_button.grid(row=1, column=2, pady=5, sticky='nsew')
+send_button.grid(row=1, column=3, pady=5, sticky='nsew')
 
 pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=11)
-pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
+pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
 
 clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=11)
 clear_button.grid(row=1, column=4, pady=5, sticky='nsew')

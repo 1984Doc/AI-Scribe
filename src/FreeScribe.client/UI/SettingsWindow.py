@@ -82,7 +82,6 @@ class SettingsWindow():
 
 
         self.basic_settings = {
-            "Model",
             "Model Endpoint",
             "Local Whisper",
             "Whisper Server API Key",
@@ -388,7 +387,7 @@ class SettingsWindow():
         }
 
         try:
-            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=1000)
+            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0)
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
             return [model["id"] for model in models]
