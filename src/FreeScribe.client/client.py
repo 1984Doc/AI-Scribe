@@ -41,6 +41,7 @@ from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
+from tkinterhtml import HtmlFrame
 
 # GUI Setup
 root = tk.Tk()
@@ -583,7 +584,7 @@ def clear_settings_file(settings_window):
 def toggle_view():
     global current_view
     if current_view == "full":
-        user_input.scrolled_text.grid_remove()
+        user_input.grid_remove()
         send_button.grid_remove()
         clear_button.grid_remove()
         toggle_button.grid_remove()
@@ -591,8 +592,8 @@ def toggle_view():
         upload_button.grid_remove()
         response_display.grid_remove()
         timestamp_listbox.grid_remove()
-        copy_user_input_button.grid_remove()
-        copy_response_display_button.grid_remove()
+        # copy_user_input_button.grid_remove()
+        # copy_response_display_button.grid_remove()
         mic_button.config(width=10, height=1)
         pause_button.config(width=10, height=1)
         switch_view_button.config(width=10, height=1)
@@ -612,7 +613,7 @@ def toggle_view():
         pause_button.config(width=11, height=2)
         switch_view_button.config(width=11, height=2)
         switch_view_button.config(text="Minimize View")
-        user_input.scrolled_text.grid()
+        user_input.grid()
         send_button.grid()
         clear_button.grid()
         toggle_button.grid()
@@ -620,8 +621,8 @@ def toggle_view():
         upload_button.grid()
         response_display.grid()
         timestamp_listbox.grid()
-        copy_user_input_button.grid()
-        copy_response_display_button.grid()
+        # copy_user_input_button.grid()
+        # copy_response_display_button.grid()
         mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
         pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
         switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
@@ -756,7 +757,7 @@ timestamp_listbox.config(fg='grey')
 combobox = ttk.Combobox(root, values=dropdown_values, width=35, state="readonly")
 combobox.current(0)
 combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
-combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
+# combobox.grid(row=3, column=4, columnspan=3, pady=10, padx=10, sticky='nsew')
 
 update_aiscribe_texts(None)
 
