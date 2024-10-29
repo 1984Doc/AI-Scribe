@@ -40,6 +40,7 @@ from UI.MainWindow import MainWindow
 from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
+from UI.Widgets.CustomTextBox import CustomTextBox
 
 # GUI Setup
 root = tk.Tk()
@@ -47,7 +48,6 @@ root.title("AI Medical Scribe")
 
 # settings logic
 app_settings = SettingsWindow()
-app_settings.start()
 
 #  create our ui elements and settings config
 window = MainWindowUI(root, app_settings)
@@ -127,15 +127,16 @@ def threaded_send_audio_to_server():
     thread.start()
 
 
-
+DEFAULT_PAUSE_BUTTON_COLOUR = None
 def toggle_pause():
-    global is_paused
+    global is_paused, DEFAULT_PAUSE_BUTTON_COLOUR
     is_paused = not is_paused
 
     if is_paused:
+        DEFAULT_PAUSE_BUTTON_COLOUR = pause_button.cget('background')
         pause_button.config(text="Resume", bg="red")
     else:
-        pause_button.config(text="Pause", bg="gray85")
+        pause_button.config(text="Pause", bg=DEFAULT_PAUSE_BUTTON_COLOUR)
 
 def record_audio():
     global is_paused, frames, audio_queue
@@ -228,8 +229,8 @@ def realtime_text():
         is_realtimeactive = False
 
 def update_gui(text):
-    user_input.insert(tk.END, text + '\n')
-    user_input.see(tk.END)
+    user_input.scrolled_text.insert(tk.END, text + '\n')
+    user_input.scrolled_text.see(tk.END)
 
 def save_audio():
     global frames
@@ -245,40 +246,48 @@ def save_audio():
         else:
             threaded_send_audio_to_server()
 
+DEFUALT_BUTTON_COLOUR = None
+
 def toggle_recording():
-    global is_recording, recording_thread
+    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR
     if not is_recording:
-        user_input.configure(state='normal')
-        user_input.delete("1.0", tk.END)
+        user_input.scrolled_text.configure(state='normal')
+        user_input.scrolled_text.delete("1.0", tk.END)
         if not app_settings.editable_settings["Real Time"]:
-            user_input.insert(tk.END, "Recording")
-        response_display.configure(state='normal')
-        response_display.delete("1.0", tk.END)
-        response_display.configure(state='disabled')
+            user_input.scrolled_text.insert(tk.END, "Recording")
+        response_display.scrolled_text.configure(state='normal')
+        response_display.scrolled_text.delete("1.0", tk.END)
+        response_display.scrolled_text.configure(fg='black')
+        response_display.scrolled_text.configure(state='disabled')
         is_recording = True
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
-        mic_button.config(bg="red", text="Mic ON")
+        DEFUALT_BUTTON_COLOUR = mic_button.cget('background')
+        mic_button.config(bg="red", text="Stop\nRecording")
         start_flashing()
     else:
         is_recording = False
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
         save_audio()
-        mic_button.config(bg="gray85", text="Mic OFF")
+        mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
 
 def clear_all_text_fields():
-    user_input.configure(state='normal')
-    user_input.delete("1.0", tk.END)
+    user_input.scrolled_text.configure(state='normal')
+    user_input.scrolled_text.delete("1.0", tk.END)
+    user_input.scrolled_text.focus_set()
+    root.focus_set()
     stop_flashing()
-    response_display.configure(state='normal')
-    response_display.delete("1.0", tk.END)
-    response_display.configure(state='disabled')
+    response_display.scrolled_text.configure(state='normal')
+    response_display.scrolled_text.delete("1.0", tk.END)
+    response_display.scrolled_text.insert(tk.END, "Medical Note")
+    response_display.scrolled_text.config(fg='grey')
+    response_display.scrolled_text.configure(state='disabled')
 
 def toggle_aiscribe():
     global use_aiscribe
     use_aiscribe = not use_aiscribe
-    toggle_button.config(text="AISCRIBE ON" if use_aiscribe else "AISCRIBE OFF")
+    toggle_button.config(text="AI Scribe\nON" if use_aiscribe else "AI Scribe\nOFF")
 
 def send_audio_to_server():
     """
@@ -316,11 +325,11 @@ def send_audio_to_server():
         print("Using Local Whisper for transcription.")
 
         # Configure the user input widget to be editable and clear its content
-        user_input.configure(state='normal')
-        user_input.delete("1.0", tk.END)
+        user_input.scrolled_text.configure(state='normal')
+        user_input.scrolled_text.delete("1.0", tk.END)
 
         # Display a message indicating that audio to text processing is in progress
-        user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
+        user_input.scrolled_text.insert(tk.END, "Audio to Text Processing...Please Wait")
 
         # Load the specified Whisper model
         model_name = app_settings.editable_settings["Whisper Model"].strip()
@@ -335,9 +344,9 @@ def send_audio_to_server():
         transcribed_text = result["text"]
 
         # Update the user input widget with the transcribed text
-        user_input.configure(state='normal')
-        user_input.delete("1.0", tk.END)
-        user_input.insert(tk.END, transcribed_text)
+        user_input.scrolled_text.configure(state='normal')
+        user_input.scrolled_text.delete("1.0", tk.END)
+        user_input.scrolled_text.insert(tk.END, transcribed_text)
 
         # Send the transcribed text and receive a response
         send_and_receive()
@@ -346,11 +355,11 @@ def send_audio_to_server():
         print("Using Remote Whisper for transcription.")
 
         # Configure the user input widget to be editable and clear its content
-        user_input.configure(state='normal')
-        user_input.delete("1.0", tk.END)
+        user_input.scrolled_text.configure(state='normal')
+        user_input.scrolled_text.delete("1.0", tk.END)
 
         # Display a message indicating that audio to text processing is in progress
-        user_input.insert(tk.END, "Audio to Text Processing...Please Wait")
+        user_input.scrolled_text.insert(tk.END, "Audio to Text Processing...Please Wait")
 
         # Determine the file to send for transcription
         if uploaded_file_path:
@@ -380,19 +389,19 @@ def send_audio_to_server():
             if response.status_code == 200:
                 # Update the UI with the transcribed text
                 transcribed_text = response.json()['text']
-                user_input.configure(state='normal')
-                user_input.delete("1.0", tk.END)
-                user_input.insert(tk.END, transcribed_text)
+                user_input.scrolled_text.configure(state='normal')
+                user_input.scrolled_text.delete("1.0", tk.END)
+                user_input.scrolled_text.insert(tk.END, transcribed_text)
 
                 # Send the transcribed text and receive a response
                 send_and_receive()
 
 def send_and_receive():
     global use_aiscribe, user_message
-    user_message = user_input.get("1.0", tk.END).strip()
+    user_message = user_input.scrolled_text.get("1.0", tk.END).strip()
     display_text(NOTE_CREATION)
     if use_aiscribe:
-        formatted_message = f'{AISCRIBE} [{user_message}] {AISCRIBE2}'
+        formatted_message = f'{app_settings.AISCRIBE} [{user_message}] {app_settings.AISCRIBE2}'
     else:
         formatted_message = user_message
     threaded_handle_message(formatted_message)
@@ -400,13 +409,21 @@ def send_and_receive():
         
 
 def display_text(text):
-    response_display.configure(state='normal')
-    response_display.delete("1.0", tk.END)
-    response_display.insert(tk.END, f"{text}\n")
-    response_display.configure(state='disabled')
+    response_display.scrolled_text.configure(state='normal')
+    response_display.scrolled_text.delete("1.0", tk.END)
+    response_display.scrolled_text.insert(tk.END, f"{text}\n")
+    response_display.scrolled_text.configure(fg='black')
+    response_display.scrolled_text.configure(state='disabled')
 
+IS_FIRST_LOG = True
 def update_gui_with_response(response_text):
-    global response_history, user_message
+    global response_history, user_message, IS_FIRST_LOG
+
+    if IS_FIRST_LOG:
+        timestamp_listbox.delete(0, tk.END)
+        timestamp_listbox.config(fg='black')
+        IS_FIRST_LOG = False
+
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     response_history.insert(0, (timestamp, user_message, response_text))
 
@@ -420,18 +437,25 @@ def update_gui_with_response(response_text):
     stop_flashing()
 
 def show_response(event):
+    global IS_FIRST_LOG
+
+    if IS_FIRST_LOG:
+        return
+
     selection = event.widget.curselection()
     if selection:
         index = selection[0]
         transcript_text = response_history[index][1]
         response_text = response_history[index][2]
-        user_input.configure(state='normal')
-        user_input.delete("1.0", tk.END)
-        user_input.insert(tk.END, transcript_text)
-        response_display.configure(state='normal')
-        response_display.delete('1.0', tk.END)
-        response_display.insert('1.0', response_text)
-        response_display.configure(state='disabled')
+        user_input.scrolled_text.configure(state='normal')
+        user_input.scrolled_text.config(fg='black')
+        user_input.scrolled_text.delete("1.0", tk.END)
+        user_input.scrolled_text.insert(tk.END, transcript_text)
+        response_display.scrolled_text.configure(state='normal')
+        response_display.scrolled_text.delete('1.0', tk.END)
+        response_display.scrolled_text.insert('1.0', response_text)
+        response_display.scrolled_text.config(fg='black')
+        response_display.scrolled_text.configure(state='disabled')
         pyperclip.copy(response_text)
 
 def send_text_to_chatgpt(edited_text):
@@ -570,23 +594,28 @@ def toggle_view():
         upload_button.grid_remove()
         response_display.grid_remove()
         timestamp_listbox.grid_remove()
-        copy_user_input_button.grid_remove()
-        copy_response_display_button.grid_remove()
         mic_button.config(width=10, height=1)
         pause_button.config(width=10, height=1)
         switch_view_button.config(width=10, height=1)
         mic_button.grid(row=0, column=0, pady=5)
         pause_button.grid(row=0, column=1, pady=5)
         switch_view_button.grid(row=0, column=2, pady=5)
+        switch_view_button.config(text="Maximize\nView")
         blinking_circle_canvas.grid(row=0, column=3, pady=5)
-        combobox.grid(row=1, column=0, columnspan=3, pady=5)
+        if app_settings.editable_settings["Enable Scribe Template"]:
+            window.destroy_scribe_template()
+            window.create_scribe_template(row=1, column=0, columnspan=3, pady=5)
+
         root.attributes('-topmost', True)
         root.minsize(300, 100)
         current_view = "minimal"
+        window.destroy_docker_status_bar()
+
     else:
-        mic_button.config(width=10, height=2)
-        pause_button.config(width=10, height=2)
-        switch_view_button.config(width=10, height=2)
+        mic_button.config(width=11, height=2)
+        pause_button.config(width=11, height=2)
+        switch_view_button.config(width=11, height=2)
+        switch_view_button.config(text="Minimize View")
         user_input.grid()
         send_button.grid()
         clear_button.grid()
@@ -595,48 +624,34 @@ def toggle_view():
         upload_button.grid()
         response_display.grid()
         timestamp_listbox.grid()
-        copy_user_input_button.grid()
-        copy_response_display_button.grid()
         mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
-        pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
-        switch_view_button.grid(row=1, column=9, pady=5, sticky='nsew')
-        blinking_circle_canvas.grid(row=1, column=10, pady=5)
-        combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
+        pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
+        switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
+        blinking_circle_canvas.grid(row=1, column=9, pady=5)
+        if app_settings.editable_settings["Enable Scribe Template"]:
+            window.destroy_scribe_template()
+            window.create_scribe_template()
+
+
         root.attributes('-topmost', False)
         root.minsize(900, 400)
         current_view = "full"
+        window.create_docker_status_bar()
 
 def copy_text(widget):
     text = widget.get("1.0", tk.END)
     pyperclip.copy(text)
 
-def get_dropdown_values_and_mapping():
-    options = []
-    mapping = {}
-    try:
-        with open('options.txt', 'r') as file:
-            content = file.read().strip()
-        templates = content.split('\n\n')
-        for template in templates:
-            lines = template.split('\n')
-            if len(lines) == 3:
-                title, aiscribe, aiscribe2 = lines
-                options.append(title)
-                mapping[title] = (aiscribe, aiscribe2)
-    except FileNotFoundError:
-        print("options.txt not found, using default values.")
-        # Fallback default options if file not found
-        options = ["Settings Template"]
-        mapping["Settings Template"] = (app_settings.AISCRIBE, app_settings.AISCRIBE2)
-    return options, mapping
+def add_placeholder(event, text_widget, placeholder_text="Text box"):
+    if text_widget.get("1.0", "end-1c") == "":
+        text_widget.insert("1.0", placeholder_text)
+        text_widget.config(fg='grey')
 
-dropdown_values, option_mapping = get_dropdown_values_and_mapping()
+def remove_placeholder(event, text_widget, placeholder_text="Text box"):
+    if text_widget.get("1.0", "end-1c") == placeholder_text:
+        text_widget.delete("1.0", "end")
+        text_widget.config(fg='black')
 
-def update_aiscribe_texts(event):
-    global AISCRIBE, AISCRIBE2
-    selected_option = combobox.get()
-    if selected_option in option_mapping:
-        AISCRIBE, AISCRIBE2 = option_mapping[selected_option]
 
 # Configure grid weights for scalability
 root.grid_columnconfigure(0, weight=1, minsize= 10)
@@ -651,66 +666,82 @@ root.grid_columnconfigure(8, weight=1)
 root.grid_columnconfigure(9, weight=1)
 root.grid_columnconfigure(10, weight=1)
 root.grid_columnconfigure(11, weight=1)
-root.grid_columnconfigure(12, weight=1)
-root.grid_columnconfigure(13, weight=1, minsize=10)
+root.grid_columnconfigure(12, weight=1, minsize=10)
 root.grid_rowconfigure(0, weight=1)
 root.grid_rowconfigure(1, weight=0)
 root.grid_rowconfigure(2, weight=1)
 root.grid_rowconfigure(3, weight=0)
 root.grid_rowconfigure(4, weight=0)
 
-user_input = scrolledtext.ScrolledText(root, height=12)
+
+user_input = CustomTextBox(root, height=12)
 user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
-mic_button = tk.Button(root, text="Mic OFF", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
-mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
 
-send_button = tk.Button(root, text="AI Request", command=send_and_flash, height=2, width=11)
-send_button.grid(row=1, column=2, pady=5, sticky='nsew')
+# Insert placeholder text
+user_input.scrolled_text.insert("1.0", "Transcript of Conversation")
+user_input.scrolled_text.config(fg='grey')
+
+# Bind events to remove or add the placeholder with arguments
+user_input.scrolled_text.bind("<FocusIn>", lambda event: remove_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
+user_input.scrolled_text.bind("<FocusOut>", lambda event: add_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
+
+mic_button = tk.Button(root, text="Start\nRecording", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
+mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
+tt.Tooltip(mic_button, "Alt+R to toggle recording, Begins recording for transcriptions")
+
+send_button = tk.Button(root, text="Generate Note", command=send_and_flash, height=2, width=11)
+send_button.grid(row=1, column=3, pady=5, sticky='nsew')
+tt.Tooltip(send_button, "Alt+G to send and receive, Generates a note from the transcript of the conversation")
 
 pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=11)
-pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
+pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
+tt.Tooltip(pause_button, "Alt+P to pause, Pauses the recording")
 
 clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=11)
 clear_button.grid(row=1, column=4, pady=5, sticky='nsew')
+tt.Tooltip(clear_button, "Clears both text fields")
 
-toggle_button = tk.Button(root, text="AISCRIBE ON", command=toggle_aiscribe, height=2, width=11)
+toggle_button = tk.Button(root, text="AI Scribe\nON", command=toggle_aiscribe, height=2, width=11)
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
+tt.Tooltip(toggle_button, "Toggles AI Scribe on and off, when off it will not request a note from the AI.")
 
 settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=11)
 settings_button.grid(row=1, column=6, pady=5, sticky='nsew')
+tt.Tooltip(settings_button, "Opens the settings window")
 
-upload_button = tk.Button(root, text="Upload File", command=upload_file, height=2, width=11)
+upload_button = tk.Button(root, text="Upload\nRecording", command=upload_file, height=2, width=11)
 upload_button.grid(row=1, column=7, pady=5, sticky='nsew')
+tt.Tooltip(upload_button, "Upload a recording for transcription")
 
-switch_view_button = tk.Button(root, text="Switch View", command=toggle_view, height=2, width=11)
+switch_view_button = tk.Button(root, text="Minimize View", command=toggle_view, height=2, width=11)
 switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
+tt.Tooltip(switch_view_button, "Toggles between a minimal and full view")
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
 blinking_circle_canvas.grid(row=1, column=9, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
+tt.Tooltip(blinking_circle_canvas, "Flashing circle indicates recording in progress")
 
-response_display = scrolledtext.ScrolledText(root, height=12, state='disabled')
+response_display = CustomTextBox(root, height=13, state="disabled")
 response_display.grid(row=2, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
 
-copy_user_input_button = tk.Button(root, text="Copy", command=lambda: copy_text(user_input), height=2, width=10)
-copy_user_input_button.grid(row=0, column=10, pady=5, padx=5, sticky='ew')
+# Insert placeholder text
+response_display.scrolled_text.configure(state='normal')
+response_display.scrolled_text.insert("1.0", "Medical Note")
+response_display.scrolled_text.config(fg='grey')
+response_display.scrolled_text.configure(state='disabled')
 
-copy_response_display_button = tk.Button(root, text="Copy", command=lambda: copy_text(response_display), height=2, width=10)
-copy_response_display_button.grid(row=2, column=10, pady=5, padx=5, sticky='ew')
+if app_settings.editable_settings["Enable Scribe Template"]:
+    window.create_scribe_template()
 
 timestamp_listbox = tk.Listbox(root, height=30)
-timestamp_listbox.grid(row=0, column=11, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
+timestamp_listbox.grid(row=0, column=10, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
+timestamp_listbox.insert(tk.END, "Medical Note History")
+timestamp_listbox.config(fg='grey')
 
-combobox = ttk.Combobox(root, values=dropdown_values, width=35, state="readonly")
-combobox.current(0)
-combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
-combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
-
-update_aiscribe_texts(None)
-
-
+window.update_aiscribe_texts(None)
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: pause_button.invoke())
 
@@ -727,7 +758,9 @@ p.terminate()
 def on_exit():
     # Create a pop up that says yes or no with tkinter messagebox to option to close the docker containers
 
-    main_window = MainWindow()
+    global window
+
+    main_window = window.logic
 
     if main_window.container_manager is not None and app_settings.editable_settings["Auto Shutdown Containers on Exit"] is True:
         main_window.container_manager.stop_container(app_settings.editable_settings["LLM Container Name"])

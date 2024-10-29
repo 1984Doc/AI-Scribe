@@ -75,21 +75,23 @@ class SettingsWindow():
         self.SSL_ENABLE = "0"
         self.SSL_SELFCERT = "1"
         self.OPENAI_API_KEY = "None"
-        self.AISCRIBE = ""
-        self.AISCRIBE2 = ""
         self.API_STYLE = "OpenAI"
         self.main_window = None
+        self.scribe_template_values = []
+        self.scribe_template_mapping = {}
+
+        
 
 
-        self.basic_settings = {
-            "Model",
-            "Model Endpoint",
+        self.whisper_settings = {
             "Local Whisper",
             "Whisper Server API Key",
             "Whisper Model",
             "Real Time",
-            "Use Docker Status Bar",
             "Whisper Endpoint",
+        }
+        self.llm_settings = {
+            "Model Endpoint",
         }
 
         self.advanced_settings = {
@@ -114,6 +116,7 @@ class SettingsWindow():
             "frmtrmblln",
             "Real Time Audio Length",
             "Real Time Silence Length",
+            "Enable Scribe Template",
         }
 
         self.editable_settings = {
@@ -153,6 +156,7 @@ class SettingsWindow():
             "Auto Shutdown Containers on Exit": True,
             "Use Docker Status Bar": False,
             "Preset": "Custom",
+            "Enable Scribe Template": False,
         }
 
         self.docker_settings = {
@@ -160,10 +164,47 @@ class SettingsWindow():
             "LLM Caddy Container Name",
             "Whisper Container Name",
             "Whisper Caddy Container Name",
-            "Auto Shutdown Containers on Exit"
+            "Auto Shutdown Containers on Exit",
+            "Use Docker Status Bar",
         }
 
         self.editable_settings_entries = {}
+
+        self.load_settings_from_file()
+        self.AISCRIBE = self.load_aiscribe_from_file() or "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
+        self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
+
+        self.get_dropdown_values_and_mapping()
+
+    def get_dropdown_values_and_mapping(self):
+        """
+        Reads the 'options.txt' file to populate dropdown values and their mappings.
+
+        This function attempts to read a file named 'options.txt' to extract templates
+        that consist of three lines: a title, aiscribe, and aiscribe2. These templates
+        are then used to populate the dropdown values and their corresponding mappings.
+        If the file is not found, default values are used instead.
+
+        :raises FileNotFoundError: If 'options.txt' is not found, a message is printed
+                                and default values are used.
+        """
+        self.scribe_template_values = []
+        self.scribe_template_mapping = {}
+        try:
+            with open('options.txt', 'r') as file:
+                content = file.read().strip()
+            templates = content.split('\n\n')
+            for template in templates:
+                lines = template.split('\n')
+                if len(lines) == 3:
+                    title, aiscribe, aiscribe2 = lines
+                    self.scribe_template_values.append(title)
+                    self.scribe_template_mapping[title] = (aiscribe, aiscribe2)
+        except FileNotFoundError:
+            print("options.txt not found, using default values.")
+            # Fallback default options if file not found
+            self.scribe_template_values = ["Settings Template"]
+            self.scribe_template_mapping["Settings Template"] = (self.AISCRIBE, self.AISCRIBE2)
 
     def load_settings_from_file(self, filename='settings.txt'):
         """
@@ -194,6 +235,10 @@ class SettingsWindow():
 
                 if self.editable_settings["Use Docker Status Bar"] and self.main_window is not None:
                     self.main_window.create_docker_status_bar()
+                
+                if self.editable_settings["Enable Scribe Template"] and self.main_window is not None:
+                    self.main_window.create_scribe_template()
+
 
                 return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
         except FileNotFoundError:
@@ -324,18 +369,6 @@ class SettingsWindow():
         else:
             print("UNENCRYPTED http connections are being used between Client and Whisper/Kobbold server...")
             return f"http://{ip}:{port}"
-
-    def start(self):
-        """
-        Load the settings from the configuration file.
-
-        This method initializes the application settings, including the loading
-        of the default AI Scribe text and other user-defined parameters.
-        """
-        self.load_settings_from_file()
-        self.AISCRIBE = self.load_aiscribe_from_file() or "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
-        self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
-        
   
     def clear_settings_file(self, settings_window):
         """
@@ -388,13 +421,15 @@ class SettingsWindow():
         }
 
         try:
-            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=1000)
+            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0)
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
-            return [model["id"] for model in models]
+            available_models = [model["id"] for model in models]
+            available_models.append("Custom")
+            return available_models
         except requests.RequestException as e:
-            messagebox.showerror("Error", f"Failed to fetch models: {e}. Please ensure your OpenAI API key is correct.") 
-            return ["Failed to load models"]
+            # messagebox.showerror("Error", f"Failed to fetch models: {e}. Please ensure your OpenAI API key is correct.") 
+            return ["Failed to load models", "Custom"]
 
     def update_models_dropdown(self, dropdown):
         """
@@ -403,9 +438,11 @@ class SettingsWindow():
         This method fetches the available models from the AI Scribe service and updates
         the dropdown widget in the settings window with the new list of models.
         """
-        
+        dropdown["values"] = []
+        dropdown.set("Loading models...")
         models = self.get_available_models()
         dropdown["values"] = models
+        dropdown.set(models[0])
 
     def load_settings_preset(self, preset_name, settings_class):
         """
@@ -444,3 +481,4 @@ class SettingsWindow():
             window (MainWindow): The main window instance to set.
         """
         self.main_window = window
+

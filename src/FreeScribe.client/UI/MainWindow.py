@@ -1,4 +1,7 @@
 """
+
+MainWindow.py
+
 Main window module for the FreeScribe client application.
 
 This module contains the MainWindow class which is responsible for managing the main window of the application.
@@ -26,11 +29,12 @@ class MainWindow:
     This class initializes the main window and provides methods to manage Docker containers for LLM and Whisper services.
     """
 
-    def __init__(self):
+    def __init__(self, settings):
         """
         Initialize the main window of the application.
         """
         self.container_manager = ContainerManager()
+        self.settings = settings
 
     def start_LLM_container(self, widget_name, app_settings):
         """
