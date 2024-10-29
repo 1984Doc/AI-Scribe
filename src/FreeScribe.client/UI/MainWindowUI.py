@@ -3,8 +3,8 @@ from tkinter import messagebox, Toplevel
 import UI.MainWindow as mw
 import Tooltip as tt
 import markdown as md
-from tkinterhtml import HtmlFrame
 from UI.SettingsWindowUI import SettingsWindowUI
+from tkhtmlview import HTMLLabel
 
 class MainWindowUI:
     """
@@ -143,10 +143,9 @@ class MainWindowUI:
         # Convert Markdown to HTML
         html_content = md.markdown(readme, extensions=["extra", "smarty"])
 
-        # Display the HTML content in a new window using tkinterhtml
-        html_frame = HtmlFrame(help_window, horizontal_scrollbar="auto")
-        html_frame.set_content(html_content)
-        html_frame.pack(fill="both", expand=True)
+        # Display the HTML content in a new window using tkhtmlview
+        html_label = HTMLLabel(help_window, html=html_content)
+        html_label.pack(fill="both", expand=True)
 
         # Add a checkbox at the end
         if show_checkbox:
