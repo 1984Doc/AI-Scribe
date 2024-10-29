@@ -420,7 +420,8 @@ class SettingsWindowUI:
         `save_settings` method of the `settings` object to save the settings.
         """
 
-        self.settings.editable_settings["Model"] = self.get_selected_model()
+        if self.get_selected_model() not in ["Loading models...", "Failed to load models"]:
+            self.settings.editable_settings["Model"] = self.get_selected_model()
 
         self.settings.save_settings(
             self.openai_api_key_entry.get(),

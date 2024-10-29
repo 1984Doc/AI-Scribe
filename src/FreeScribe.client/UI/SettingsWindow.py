@@ -448,7 +448,11 @@ class SettingsWindow():
         dropdown.set("Loading models...")
         models = self.get_available_models()
         dropdown["values"] = models
-        dropdown.set(models[0])
+        if self.editable_settings["Model"] in models:
+            dropdown.set(self.editable_settings["Model"])
+        else:
+            dropdown.set(models[0])
+        
 
     def load_settings_preset(self, preset_name, settings_class):
         """
