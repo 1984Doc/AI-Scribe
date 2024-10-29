@@ -48,7 +48,6 @@ root.title("AI Medical Scribe")
 
 # settings logic
 app_settings = SettingsWindow()
-app_settings.start()
 
 #  create our ui elements and settings config
 window = MainWindowUI(root, app_settings)
@@ -402,7 +401,7 @@ def send_and_receive():
     user_message = user_input.scrolled_text.get("1.0", tk.END).strip()
     display_text(NOTE_CREATION)
     if use_aiscribe:
-        formatted_message = f'{AISCRIBE} [{user_message}] {AISCRIBE2}'
+        formatted_message = f'{app_settings.AISCRIBE} [{user_message}] {app_settings.AISCRIBE2}'
     else:
         formatted_message = user_message
     threaded_handle_message(formatted_message)
