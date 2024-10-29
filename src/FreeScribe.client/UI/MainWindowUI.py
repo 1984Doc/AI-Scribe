@@ -145,7 +145,7 @@ class MainWindowUI:
 
         # Display the HTML content in a new window using tkhtmlview
         html_label = HTMLLabel(help_window, html=html_content)
-        html_label.pack(fill="both", expand=True)
+        html_label.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Add a checkbox at the end
         if show_checkbox:
@@ -157,6 +157,9 @@ class MainWindowUI:
 
         # Ensure the help window is always on top
         help_window.lift()
+
+        # Set the size of the help window to height and width of 900px
+        help_window.geometry(f"900x900")
             
 
     def _on_help_window_close(self, help_window, dont_show_again: tk.BooleanVar):
