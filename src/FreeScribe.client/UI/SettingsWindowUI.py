@@ -400,7 +400,7 @@ class SettingsWindowUI:
 
         if self.settings.editable_settings["Enable Scribe Template"]:
             self.main_window.create_scribe_template()
-        elif not self.settings.editable_settings["Enable Scribe Template"]:
+        else:
             self.main_window.destroy_scribe_template()
 
         if close_window:
