@@ -398,6 +398,11 @@ class SettingsWindowUI:
         elif not self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is not None:
             self.main_window.destroy_docker_status_bar()
 
+        if self.settings.editable_settings["Enable Scribe Template"]:
+            self.main_window.create_scribe_template()
+        elif not self.settings.editable_settings["Enable Scribe Template"]:
+            self.main_window.destroy_scribe_template()
+
         if close_window:
             self.settings_window.destroy()
 

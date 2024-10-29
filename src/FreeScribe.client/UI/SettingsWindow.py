@@ -79,6 +79,10 @@ class SettingsWindow():
         self.AISCRIBE2 = ""
         self.API_STYLE = "OpenAI"
         self.main_window = None
+        self.scribe_template_values = []
+        self.scribe_template_mapping = {}
+
+        self.get_dropdown_values_and_mapping()
 
 
         self.whisper_settings = {
@@ -114,6 +118,7 @@ class SettingsWindow():
             "frmtrmblln",
             "Real Time Audio Length",
             "Real Time Silence Length",
+            "Enable Scribe Template",
         }
 
         self.editable_settings = {
@@ -153,6 +158,7 @@ class SettingsWindow():
             "Auto Shutdown Containers on Exit": True,
             "Use Docker Status Bar": False,
             "Preset": "Custom",
+            "Enable Scribe Template": False,
         }
 
         self.docker_settings = {
@@ -165,6 +171,36 @@ class SettingsWindow():
         }
 
         self.editable_settings_entries = {}
+
+    def get_dropdown_values_and_mapping(self):
+        """
+        Reads the 'options.txt' file to populate dropdown values and their mappings.
+
+        This function attempts to read a file named 'options.txt' to extract templates
+        that consist of three lines: a title, aiscribe, and aiscribe2. These templates
+        are then used to populate the dropdown values and their corresponding mappings.
+        If the file is not found, default values are used instead.
+
+        :raises FileNotFoundError: If 'options.txt' is not found, a message is printed
+                                and default values are used.
+        """
+        self.scribe_template_values = []
+        self.scribe_template_mapping = {}
+        try:
+            with open('options.txt', 'r') as file:
+                content = file.read().strip()
+            templates = content.split('\n\n')
+            for template in templates:
+                lines = template.split('\n')
+                if len(lines) == 3:
+                    title, aiscribe, aiscribe2 = lines
+                    self.scribe_template_values.append(title)
+                    self.scribe_template_mapping[title] = (aiscribe, aiscribe2)
+        except FileNotFoundError:
+            print("options.txt not found, using default values.")
+            # Fallback default options if file not found
+            self.scribe_template_values = ["Settings Template"]
+            self.scribe_template_mapping["Settings Template"] = (self.AISCRIBE, self.AISCRIBE2)
 
     def load_settings_from_file(self, filename='settings.txt'):
         """
@@ -195,6 +231,10 @@ class SettingsWindow():
 
                 if self.editable_settings["Use Docker Status Bar"] and self.main_window is not None:
                     self.main_window.create_docker_status_bar()
+                
+                if self.editable_settings["Enable Scribe Template"] and self.main_window is not None:
+                    self.main_window.create_scribe_template()
+
 
                 return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
         except FileNotFoundError:
@@ -449,3 +489,4 @@ class SettingsWindow():
             window (MainWindow): The main window instance to set.
         """
         self.main_window = window
+

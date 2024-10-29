@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import scrolledtext, ttk, filedialog
 import UI.MainWindow as mw
 import Tooltip as tt
 
@@ -21,7 +22,14 @@ class MainWindowUI:
         self.root = root  # Tkinter root window
         self.docker_status_bar = None  # Docker status bar frame
         self.app_settings = settings  # Application settings
-        self.logic = mw.MainWindow()  # Logic to control the container behavior
+        self.logic = mw.MainWindow(self.app_settings)  # Logic to control the container behaviorse
+        self.scribe_template = None
+
+    def update_aiscribe_texts(self, event):
+        if self.scribe_template is not None:
+            selected_option = self.scribe_template.get()
+            if selected_option in self.app_settings.scribe_template_mapping:
+                self.app_settings.AISCRIBE, self.app_settings.AISCRIBE2 = self.app_settings.scribe_template_mapping[selected_option]
 
     def create_docker_status_bar(self):
         """
@@ -110,3 +118,22 @@ class MainWindowUI:
         if self.docker_status_bar is not None:
             self.docker_status_bar.destroy()
             self.docker_status_bar = None
+    
+    def create_scribe_template(self, row=3, column=4, columnspan=3, pady=10, padx=10, sticky='nsew'):
+        """
+        Create a template for the Scribe application.
+        """
+        self.scribe_template = ttk.Combobox(self.root, values=self.app_settings.scribe_template_values, width=35, state="readonly")
+        print(self.app_settings.scribe_template_values)
+        self.scribe_template.current(0)
+        self.scribe_template.bind("<<ComboboxSelected>>", self.app_settings.scribe_template_values)
+        self.scribe_template.grid(row=row, column=column, columnspan=columnspan, pady=pady, padx=padx, sticky=sticky)
+    
+    def destroy_scribe_template(self):
+        """
+        Destroy the Scribe template if it exists.
+        """
+        if self.scribe_template is not None:
+            self.scribe_template.destroy()
+            self.scribe_template = None
+
