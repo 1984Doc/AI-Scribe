@@ -141,7 +141,7 @@ class MainWindowUI:
             readme = file.read()
         
         # Convert Markdown to HTML
-        html_content = md.markdown(readme)
+        html_content = md.markdown(readme, extensions=["extra", "smarty"])
 
         # Display the HTML content in a new window using tkinterhtml
         html_frame = HtmlFrame(help_window, horizontal_scrollbar="auto")
@@ -153,12 +153,11 @@ class MainWindowUI:
             dont_show_again = tk.BooleanVar()
             checkbox = tk.Checkbutton(help_window, text="Don't show this message again", variable=dont_show_again)
             checkbox.pack(side=tk.BOTTOM, pady=10)
+            # Update the setting when the window is closed
+            help_window.protocol("WM_DELETE_WINDOW", lambda: self._on_help_window_close(help_window, dont_show_again))
 
         # Ensure the help window is always on top
         help_window.lift()
-
-        # Update the setting when the window is closed
-        help_window.protocol("WM_DELETE_WINDOW", lambda: self._on_help_window_close(help_window, dont_show_again))
             
 
     def _on_help_window_close(self, help_window, dont_show_again: tk.BooleanVar):
@@ -176,6 +175,6 @@ class MainWindowUI:
         Display a welcome message when the application is launched.
         This method shows a welcome message in a message box when the application is launched.
         """
-        self._show_md_content('src/FreeScribe.client/markdown/help/about.md', 'Welcome', True)
+        self._show_md_content('src/FreeScribe.client/markdown/welcome.md', 'Welcome', True)
 
 

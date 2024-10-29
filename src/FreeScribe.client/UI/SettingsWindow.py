@@ -88,6 +88,7 @@ class SettingsWindow():
             "Whisper Model",
             "Real Time",
             "Whisper Endpoint",
+            "Show Welcome Message"
         }
 
         self.advanced_settings = {
