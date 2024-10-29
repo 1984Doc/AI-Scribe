@@ -245,7 +245,7 @@ class SettingsWindowUI:
 
     def get_selected_model(self):
         """Returns the selected model, either from dropdown or custom entry"""
-        if self.models_drop_down.get() == "Custom" or self.models_drop_down.get() == "Select a Model":
+        if self.models_drop_down.get() in ["Custom", "Select a Model"]:
             return self.custom_model_entry.get()
         return self.models_drop_down.get()
 
@@ -397,6 +397,11 @@ class SettingsWindowUI:
             self.main_window.create_docker_status_bar()
         elif not self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is not None:
             self.main_window.destroy_docker_status_bar()
+
+        if self.settings.editable_settings["Enable Scribe Template"]:
+            self.main_window.create_scribe_template()
+        else:
+            self.main_window.destroy_scribe_template()
 
         if close_window:
             self.settings_window.destroy()

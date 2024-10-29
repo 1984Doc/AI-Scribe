@@ -41,7 +41,6 @@ from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
-from tkinterhtml import HtmlFrame
 
 # GUI Setup
 root = tk.Tk()
@@ -129,16 +128,16 @@ def threaded_send_audio_to_server():
     thread.start()
 
 
-DEFUALT_PAUSE_BUTTON_COLOUR = None
+DEFAULT_PAUSE_BUTTON_COLOUR = None
 def toggle_pause():
-    global is_paused, DEFUALT_PAUSE_BUTTON_COLOUR
+    global is_paused, DEFAULT_PAUSE_BUTTON_COLOUR
     is_paused = not is_paused
 
     if is_paused:
-        DEFUALT_PAUSE_BUTTON_COLOUR = pause_button.cget('background')
+        DEFAULT_PAUSE_BUTTON_COLOUR = pause_button.cget('background')
         pause_button.config(text="Resume", bg="red")
     else:
-        pause_button.config(text="Pause", bg=DEFUALT_PAUSE_BUTTON_COLOUR)
+        pause_button.config(text="Pause", bg=DEFAULT_PAUSE_BUTTON_COLOUR)
 
 def record_audio():
     global is_paused, frames, audio_queue
@@ -596,17 +595,18 @@ def toggle_view():
         upload_button.grid_remove()
         response_display.grid_remove()
         timestamp_listbox.grid_remove()
-        # copy_user_input_button.grid_remove()
-        # copy_response_display_button.grid_remove()
         mic_button.config(width=10, height=1)
         pause_button.config(width=10, height=1)
         switch_view_button.config(width=10, height=1)
         mic_button.grid(row=0, column=0, pady=5)
         pause_button.grid(row=0, column=1, pady=5)
         switch_view_button.grid(row=0, column=2, pady=5)
-        switch_view_button.config(text="Maximize View")
+        switch_view_button.config(text="Maximize\nView")
         blinking_circle_canvas.grid(row=0, column=3, pady=5)
-        combobox.grid(row=1, column=0, columnspan=3, pady=5)
+        if app_settings.editable_settings["Enable Scribe Template"]:
+            window.destroy_scribe_template()
+            window.create_scribe_template(row=1, column=0, columnspan=3, pady=5)
+
         root.attributes('-topmost', True)
         root.minsize(300, 100)
         current_view = "minimal"
@@ -625,13 +625,15 @@ def toggle_view():
         upload_button.grid()
         response_display.grid()
         timestamp_listbox.grid()
-        # copy_user_input_button.grid()
-        # copy_response_display_button.grid()
         mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
-        pause_button.grid(row=1, column=3, pady=5, sticky='nsew')
+        pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
         switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
         blinking_circle_canvas.grid(row=1, column=9, pady=5)
-        combobox.grid(row=3, column=4, columnspan=4, pady=10, padx=10, sticky='nsew')
+        if app_settings.editable_settings["Enable Scribe Template"]:
+            window.destroy_scribe_template()
+            window.create_scribe_template()
+
+
         root.attributes('-topmost', False)
         root.minsize(900, 400)
         current_view = "full"
@@ -651,33 +653,6 @@ def remove_placeholder(event, text_widget, placeholder_text="Text box"):
         text_widget.delete("1.0", "end")
         text_widget.config(fg='black')
 
-def get_dropdown_values_and_mapping():
-    options = []
-    mapping = {}
-    try:
-        with open('options.txt', 'r') as file:
-            content = file.read().strip()
-        templates = content.split('\n\n')
-        for template in templates:
-            lines = template.split('\n')
-            if len(lines) == 3:
-                title, aiscribe, aiscribe2 = lines
-                options.append(title)
-                mapping[title] = (aiscribe, aiscribe2)
-    except FileNotFoundError:
-        print("options.txt not found, using default values.")
-        # Fallback default options if file not found
-        options = ["Settings Template"]
-        mapping["Settings Template"] = (app_settings.AISCRIBE, app_settings.AISCRIBE2)
-    return options, mapping
-
-dropdown_values, option_mapping = get_dropdown_values_and_mapping()
-
-def update_aiscribe_texts(event):
-    global AISCRIBE, AISCRIBE2
-    selected_option = combobox.get()
-    if selected_option in option_mapping:
-        AISCRIBE, AISCRIBE2 = option_mapping[selected_option]
 
 # Configure grid weights for scalability
 root.grid_columnconfigure(0, weight=1, minsize= 10)
@@ -758,6 +733,8 @@ response_display.scrolled_text.insert("1.0", "Medical Note")
 response_display.scrolled_text.config(fg='grey')
 response_display.scrolled_text.configure(state='disabled')
 
+if app_settings.editable_settings["Enable Scribe Template"]:
+    window.create_scribe_template()
 
 timestamp_listbox = tk.Listbox(root, height=30)
 timestamp_listbox.grid(row=0, column=10, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
@@ -765,14 +742,7 @@ timestamp_listbox.bind('<<ListboxSelect>>', show_response)
 timestamp_listbox.insert(tk.END, "Medical Note History")
 timestamp_listbox.config(fg='grey')
 
-combobox = ttk.Combobox(root, values=dropdown_values, width=35, state="readonly")
-combobox.current(0)
-combobox.bind("<<ComboboxSelected>>", update_aiscribe_texts)
-# combobox.grid(row=3, column=4, columnspan=3, pady=10, padx=10, sticky='nsew')
-
-update_aiscribe_texts(None)
-
-
+window.update_aiscribe_texts(None)
 # Bind Alt+P to send_and_receive function
 root.bind('<Alt-p>', lambda event: pause_button.invoke())
 
