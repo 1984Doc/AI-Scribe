@@ -117,6 +117,8 @@ class SettingsWindow():
             "Real Time Audio Length",
             "Real Time Silence Length",
             "Enable Scribe Template",
+            "Use Pre-Processing",
+            "Use Post-Processing",
         }
 
         self.editable_settings = {

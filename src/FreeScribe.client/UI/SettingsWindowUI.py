@@ -331,6 +331,7 @@ class SettingsWindowUI:
 
         row_idx += 1
         self.preprocess_label = tk.Label(self.advanced_settings_frame, text="Pre-Processing")
+        self.preprocess_label.grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         
         row_idx += 1
         self.preprocess_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
@@ -339,7 +340,7 @@ class SettingsWindowUI:
 
         self.use_preprocess_var = tk.IntVar(value=int(self.settings.editable_settings["Use Pre-Processing"]))
         self.use_preprocess_check = tk.Checkbutton(self.advanced_settings_frame, text="Use Preprocessing", variable=self.use_preprocess_var)
-        self.use_preprocess_check.grid(row=row_idx, column=2, padx=0, pady=5, sticky="w")
+        self.use_preprocess_check.grid(row=row_idx, column=3, padx=0, pady=5, sticky="w")
 
         row_idx += 1
         
