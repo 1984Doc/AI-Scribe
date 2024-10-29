@@ -1,4 +1,7 @@
 """
+
+MainWindow.py
+
 Main window module for the FreeScribe client application.
 
 This module contains the MainWindow class which is responsible for managing the main window of the application.
