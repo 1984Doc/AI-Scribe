@@ -159,6 +159,10 @@ class SettingsWindow():
             "Use Docker Status Bar": False,
             "Preset": "Custom",
             "Enable Scribe Template": False,
+            "Use Pre-Processing": True,
+            "Use Post-Processing": True,
+            "Pre-Processing": "",
+            "Post-Processing": "",
         }
 
         self.docker_settings = {
