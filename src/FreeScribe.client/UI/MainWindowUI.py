@@ -28,14 +28,19 @@ class MainWindowUI:
         self.logic = mw.MainWindow()  # Logic to control the container behavior
         self.setting_window = SettingsWindowUI(self.app_settings, self)  # Settings window
 
+    def load_main_window(self):
+        """
+        Load the main window of the application.
+        This method initializes the main window components, including the menu bar.
+        """
+        self._create_menu_bar()
+        self._show_welcome_message()
+
     def create_docker_status_bar(self):
         """
         Create a Docker status bar to display the status of the LLM and Whisper containers.
         Adds start and stop buttons for each container and tooltips for their status.
         """
-        if self.logic.container_manager.client is None:
-            print("Docker client not initialized, removing status bar.")
-            return
         
         if self.docker_status_bar is not None:
             return
@@ -96,13 +101,6 @@ class MainWindowUI:
             self.docker_status_bar.destroy()
             self.docker_status_bar = None
 
-    def load_main_window(self):
-        """
-        Load the main window of the application.
-        This method initializes the main window components, including the menu bar.
-        """
-        self._create_menu_bar()
-
     def _create_menu_bar(self):
         """
         Private method to create menu bar.
@@ -122,17 +120,21 @@ class MainWindowUI:
         # Add Help menu
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About", command=lambda: self._show_help_content('src/FreeScribe.client/markdown/help/about.md'))
+        help_menu.add_command(label="About", command=lambda: self._show_md_content('src/FreeScribe.client/markdown/help/about.md', 'About'))
 
     
-    def _show_help_content(self, file_path):
+    def _show_md_content(self, file_path: str, title: str, show_checkbox: bool = False):
         """
         Private method to display help/about information.
         Display help information in a message box.
         This method shows a message box with information about the application when the About option is selected from the Help menu.
         """
         help_window = Toplevel(self.root)
-        help_window.title("About")
+        help_window.title(title)
+
+        # Make the help window modal (always on top and blocking interaction with other windows)
+        help_window.transient(self.root)
+        help_window.grab_set()
 
         with open(file_path, "r") as file:
             readme = file.read()
@@ -144,5 +146,21 @@ class MainWindowUI:
         html_frame = HtmlFrame(help_window, horizontal_scrollbar="auto")
         html_frame.set_content(html_content)
         html_frame.pack(fill="both", expand=True)
+
+        # Add a checkbox at the end
+        if show_checkbox:
+            checkbox = tk.Checkbutton(help_window, text="Don't show this message again")
+            checkbox.pack(side=tk.BOTTOM, pady=10)
+
+        # Ensure the help window is always on top
+        help_window.lift()
+    
+    def _show_welcome_message(self):
+        """
+        Private method to display a welcome message.
+        Display a welcome message when the application is launched.
+        This method shows a welcome message in a message box when the application is launched.
+        """
+        self._show_md_content('src/FreeScribe.client/markdown/help/about.md', 'Welcome', True)
 
 
