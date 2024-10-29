@@ -124,7 +124,6 @@ class MainWindowUI:
         Create a template for the Scribe application.
         """
         self.scribe_template = ttk.Combobox(self.root, values=self.app_settings.scribe_template_values, width=35, state="readonly")
-        print(self.app_settings.scribe_template_values)
         self.scribe_template.current(0)
         self.scribe_template.bind("<<ComboboxSelected>>", self.app_settings.scribe_template_values)
         self.scribe_template.grid(row=row, column=column, columnspan=columnspan, pady=pady, padx=padx, sticky=sticky)
