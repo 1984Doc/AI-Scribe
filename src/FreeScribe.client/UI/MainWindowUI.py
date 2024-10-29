@@ -34,7 +34,8 @@ class MainWindowUI:
         This method initializes the main window components, including the menu bar.
         """
         self._create_menu_bar()
-        self._show_welcome_message()
+        if (self.setting_window.settings.editable_settings['Show Welcome Message']):
+            self._show_welcome_message()
 
     def create_docker_status_bar(self):
         """
