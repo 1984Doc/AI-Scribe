@@ -161,8 +161,8 @@ class SettingsWindow():
             "Enable Scribe Template": False,
             "Use Pre-Processing": True,
             "Use Post-Processing": True,
-            "Pre-Processing": "",
-            "Post-Processing": "",
+            "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:",
+            "Post-Processing": "Please check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts.",
         }
 
         self.docker_settings = {
