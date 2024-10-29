@@ -41,7 +41,6 @@ from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
-from tkinterhtml import HtmlFrame
 
 # GUI Setup
 root = tk.Tk()
