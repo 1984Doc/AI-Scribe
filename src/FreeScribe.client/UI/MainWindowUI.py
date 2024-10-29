@@ -149,11 +149,25 @@ class MainWindowUI:
 
         # Add a checkbox at the end
         if show_checkbox:
-            checkbox = tk.Checkbutton(help_window, text="Don't show this message again")
+            dont_show_again = tk.BooleanVar()
+            checkbox = tk.Checkbutton(help_window, text="Don't show this message again", variable=dont_show_again)
             checkbox.pack(side=tk.BOTTOM, pady=10)
 
         # Ensure the help window is always on top
         help_window.lift()
+
+        # Update the setting when the window is closed
+        help_window.protocol("WM_DELETE_WINDOW", lambda: self._on_help_window_close(help_window, dont_show_again))
+            
+
+    def _on_help_window_close(self, help_window, dont_show_again: tk.BooleanVar):
+        """
+        Private method to handle the closing of the help window.
+        Updates the 'Show Welcome Message' setting based on the checkbox state.
+        """
+        self.setting_window.settings.editable_settings['Show Welcome Message'] = not dont_show_again.get()
+        self.setting_window.settings.save_settings_to_file()
+        help_window.destroy()
     
     def _show_welcome_message(self):
         """

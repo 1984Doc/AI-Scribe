@@ -151,6 +151,7 @@ class SettingsWindow():
             "Auto Shutdown Containers on Exit": True,
             "Use Docker Status Bar": False,
             "Preset": "Custom",
+            "Show Welcome Message": True,
         }
 
         self.docker_settings = {
