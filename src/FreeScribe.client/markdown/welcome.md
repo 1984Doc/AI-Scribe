@@ -1,10 +1,10 @@
-# Welcome to the AI Medical Scribe Project
+# Welcome to the FreeScribe Project
 
-Welcome to the AI Medical Scribe project! This project aims to provide an intelligent medical scribe application that assists healthcare professionals by transcribing conversations and generating medical notes.
+Welcome to the FreeScribe project! This project aims to provide an intelligent medical scribe application that assists healthcare professionals by transcribing conversations and generating medical notes.
 
 ## Introduction
 
-The AI Medical Scribe project leverages advanced machine learning models to transcribe conversations between healthcare providers and patients. It also generates structured medical notes based on the transcriptions, helping to streamline the documentation process in clinical settings.
+The FreeScribe project leverages advanced machine learning models to transcribe conversations between healthcare providers and patients. It also generates structured medical notes based on the transcriptions, helping to streamline the documentation process in clinical settings.
 
 ## Features
 
@@ -34,4 +34,4 @@ Please ensure your code adheres to our coding standards and includes appropriate
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/ClinicianFOCUS/FreeScribe/blob/main/LICENSE.txt) file for more information.
