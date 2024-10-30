@@ -22,7 +22,7 @@ VIAddVersionKey "FileDescription" "FreeScribe Installer"
 ; Function to show message box on finish
 Function .onInstSuccess
     IfSilent +2
-    MessageBox MB_OK "Installation completed successfully! Please note upon first launch start time maybe slow. Please wait for the program to open!"
+    MessageBox MB_OK "Installation completed successfully! Please note upon first launch start time may be slow. Please wait for the program to open!"
 FunctionEnd
 
 ; Define the section of the installer
