@@ -24,6 +24,8 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import Tooltip as tt
 from UI.Widgets.AudioMeter import AudioMeter
+import threading
+
 
 
 class SettingsWindowUI:
@@ -75,7 +77,7 @@ class SettingsWindowUI:
         self.settings_window = tk.Toplevel()
         self.settings_window.title("Settings")
         self.settings_window.geometry("600x450")  # Set initial window size
-        self.settings_window.minsize(600, 450)    # Set minimum window size
+        self.settings_window.minsize(600, 500)    # Set minimum window size
         self.settings_window.resizable(True, True)
         self.settings_window.grab_set()
 
@@ -85,18 +87,23 @@ class SettingsWindowUI:
         self.notebook = ttk.Notebook(self.main_frame)
         self.notebook.pack(expand=True, fill='both')
 
-        self.basic_frame = ttk.Frame(self.notebook)
+        self.llm_settings_frame = ttk.Frame(self.notebook)
+        self.whisper_settings_frame = ttk.Frame(self.notebook)
         self.advanced_frame = ttk.Frame(self.notebook)
         self.docker_settings_frame = ttk.Frame(self.notebook)
 
-        self.notebook.add(self.basic_frame, text="Basic Settings")
+        self.notebook.add(self.llm_settings_frame, text="AI Settings")
+        self.notebook.add(self.whisper_settings_frame, text="Whisper Settings")
         self.notebook.add(self.advanced_frame, text="Advanced Settings")
         self.notebook.add(self.docker_settings_frame, text="Docker Settings")
 
-        self.basic_settings_frame = self.add_scrollbar_to_frame(self.basic_frame)
+        self.llm_settings_frame = self.add_scrollbar_to_frame(self.llm_settings_frame)
+        self.whisper_settings_frame = self.add_scrollbar_to_frame(self.whisper_settings_frame)
         self.advanced_settings_frame = self.add_scrollbar_to_frame(self.advanced_frame)
 
-        self.create_basic_settings()
+        # self.create_basic_settings()
+        self.create_llm_settings()
+        self.create_whisper_settings()
         self.create_advanced_settings()
         self.create_docker_settings()
         self.create_buttons()
@@ -128,30 +135,48 @@ class SettingsWindowUI:
 
         return scrollable_frame
 
-    def create_basic_settings(self):
+    def create_whisper_settings(self):
         """
-        Creates the basic settings UI elements in a two-column layout.
+        Creates the Whisper settings UI elements in a two-column layout.
         Settings alternate between left and right columns for even distribution.
         """
-        # Create left and right frames for the two columns
-        left_frame = ttk.Frame(self.basic_settings_frame)
+
+        left_frame = ttk.Frame(self.whisper_settings_frame)
         left_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
-        
-        right_frame = ttk.Frame(self.basic_settings_frame)
+
+        right_frame = ttk.Frame(self.whisper_settings_frame)
         right_frame.grid(row=0, column=1, padx=10, pady=5, sticky="nw")
 
         left_row = 0
         right_row = 0
 
-        # 1. Settings Preset (Left Column)
-        tk.Label(left_frame, text="Settings Preset:").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-        settings_preset_options = ["JanAI", "ChatGPT", "ClinicianFocus Toolbox", "Custom"]
-        self.settings_preset_dropdown = ttk.Combobox(left_frame, values=settings_preset_options, width=15, state="readonly")
-        self.settings_preset_dropdown.current(settings_preset_options.index(self.settings.editable_settings["Preset"]))
-        self.settings_preset_dropdown.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
+
+        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.whisper_settings)
+
+    def create_llm_settings(self):
+        """
+        Creates the LLM settings UI elements in a two-column layout.
+        Settings alternate between left and right columns for even distribution.
+        """
+        # Create left and right frames for the two columns
+        left_frame = ttk.Frame(self.llm_settings_frame)
+        left_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+        
+        right_frame = ttk.Frame(self.llm_settings_frame)
+        right_frame.grid(row=0, column=1, padx=10, pady=5, sticky="nw")
+
+        left_row = 0
+        right_row = 0
+
+        # 1. LLM Preset (Left Column)
+        tk.Label(left_frame, text="LLM Preset:").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
+        llm_preset_options = ["JanAI", "ChatGPT", "ClinicianFocus Toolbox", "Custom"]
+        self.llm_preset_dropdown = ttk.Combobox(left_frame, values=llm_preset_options, width=15, state="readonly")
+        self.llm_preset_dropdown.current(llm_preset_options.index(self.settings.editable_settings["Preset"]))
+        self.llm_preset_dropdown.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
 
         load_preset_btn = ttk.Button(left_frame, text="Load", width=5, 
-                                    command=lambda: self.settings.load_settings_preset(self.settings_preset_dropdown.get(), self))
+                                    command=lambda: self.settings.load_settings_preset(self.llm_preset_dropdown.get(), self))
         load_preset_btn.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
         left_row += 1
 
@@ -179,14 +204,18 @@ class SettingsWindowUI:
 
         # 5. Models (Left Column)
         tk.Label(left_frame, text="Models").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-        models_drop_down_options = self.settings.get_available_models() or ["No models available"]
+        models_drop_down_options = []
         self.models_drop_down = ttk.Combobox(left_frame, values=models_drop_down_options, width=15, state="readonly")
-        self.models_drop_down.current(api_options.index(self.settings.API_STYLE))
         self.models_drop_down.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
-        
+        self.models_drop_down.bind('<<ComboboxSelected>>', self.on_model_selection_change)
+        thread = threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,))
+        thread.start()
+
+        # Create custom model entry (initially hidden)
+        self.custom_model_entry = tk.Entry(left_frame, width=15)
+
         refresh_button = ttk.Button(left_frame, text="↻", 
-                                command=lambda: (self.save_settings(False), 
-                                                self.settings.update_models_dropdown(self.models_drop_down)), 
+                                command=lambda: (self.save_settings(False), threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,)).start(), self.on_model_selection_change(None)), 
                                 width=4)
         refresh_button.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
         tt.Tooltip(refresh_button, text="Refresh the list of available models")
@@ -198,13 +227,31 @@ class SettingsWindowUI:
         self.ssl_selfcert_checkbox = tk.Checkbutton(right_frame, variable=self.ssl_selfcert_var)
         self.ssl_selfcert_checkbox.grid(row=right_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
         right_row += 1
+        
+        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.llm_settings)
+ 
+    def on_model_selection_change(self, event):
+        if self.models_drop_down.get() == "Custom" and self.custom_model_entry.grid_info() == {}:
+            # Show the custom model entry below the dropdown
+            self.custom_model_entry.grid(row=self.models_drop_down.grid_info()['row'], 
+                        column=1, padx=0, pady=5, sticky="w")
+            self.models_drop_down.set("Select a Model")
+            self.models_drop_down.grid_remove()
+        elif self.models_drop_down.get() != "Custom" and self.custom_model_entry.grid_info() != {}:
+            # Hide the custom model entry
+            self.models_drop_down.grid(row=self.custom_model_entry.grid_info()['row'], 
+                        column=1, padx=0, pady=5, sticky="w")
+            self.custom_model_entry.grid_remove()
 
-
-        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.basic_settings)
+    def get_selected_model(self):
+        """Returns the selected model, either from dropdown or custom entry"""
+        if self.models_drop_down.get() in ["Custom", "Select a Model"]:
+            return self.custom_model_entry.get()
+        return self.models_drop_down.get()
 
     def create_editable_settings_col(self, left_frame, right_frame, left_row, right_row, settings_set):
         # Add remaining editable settings alternating between columns
-          for idx, setting_name in enumerate(settings_set):
+        for idx, setting_name in enumerate(settings_set):
             target_frame = left_frame if idx % 2 == 0 else right_frame
             target_row = left_row if idx % 2 == 0 else right_row
             
@@ -227,6 +274,8 @@ class SettingsWindowUI:
             else:
                 right_row += 1
 
+        return left_row, right_row
+
     def create_advanced_settings(self):
         """
         Creates the advanced settings UI elements.
@@ -244,14 +293,22 @@ class SettingsWindowUI:
         left_row = 0
         right_row = 0
 
-        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.advanced_settings)
+        left_row, right_row = self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.advanced_settings)
 
-        row_idx = len(self.settings.advanced_settings)
+        target_frame = None
+        row_idx = None
 
-        tk.Label(self.advanced_settings_frame, text="Whisper Audio Cutoff").grid(row=row_idx, column=0, padx=0, pady=0, sticky="w")
+        if left_row > right_row:
+            target_frame = right_frame
+            row_idx = right_row
+        else:
+            target_frame = left_frame
+            row_idx = left_row
+
+        tk.Label(target_frame, text="Whisper Audio Cutoff").grid(row=row_idx, column=0, padx=0, pady=0, sticky="w")
 
         # Create audio meter for silence cut-off, used for setting microphone cutoff in Whisper
-        self.cutoff_slider = AudioMeter(self.advanced_settings_frame, width=150, height=50, threshold=self.settings.editable_settings["Silence cut-off"] * 32768)
+        self.cutoff_slider = AudioMeter(target_frame, width=150, height=50, threshold=self.settings.editable_settings["Silence cut-off"] * 32768)
         self.cutoff_slider.grid(row=row_idx, column=1, padx=0, pady=0, sticky="w")
 
         row_idx += 1
@@ -323,6 +380,8 @@ class SettingsWindowUI:
         `save_settings` method of the `settings` object to save the settings.
         """
 
+        self.settings.editable_settings["Model"] = self.get_selected_model()
+
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
             self.aiscribe_text.get("1.0", tk.END),
@@ -339,6 +398,11 @@ class SettingsWindowUI:
         elif not self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is not None:
             self.main_window.destroy_docker_status_bar()
 
+        if self.settings.editable_settings["Enable Scribe Template"]:
+            self.main_window.create_scribe_template()
+        else:
+            self.main_window.destroy_scribe_template()
+
         if close_window:
             self.settings_window.destroy()
 
@@ -350,4 +414,5 @@ class SettingsWindowUI:
         to reset the settings to their default values.
         """
         self.settings.clear_settings_file(self.settings_window)
+
 

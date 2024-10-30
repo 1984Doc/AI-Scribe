@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - "v*.*.*"
-      # - "v*.*.*.alpha" # prerelease tags
+      - "v*.*.*.alpha"
 
 jobs:
   build-windows:
@@ -29,6 +29,16 @@ jobs:
         with:
           script-file: .\scripts\install.nsi
 
+      - name: Check if alpha release
+        id: check_alpha
+        run: |
+          if ("${{ github.ref }}" -like "*.alpha") {
+            echo "is_alpha=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "is_alpha=false" >> $env:GITHUB_OUTPUT
+          }
+        shell: pwsh
+
       - name: create release
         id: create_release
         uses: actions/create-release@v1
@@ -43,7 +53,7 @@ jobs:
 
             For full changelog, see [the commits since last release](${{ github.server_url }}/${{ github.repository }}/compare/${{ steps.changelog.last_tag }}...${{ github.ref }})
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.check_alpha.outputs.is_alpha == 'true' }}
 
       - name: Upload Installer
         id: upload-installer
