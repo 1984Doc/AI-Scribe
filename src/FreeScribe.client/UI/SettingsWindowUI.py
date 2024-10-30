@@ -136,6 +136,8 @@ class SettingsWindowUI:
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
+        self.settings_window.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
+
         return scrollable_frame
 
     def create_whisper_settings(self):
