@@ -25,7 +25,7 @@ class MainWindowUI:
         self.root = root  # Tkinter root window
         self.docker_status_bar = None  # Docker status bar frame
         self.app_settings = settings  # Application settings
-        self.logic = mw.MainWindow()  # Logic to control the container behavior
+        self.logic = mw.MainWindow(self.app_settings)  # Logic to control the container behavior
         self.scribe_template = None
         self.setting_window = SettingsWindowUI(self.app_settings, self)  # Settings window
 

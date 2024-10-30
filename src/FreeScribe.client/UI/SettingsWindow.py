@@ -81,7 +81,9 @@ class SettingsWindow():
         self.scribe_template_mapping = {}
 
         
-
+        self.general_settings = {
+            "Show Welcome Message"            
+        }
 
         self.whisper_settings = {
             "Local Whisper",
@@ -89,7 +91,6 @@ class SettingsWindow():
             "Whisper Model",
             "Real Time",
             "Whisper Endpoint",
-            "Show Welcome Message"
         }
         self.llm_settings = {
             "Model Endpoint",
