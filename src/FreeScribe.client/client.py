@@ -765,7 +765,7 @@ if app_settings.editable_settings["Enable Scribe Template"]:
 timestamp_listbox = tk.Listbox(root, height=30)
 timestamp_listbox.grid(row=0, column=10, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
-timestamp_listbox.insert(tk.END, "Medical Note History")
+timestamp_listbox.insert(tk.END, "Temporary Note History")
 timestamp_listbox.config(fg='grey')
 
 window.update_aiscribe_texts(None)
