@@ -117,6 +117,8 @@ class SettingsWindow():
             "Real Time Audio Length",
             "Real Time Silence Length",
             "Enable Scribe Template",
+            "Use Pre-Processing",
+            "Use Post-Processing",
         }
 
         self.editable_settings = {
@@ -157,6 +159,10 @@ class SettingsWindow():
             "Use Docker Status Bar": False,
             "Preset": "Custom",
             "Enable Scribe Template": False,
+            "Use Pre-Processing": True,
+            "Use Post-Processing": True,
+            "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:",
+            "Post-Processing": "Please check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts.",
         }
 
         self.docker_settings = {
@@ -442,7 +448,11 @@ class SettingsWindow():
         dropdown.set("Loading models...")
         models = self.get_available_models()
         dropdown["values"] = models
-        dropdown.set(models[0])
+        if self.editable_settings["Model"] in models:
+            dropdown.set(self.editable_settings["Model"])
+        else:
+            dropdown.set(models[0])
+        
 
     def load_settings_preset(self, preset_name, settings_class):
         """
