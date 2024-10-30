@@ -19,6 +19,11 @@ VIAddVersionKey "FileDescription" "FreeScribe Installer"
 ; Define the logo image
 !define MUI_ICON ./assets/logo.ico
 
+; Function to show message box on finish
+Function .onInstSuccess
+    MessageBox MB_OK "Installation completed successfully! Please note upon first launch start time maybe slow. Please wait for the program to open!"
+FunctionEnd
+
 ; Define the section of the installer
 Section "MainSection" SEC01
     ; Set output path to the installation directory
@@ -57,6 +62,9 @@ Section "Uninstall"
 
     ; Remove the uninstaller entry from the Control Panel
     Delete "$INSTDIR\Uninstall.exe"
+    
+    ; Show message when uninstallation is complete
+    MessageBox MB_OK "FreeScribe has been successfully uninstalled."
 SectionEnd
 
 ; Define the installer pages
@@ -65,10 +73,8 @@ SectionEnd
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\freescribe-client.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Run App now"
-!define MUI_FINISHPAGE_RUN_NOTCHECKED
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_LANGUAGE English
-
 
 ; Define the uninstaller pages
 !insertmacro MUI_UNPAGE_CONFIRM

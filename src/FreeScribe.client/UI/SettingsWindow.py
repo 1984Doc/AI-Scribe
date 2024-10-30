@@ -75,14 +75,12 @@ class SettingsWindow():
         self.SSL_ENABLE = "0"
         self.SSL_SELFCERT = "1"
         self.OPENAI_API_KEY = "None"
-        self.AISCRIBE = ""
-        self.AISCRIBE2 = ""
         self.API_STYLE = "OpenAI"
         self.main_window = None
         self.scribe_template_values = []
         self.scribe_template_mapping = {}
 
-        self.get_dropdown_values_and_mapping()
+        
 
 
         self.whisper_settings = {
@@ -119,6 +117,8 @@ class SettingsWindow():
             "Real Time Audio Length",
             "Real Time Silence Length",
             "Enable Scribe Template",
+            "Use Pre-Processing",
+            "Use Post-Processing",
         }
 
         self.editable_settings = {
@@ -159,6 +159,10 @@ class SettingsWindow():
             "Use Docker Status Bar": False,
             "Preset": "Custom",
             "Enable Scribe Template": False,
+            "Use Pre-Processing": True,
+            "Use Post-Processing": True,
+            "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:",
+            "Post-Processing": "Please check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts.",
         }
 
         self.docker_settings = {
@@ -171,6 +175,12 @@ class SettingsWindow():
         }
 
         self.editable_settings_entries = {}
+
+        self.load_settings_from_file()
+        self.AISCRIBE = self.load_aiscribe_from_file() or "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
+        self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
+
+        self.get_dropdown_values_and_mapping()
 
     def get_dropdown_values_and_mapping(self):
         """
@@ -365,18 +375,6 @@ class SettingsWindow():
         else:
             print("UNENCRYPTED http connections are being used between Client and Whisper/Kobbold server...")
             return f"http://{ip}:{port}"
-
-    def start(self):
-        """
-        Load the settings from the configuration file.
-
-        This method initializes the application settings, including the loading
-        of the default AI Scribe text and other user-defined parameters.
-        """
-        self.load_settings_from_file()
-        self.AISCRIBE = self.load_aiscribe_from_file() or "AI, please transform the following conversation into a concise SOAP note. Do not assume any medical data, vital signs, or lab values. Base the note strictly on the information provided in the conversation. Ensure that the SOAP note is structured appropriately with Subjective, Objective, Assessment, and Plan sections. Strictly extract facts from the conversation. Here's the conversation:"
-        self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
-        
   
     def clear_settings_file(self, settings_window):
         """
@@ -450,7 +448,11 @@ class SettingsWindow():
         dropdown.set("Loading models...")
         models = self.get_available_models()
         dropdown["values"] = models
-        dropdown.set(models[0])
+        if self.editable_settings["Model"] in models:
+            dropdown.set(self.editable_settings["Model"])
+        else:
+            dropdown.set(models[0])
+        
 
     def load_settings_preset(self, preset_name, settings_class):
         """

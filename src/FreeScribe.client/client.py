@@ -48,7 +48,6 @@ root.title("AI Medical Scribe")
 
 # settings logic
 app_settings = SettingsWindow()
-app_settings.start()
 
 #  create our ui elements and settings config
 window = MainWindowUI(root, app_settings)
@@ -401,11 +400,7 @@ def send_and_receive():
     global use_aiscribe, user_message
     user_message = user_input.scrolled_text.get("1.0", tk.END).strip()
     display_text(NOTE_CREATION)
-    if use_aiscribe:
-        formatted_message = f'{AISCRIBE} [{user_message}] {AISCRIBE2}'
-    else:
-        formatted_message = user_message
-    threaded_handle_message(formatted_message)
+    threaded_handle_message(user_message)
 
         
 
@@ -460,9 +455,8 @@ def show_response(event):
         pyperclip.copy(response_text)
 
 def send_text_to_chatgpt(edited_text):
-    api_key = app_settings.OPENAI_API_KEY
     headers = {
-        "Authorization": f"Bearer {api_key}",
+        "Authorization": f"Bearer {app_settings.OPENAI_API_KEY}",
         "Content-Type": "application/json",
         "accept": "application/json",
     }
@@ -488,7 +482,7 @@ def send_text_to_chatgpt(edited_text):
             response.raise_for_status()
             response_data = response.json()
             response_text = (response_data['choices'][0]['message']['content'])
-            update_gui_with_response(response_text)
+            return response_text
         elif app_settings.API_STYLE == "KoboldCpp":
             prompt = get_prompt(edited_text)
             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
@@ -499,7 +493,7 @@ def send_text_to_chatgpt(edited_text):
                 results = response.json()['results']
                 response_text = results[0]['text']
                 response_text = response_text.replace("  ", " ").strip()
-                update_gui_with_response(response_text)
+                return response_text
 
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP error occurred: {http_err}")
@@ -509,10 +503,10 @@ def send_text_to_chatgpt(edited_text):
         display_text(f"Connection error occurred: {conn_err}")
     except requests.exceptions.Timeout as timeout_err:
         print(f"Timeout error occurred: {timeout_err}")
-        display_text(f"Connection error occurred: {conn_err}")
+        display_text(f"Connection error occurred: {timeout_err}")
     except requests.exceptions.RequestException as req_err:
         print(f"An error occurred: {req_err}")
-        display_text(f"Connection error occurred: {conn_err}")
+        display_text(f"Connection error occurred: {req_err}")
 
 
 def show_edit_transcription_popup(formatted_message):
@@ -530,9 +524,41 @@ def show_edit_transcription_popup(formatted_message):
     text_area.insert(tk.END, cleaned_message)
 
     def on_proceed():
+        global use_aiscribe
         edited_text = text_area.get("1.0", tk.END).strip()
         popup.destroy()
-        send_text_to_chatgpt(edited_text)
+        
+        final_note = None
+        
+        # If note generation is on
+        if use_aiscribe:
+
+            # If pre-processing is enabled
+            if app_settings.editable_settings["Pre-Processing"] is True:
+                #Generate Facts List
+                list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
+                
+                #Make a note from the facts
+                medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
+
+                # If post-processing is enabled check the note over
+                if app_settings.editable_settings["Post-Processing"] is True:
+                    post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
+                    update_gui_with_response(post_processed_note)
+                else:
+                    update_gui_with_response(medical_note)
+
+            else: # If pre-processing is not enabled thhen just generate the note
+                medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
+
+                if app_settings.editable_settings["Post-Processing"] is True:
+                    post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
+                    update_gui_with_response(post_processed_note)
+                else:
+                    update_gui_with_response(medical_note)
+        else: # do not generate note just send text directly to AI 
+            ai_response = send_text_to_chatgpt(edited_text)
+            update_gui_with_response(ai_response)
 
     proceed_button = tk.Button(popup, text="Proceed", command=on_proceed)
     proceed_button.pack(side=tk.RIGHT, padx=10, pady=10)
@@ -739,7 +765,7 @@ if app_settings.editable_settings["Enable Scribe Template"]:
 timestamp_listbox = tk.Listbox(root, height=30)
 timestamp_listbox.grid(row=0, column=10, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
-timestamp_listbox.insert(tk.END, "Medical Note History")
+timestamp_listbox.insert(tk.END, "Temporary Note History")
 timestamp_listbox.config(fg='grey')
 
 window.update_aiscribe_texts(None)
