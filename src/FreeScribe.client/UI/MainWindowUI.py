@@ -1,10 +1,8 @@
 import tkinter as tk
-from tkinter import ttk,Toplevel
+from tkinter import ttk
 import UI.MainWindow as mw
 import Tooltip as tt
-import markdown as md
 from UI.SettingsWindowUI import SettingsWindowUI
-from tkhtmlview import HTMLLabel
 from UI.MarkdownWindow import MarkdownWindow
 import os
 
