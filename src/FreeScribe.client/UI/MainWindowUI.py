@@ -5,6 +5,7 @@ import Tooltip as tt
 import markdown as md
 from UI.SettingsWindowUI import SettingsWindowUI
 from tkhtmlview import HTMLLabel
+from UI.MarkdownWindow import MarkdownWindow
 import os
 
 class MainWindowUI:
@@ -162,36 +163,15 @@ class MainWindowUI:
         Display help information in a message box.
         This method shows a message box with information about the application when the About option is selected from the Help menu.
         """
-        help_window = Toplevel(self.root)
-        help_window.title(title)
 
-        # Make the help window modal (always on top and blocking interaction with other windows)
-        help_window.transient(self.root)
-        help_window.grab_set()
-
-        with open(file_path, "r") as file:
-            readme = file.read()
+        # Callback function called when the window is closed
+        def on_close(checkbox_state):
+            self.setting_window.settings.editable_settings['Show Welcome Message'] = not checkbox_state
+            self.setting_window.settings.save_settings_to_file()
         
-        # Convert Markdown to HTML
-        html_content = md.markdown(readme, extensions=["extra", "smarty"])
-
-        # Display the HTML content in a new window using tkhtmlview
-        html_label = HTMLLabel(help_window, html=html_content)
-        html_label.pack(fill="both", expand=True, padx=10, pady=10)
-
-        # Add a checkbox at the end
-        if show_checkbox:
-            dont_show_again = tk.BooleanVar()
-            checkbox = tk.Checkbutton(help_window, text="Don't show this message again", variable=dont_show_again)
-            checkbox.pack(side=tk.BOTTOM, pady=10)
-            # Update the setting when the window is closed
-            help_window.protocol("WM_DELETE_WINDOW", lambda: self._on_help_window_close(help_window, dont_show_again))
-
-        # Ensure the help window is always on top
-        help_window.lift()
-
-        # Set the size of the help window to height and width of 900px
-        help_window.geometry(f"900x900")
+        # Create a MarkdownWindow to display the content
+        MarkdownWindow(self.root, title, file_path, 
+                  callback=on_close if show_checkbox else None)
             
 
     def _on_help_window_close(self, help_window, dont_show_again: tk.BooleanVar):
