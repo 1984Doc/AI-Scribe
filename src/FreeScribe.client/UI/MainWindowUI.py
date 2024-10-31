@@ -199,7 +199,7 @@ class MainWindowUI:
         self._show_md_content(self._get_file_path('welcome.md'), 'Welcome', True)
 
     def _get_file_path(self, *file_names):
-        return os.path.join('src', 'FreeScribe.client', 'markdown', *file_names)
+        return os.path.join('markdown', *file_names)
 
     
     def create_scribe_template(self, row=3, column=4, columnspan=3, pady=10, padx=10, sticky='nsew'):
