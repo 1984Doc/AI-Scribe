@@ -645,8 +645,8 @@ def toggle_view():
         timestamp_listbox.grid()
         mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
         pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
-        switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
-        blinking_circle_canvas.grid(row=1, column=9, pady=5)
+        switch_view_button.grid(row=1, column=7, pady=5, sticky='nsew')
+        blinking_circle_canvas.grid(row=1, column=8, pady=5)
         if app_settings.editable_settings["Enable Scribe Template"]:
             window.destroy_scribe_template()
             window.create_scribe_template()
