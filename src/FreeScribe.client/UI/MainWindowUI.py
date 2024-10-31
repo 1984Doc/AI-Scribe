@@ -70,7 +70,7 @@ class MainWindowUI:
 
         # Add status dot for LLM (default: red)
         llm_dot = tk.Label(self.docker_status_bar, text='●', fg='red')
-        self.logic.container_manager.check_container_status(llm_dot, self.app_settings.editable_settings["LLM Container Name"])
+        self.logic.container_manager.update_container_status_icon(llm_dot, self.app_settings.editable_settings["LLM Container Name"])
 
 
         llm_dot.pack(side=tk.LEFT)
@@ -85,7 +85,7 @@ class MainWindowUI:
 
         # Add status dot for Whisper (default: red)
         whisper_dot = tk.Label(self.docker_status_bar, text='●', fg='red')
-        self.logic.container_manager.check_container_status(whisper_dot, self.app_settings.editable_settings["Whisper Container Name"])
+        self.logic.container_manager.update_container_status_icon(whisper_dot, self.app_settings.editable_settings["Whisper Container Name"])
         
         whisper_dot.pack(side=tk.LEFT)
         # Tooltip explaining the color of the status dot (green = running, red = stopped)
