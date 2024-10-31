@@ -1,7 +1,10 @@
 import tkinter as tk
-from tkinter import scrolledtext, ttk, filedialog
+from tkinter import ttk
 import UI.MainWindow as mw
 import Tooltip as tt
+from UI.SettingsWindowUI import SettingsWindowUI
+from UI.MarkdownWindow import MarkdownWindow
+import os
 
 class MainWindowUI:
     """
@@ -22,8 +25,19 @@ class MainWindowUI:
         self.root = root  # Tkinter root window
         self.docker_status_bar = None  # Docker status bar frame
         self.app_settings = settings  # Application settings
-        self.logic = mw.MainWindow(self.app_settings)  # Logic to control the container behaviorse
+        self.logic = mw.MainWindow(self.app_settings)  # Logic to control the container behavior
         self.scribe_template = None
+        self.setting_window = SettingsWindowUI(self.app_settings, self)  # Settings window
+
+    def load_main_window(self):
+        """
+        Load the main window of the application.
+        This method initializes the main window components, including the menu bar.
+        """
+        self._create_menu_bar()
+        if (self.setting_window.settings.editable_settings['Show Welcome Message']):
+            self._show_welcome_message()
+        
 
     def update_aiscribe_texts(self, event):
         if self.scribe_template is not None:
@@ -118,6 +132,66 @@ class MainWindowUI:
         if self.docker_status_bar is not None:
             self.docker_status_bar.destroy()
             self.docker_status_bar = None
+
+    def _create_menu_bar(self):
+        """
+        Private method to create menu bar.
+        Create a menu bar with a Help menu.
+        This method sets up the menu bar at the top of the main window and adds a Help menu with an About option.
+        """
+        self.menu_bar = tk.Menu(self.root)
+        self.root.config(menu=self.menu_bar)
+        self._create_settings_menu()
+        self._create_help_menu()
+
+    def _create_settings_menu(self):
+        # Add Settings menu
+        self.menu_bar.add_command(label="Settings", command=self.setting_window.open_settings_window)
+
+    def _create_help_menu(self):
+        # Add Help menu
+        help_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="About", command=lambda: self._show_md_content(self._get_file_path('help','about.md'), 'About'))
+
+    
+    def _show_md_content(self, file_path: str, title: str, show_checkbox: bool = False):
+        """
+        Private method to display help/about information.
+        Display help information in a message box.
+        This method shows a message box with information about the application when the About option is selected from the Help menu.
+        """
+
+        # Callback function called when the window is closed
+        def on_close(checkbox_state):
+            self.setting_window.settings.editable_settings['Show Welcome Message'] = not checkbox_state
+            self.setting_window.settings.save_settings_to_file()
+        
+        # Create a MarkdownWindow to display the content
+        MarkdownWindow(self.root, title, file_path, 
+                  callback=on_close if show_checkbox else None)
+            
+
+    def _on_help_window_close(self, help_window, dont_show_again: tk.BooleanVar):
+        """
+        Private method to handle the closing of the help window.
+        Updates the 'Show Welcome Message' setting based on the checkbox state.
+        """
+        self.setting_window.settings.editable_settings['Show Welcome Message'] = not dont_show_again.get()
+        self.setting_window.settings.save_settings_to_file()
+        help_window.destroy()
+    
+    def _show_welcome_message(self):
+        """
+        Private method to display a welcome message.
+        Display a welcome message when the application is launched.
+        This method shows a welcome message in a message box when the application is launched.
+        """
+        self._show_md_content(self._get_file_path('welcome.md'), 'Welcome', True)
+
+    def _get_file_path(self, *file_names):
+        return os.path.join('src', 'FreeScribe.client', 'markdown', *file_names)
+
     
     def create_scribe_template(self, row=3, column=4, columnspan=3, pady=10, padx=10, sticky='nsew'):
         """

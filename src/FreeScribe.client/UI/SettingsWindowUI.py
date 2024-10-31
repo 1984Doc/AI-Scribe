@@ -41,7 +41,7 @@ class SettingsWindowUI:
         window (tk.Toplevel): The main settings window.
         main_frame (tk.Frame): The main frame containing the notebook.
         notebook (ttk.Notebook): The notebook widget containing different settings tabs.
-        basic_frame (ttk.Frame): The frame for basic settings.
+        general_frame (ttk.Frame): The frame for general settings.
         advanced_frame (ttk.Frame): The frame for advanced settings.
         docker_settings_frame (ttk.Frame): The frame for Docker settings.
         basic_settings_frame (tk.Frame): The scrollable frame for basic settings.
@@ -87,11 +87,13 @@ class SettingsWindowUI:
         self.notebook = ttk.Notebook(self.main_frame)
         self.notebook.pack(expand=True, fill='both')
 
+        self.general_settings_frame = ttk.Frame(self.notebook)
         self.llm_settings_frame = ttk.Frame(self.notebook)
         self.whisper_settings_frame = ttk.Frame(self.notebook)
         self.advanced_frame = ttk.Frame(self.notebook)
         self.docker_settings_frame = ttk.Frame(self.notebook)
 
+        self.notebook.add(self.general_settings_frame, text="General Settings")
         self.notebook.add(self.llm_settings_frame, text="AI Settings")
         self.notebook.add(self.whisper_settings_frame, text="Whisper Settings")
         self.notebook.add(self.advanced_frame, text="Advanced Settings")
@@ -102,6 +104,7 @@ class SettingsWindowUI:
         self.advanced_settings_frame = self.add_scrollbar_to_frame(self.advanced_frame)
 
         # self.create_basic_settings()
+        self._create_general_settings()
         self.create_llm_settings()
         self.create_whisper_settings()
         self.create_advanced_settings()
@@ -132,6 +135,8 @@ class SettingsWindowUI:
 
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
+
+        self.settings_window.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
 
         return scrollable_frame
 
@@ -387,7 +392,7 @@ class SettingsWindowUI:
             start_row (int): The starting row for placing the settings.
         """
         for i, setting in enumerate(settings_set):
-            tk.Label(frame, text=f"{setting}:").grid(row=start_row+i, column=0, padx=0, pady=5, sticky="w")
+            tk.Label(frame, text=f"{setting}:").grid(row=start_row+i, column=0, padx=10, pady=5, sticky="w")
             
             value = self.settings.editable_settings[setting]
             if value in [True, False]:
@@ -455,5 +460,13 @@ class SettingsWindowUI:
         to reset the settings to their default values.
         """
         self.settings.clear_settings_file(self.settings_window)
+
+    def _create_general_settings(self):
+        """
+        Creates the general settings UI elements.
+
+        This method creates and places UI elements for general settings.
+        """
+        self.create_editable_settings(self.general_settings_frame, self.settings.general_settings)
 
 
