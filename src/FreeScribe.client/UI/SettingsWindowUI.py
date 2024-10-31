@@ -424,6 +424,9 @@ class SettingsWindowUI:
         if self.get_selected_model() not in ["Loading models...", "Failed to load models"]:
             self.settings.editable_settings["Model"] = self.get_selected_model()
 
+        self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", tk.END)
+        self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", tk.END)
+
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
             self.aiscribe_text.get("1.0", tk.END),
