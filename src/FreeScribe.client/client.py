@@ -466,6 +466,11 @@ def send_text_to_chatgpt(edited_text):
         "messages": [
             {"role": "user", "content": edited_text}
         ],
+        "temperature": float(app_settings.editable_settings["temperature"]),
+        "top_p": float(app_settings.editable_settings["top_p"]),
+        "top_k": int(app_settings.editable_settings["top_k"]),
+        "best_of": int(app_settings.editable_settings["best_of"]),
+        "tfs": float(app_settings.editable_settings["tfs"]),
     }
     try:
 
