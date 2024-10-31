@@ -42,16 +42,20 @@ class MarkdownWindow:
         html_label = HTMLLabel(self.window, html=content)
         html_label.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Add a close button at the bottom center
-        close_button = tk.Button(self.window, text="Close", command=lambda: self._close(callback))
-        close_button.pack(side=tk.BOTTOM)  # Extra padding for separation from the checkbox
-
         if callback:
             var = tk.BooleanVar()
             tk.Checkbutton(self.window, text="Don't show this message again", 
                           variable=var).pack(side=tk.BOTTOM, pady=10)
             self.window.protocol("WM_DELETE_WINDOW", 
                                lambda: self._on_close(var, callback))
+
+            # Add a close button at the bottom center
+            close_button = tk.Button(self.window, text="Close", command=lambda: self._on_close(var, callback))
+            close_button.pack(side=tk.BOTTOM)  # Extra padding for separation from the checkbox
+
+        # Add a close button at the bottom center
+        close_button = tk.Button(self.window, text="Close", command= self.window.destroy)
+        close_button.pack(side=tk.BOTTOM)  # Extra padding for separation from the checkbox
 
         self.window.geometry("900x900")
         self.window.lift()
