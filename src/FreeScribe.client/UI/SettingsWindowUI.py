@@ -213,6 +213,7 @@ class SettingsWindowUI:
 
         # Create custom model entry (initially hidden)
         self.custom_model_entry = tk.Entry(left_frame, width=15)
+        self.custom_model_entry.insert(0, self.settings.editable_settings["Model"])
 
         refresh_button = ttk.Button(left_frame, text="↻", 
                                 command=lambda: (self.save_settings(False), threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,)).start(), self.on_model_selection_change(None)), 
