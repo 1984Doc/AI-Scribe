@@ -81,7 +81,9 @@ class SettingsWindow():
         self.scribe_template_mapping = {}
 
         
-
+        self.general_settings = {
+            "Show Welcome Message"            
+        }
 
         self.whisper_settings = {
             "Local Whisper",
@@ -160,6 +162,7 @@ class SettingsWindow():
             "Auto Shutdown Containers on Exit": True,
             "Use Docker Status Bar": False,
             "Preset": "Custom",
+            "Show Welcome Message": True,
             "Enable Scribe Template": False,
             "Use Pre-Processing": True,
             "Use Post-Processing": True,
