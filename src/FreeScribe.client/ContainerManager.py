@@ -86,9 +86,9 @@ class ContainerManager:
         >>> status_dot = QWidget()
         >>> self.update_container_status_icon(status_dot, "mysql-container")
         """
-        if self.logic.container_manager.client is not None:
-            status = self.logic.container_manager.check_container_status(container_name)
-            self.logic.container_manager.set_status_icon_color(dot, status)
+        if self.client is not None:
+            status = self.check_container_status(container_name)
+            self.set_status_icon_color(dot, status)
 
     def stop_container(self, container_name):
         """
