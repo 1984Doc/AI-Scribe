@@ -51,7 +51,7 @@ app_settings = SettingsWindow()
 
 #  create our ui elements and settings config
 window = MainWindowUI(root, app_settings)
-settings_window = SettingsWindowUI(app_settings, window)
+
 app_settings.set_main_window(window)
 
 if app_settings.editable_settings["Use Docker Status Bar"]:
@@ -461,12 +461,35 @@ def send_text_to_chatgpt(edited_text):
         "accept": "application/json",
     }
 
-    payload = {
-        "model": app_settings.editable_settings["Model"].strip(),
-        "messages": [
-            {"role": "user", "content": edited_text}
-        ],
-    }
+    payload = {}
+
+    try:
+        payload = {
+            "model": app_settings.editable_settings["Model"].strip(),
+            "messages": [
+                {"role": "user", "content": edited_text}
+            ],
+            "temperature": float(app_settings.editable_settings["temperature"]),
+            "top_p": float(app_settings.editable_settings["top_p"]),
+            "top_k": int(app_settings.editable_settings["top_k"]),
+            "best_of": int(app_settings.editable_settings["best_of"]),
+            "tfs": float(app_settings.editable_settings["tfs"]),
+        }
+    except ValueError as e:
+        payload = {
+            "model": app_settings.editable_settings["Model"].strip(),
+            "messages": [
+                {"role": "user", "content": edited_text}
+            ],
+            "temperature": 0.1,
+            "top_p": 0.4,
+            "top_k": 30,
+            "best_of": 6,
+            "tfs": 0.97,
+        }
+
+        print(f"Error parsing settings: {e}. Using default settings.")
+
     try:
 
         if app_settings.editable_settings["Model Endpoint"].endswith('/'):
@@ -599,17 +622,6 @@ def send_and_flash():
     start_flashing()
     send_and_receive()
 
-def clear_settings_file(settings_window):
-    try:
-        open('settings.txt', 'w').close()  # This opens the files and immediately closes it, clearing its contents.
-        open('aiscribe.txt', 'w').close()
-        open('aiscribe2.txt', 'w').close()
-        messagebox.showinfo("Settings Reset", "Settings have been reset. Please restart.")
-        print("Settings file cleared.")
-        settings_window.destroy()
-    except Exception as e:
-        print(f"Error clearing settings files: {e}")
-
 def toggle_view():
     global current_view
     if current_view == "full":
@@ -617,7 +629,6 @@ def toggle_view():
         send_button.grid_remove()
         clear_button.grid_remove()
         toggle_button.grid_remove()
-        settings_button.grid_remove()
         upload_button.grid_remove()
         response_display.grid_remove()
         timestamp_listbox.grid_remove()
@@ -647,14 +658,13 @@ def toggle_view():
         send_button.grid()
         clear_button.grid()
         toggle_button.grid()
-        settings_button.grid()
         upload_button.grid()
         response_display.grid()
         timestamp_listbox.grid()
         mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
         pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
-        switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
-        blinking_circle_canvas.grid(row=1, column=9, pady=5)
+        switch_view_button.grid(row=1, column=7, pady=5, sticky='nsew')
+        blinking_circle_canvas.grid(row=1, column=8, pady=5)
         if app_settings.editable_settings["Enable Scribe Template"]:
             window.destroy_scribe_template()
             window.create_scribe_template()
@@ -692,8 +702,7 @@ root.grid_columnconfigure(7, weight=1)
 root.grid_columnconfigure(8, weight=1)
 root.grid_columnconfigure(9, weight=1)
 root.grid_columnconfigure(10, weight=1)
-root.grid_columnconfigure(11, weight=1)
-root.grid_columnconfigure(12, weight=1, minsize=10)
+root.grid_columnconfigure(11, weight=1, minsize=10)
 root.grid_rowconfigure(0, weight=1)
 root.grid_rowconfigure(1, weight=0)
 root.grid_rowconfigure(2, weight=1)
@@ -701,8 +710,10 @@ root.grid_rowconfigure(3, weight=0)
 root.grid_rowconfigure(4, weight=0)
 
 
+window.load_main_window()
+
 user_input = CustomTextBox(root, height=12)
-user_input.grid(row=0, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
+user_input.grid(row=0, column=1, columnspan=8, padx=5, pady=15, sticky='nsew')
 
 
 # Insert placeholder text
@@ -733,25 +744,21 @@ toggle_button = tk.Button(root, text="AI Scribe\nON", command=toggle_aiscribe, h
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
 tt.Tooltip(toggle_button, "Toggles AI Scribe on and off, when off it will not request a note from the AI.")
 
-settings_button = tk.Button(root, text="Settings", command= settings_window.open_settings_window, height=2, width=11)
-settings_button.grid(row=1, column=6, pady=5, sticky='nsew')
-tt.Tooltip(settings_button, "Opens the settings window")
-
 upload_button = tk.Button(root, text="Upload\nRecording", command=upload_file, height=2, width=11)
-upload_button.grid(row=1, column=7, pady=5, sticky='nsew')
+upload_button.grid(row=1, column=6, pady=5, sticky='nsew')
 tt.Tooltip(upload_button, "Upload a recording for transcription")
 
 switch_view_button = tk.Button(root, text="Minimize View", command=toggle_view, height=2, width=11)
-switch_view_button.grid(row=1, column=8, pady=5, sticky='nsew')
+switch_view_button.grid(row=1, column=7, pady=5, sticky='nsew')
 tt.Tooltip(switch_view_button, "Toggles between a minimal and full view")
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
-blinking_circle_canvas.grid(row=1, column=9, pady=5)
+blinking_circle_canvas.grid(row=1, column=8, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
 tt.Tooltip(blinking_circle_canvas, "Flashing circle indicates recording in progress")
 
 response_display = CustomTextBox(root, height=13, state="disabled")
-response_display.grid(row=2, column=1, columnspan=9, padx=5, pady=15, sticky='nsew')
+response_display.grid(row=2, column=1, columnspan=8, padx=5, pady=15, sticky='nsew')
 
 # Insert placeholder text
 response_display.scrolled_text.configure(state='normal')
@@ -763,7 +770,7 @@ if app_settings.editable_settings["Enable Scribe Template"]:
     window.create_scribe_template()
 
 timestamp_listbox = tk.Listbox(root, height=30)
-timestamp_listbox.grid(row=0, column=10, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
+timestamp_listbox.grid(row=0, column=9, columnspan=2, rowspan=3, padx=5, pady=15, sticky='nsew')
 timestamp_listbox.bind('<<ListboxSelect>>', show_response)
 timestamp_listbox.insert(tk.END, "Temporary Note History")
 timestamp_listbox.config(fg='grey')

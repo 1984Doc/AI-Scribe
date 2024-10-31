@@ -81,7 +81,9 @@ class SettingsWindow():
         self.scribe_template_mapping = {}
 
         
-
+        self.general_settings = {
+            "Show Welcome Message"            
+        }
 
         self.whisper_settings = {
             "Local Whisper",
@@ -114,6 +116,7 @@ class SettingsWindow():
             "singleline",
             "frmttriminc",
             "frmtrmblln",
+            "best_of",
             "Real Time Audio Length",
             "Real Time Silence Length",
             "Enable Scribe Template",
@@ -143,6 +146,7 @@ class SettingsWindow():
             "singleline": False,
             "frmttriminc": False,
             "frmtrmblln": False,
+            "best_of": 6,
             "Local Whisper": False,
             "Whisper Endpoint": "https://localhost:2224/whisperaudio",
             "Whisper Server API Key": "None",
@@ -158,6 +162,7 @@ class SettingsWindow():
             "Auto Shutdown Containers on Exit": True,
             "Use Docker Status Bar": False,
             "Preset": "Custom",
+            "Show Welcome Message": True,
             "Enable Scribe Template": False,
             "Use Pre-Processing": True,
             "Use Post-Processing": True,

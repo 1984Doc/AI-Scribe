@@ -54,6 +54,42 @@ class ContainerManager:
         except docker.errors.APIError as e:
             raise docker.errors.APIError(f"An error occurred while starting the container: {e}") from e
 
+    def update_container_status_icon(self, dot, container_name):
+        """Update the status icon for a Docker container based on its current state.
+
+        This method checks the current status of a specified Docker container and updates
+        the visual indicator (dot) to reflect that status using appropriate colors.
+        The method only executes if there is an active Docker client connection.
+
+        Parameters
+        ----------
+        dot : QWidget
+            The widget representing the status indicator dot that will be updated
+            with the appropriate color based on container status.
+        container_name : str
+            The name of the Docker container to check the status for.
+
+        Notes
+        -----
+        This method requires:
+            - An active Docker client connection through container_manager
+            - A valid container name that exists in Docker
+        
+        The status colors are managed by the container_manager's set_status_icon_color
+        method and typically follow conventions like:
+            - Green for running
+            - Red for stopped/failed
+            - Yellow for transitional states
+
+        Examples
+        --------
+        >>> status_dot = QWidget()
+        >>> self.update_container_status_icon(status_dot, "mysql-container")
+        """
+        if self.client is not None:
+            status = self.check_container_status(container_name)
+            self.set_status_icon_color(dot, status)
+
     def stop_container(self, container_name):
         """
         Stop a Docker container by its name.

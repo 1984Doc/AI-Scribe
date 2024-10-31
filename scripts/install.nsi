@@ -21,7 +21,9 @@ VIAddVersionKey "FileDescription" "FreeScribe Installer"
 
 ; Function to show message box on finish
 Function .onInstSuccess
-    MessageBox MB_OK "Installation completed successfully! Please note upon first launch start time maybe slow. Please wait for the program to open!"
+    ; Check if silent, if is silent skip message box prompt
+    IfSilent +2
+    MessageBox MB_OK "Installation completed successfully! Please note upon first launch start time may be slow. Please wait for the program to open!"
 FunctionEnd
 
 ; Define the section of the installer
@@ -32,6 +34,7 @@ Section "MainSection" SEC01
     ; Add files to the installer
     File /r "..\dist\freescribe-client\freescribe-client.exe"
     File /r "..\dist\freescribe-client\_internal"
+    File /r "..\src\FreeScribe.client\markdown"
 
     ; add presets
     CreateDirectory "$INSTDIR\presets"
