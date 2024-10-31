@@ -461,17 +461,35 @@ def send_text_to_chatgpt(edited_text):
         "accept": "application/json",
     }
 
-    payload = {
-        "model": app_settings.editable_settings["Model"].strip(),
-        "messages": [
-            {"role": "user", "content": edited_text}
-        ],
-        "temperature": float(app_settings.editable_settings["temperature"]),
-        "top_p": float(app_settings.editable_settings["top_p"]),
-        "top_k": int(app_settings.editable_settings["top_k"]),
-        "best_of": int(app_settings.editable_settings["best_of"]),
-        "tfs": float(app_settings.editable_settings["tfs"]),
-    }
+    payload = {}
+
+    try:
+        payload = {
+            "model": app_settings.editable_settings["Model"].strip(),
+            "messages": [
+                {"role": "user", "content": edited_text}
+            ],
+            "temperature": float(app_settings.editable_settings["temperature"]),
+            "top_p": float(app_settings.editable_settings["top_p"]),
+            "top_k": int(app_settings.editable_settings["top_k"]),
+            "best_of": int(app_settings.editable_settings["best_of"]),
+            "tfs": float(app_settings.editable_settings["tfs"]),
+        }
+    except ValueError as e:
+        payload = {
+            "model": app_settings.editable_settings["Model"].strip(),
+            "messages": [
+                {"role": "user", "content": edited_text}
+            ],
+            "temperature": 0.1,
+            "top_p": 0.4,
+            "top_k": 30,
+            "best_of": 6,
+            "tfs": 0.97,
+        }
+
+        print(f"Error parsing settings: {e}. Using default settings.")
+
     try:
 
         if app_settings.editable_settings["Model Endpoint"].endswith('/'):
