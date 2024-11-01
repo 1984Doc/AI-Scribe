@@ -29,78 +29,78 @@ class Tooltip(object):
         :type widget: tkinter.Widget
         :param text: The text to display in the tooltip.
         :type text: str, optional
-        """
-        self.waittime = 500     # milliseconds
-        self.wraplength = 180   # pixels
-        self.widget = widget
-        self.text = text
-        self.widget.bind("<Enter>", self.enter)
-        self.widget.bind("<Leave>", self.leave)
-        self.widget.bind("<ButtonPress>", self.leave)
-        self.ttid = None
-        self.tw = None
+    #     """
+    #     self.waittime = 500     # milliseconds
+    #     self.wraplength = 180   # pixels
+    #     self.widget = widget
+    #     self.text = text
+    #     self.widget.bind("<Enter>", self.enter)
+    #     self.widget.bind("<Leave>", self.leave)
+    #     self.widget.bind("<ButtonPress>", self.leave)
+    #     self.ttid = None
+    #     self.tw = None
 
-    def enter(self, event=None):
-        """
-        Schedule the tooltip to be shown when the mouse enters the widget.
+    # def enter(self, event=None):
+    #     """
+    #     Schedule the tooltip to be shown when the mouse enters the widget.
 
-        :param event: The event object.
-        :type event: tkinter.Event, optional
-        """
-        self.schedule()
+    #     :param event: The event object.
+    #     :type event: tkinter.Event, optional
+    #     """
+    #     self.schedule()
 
-    def leave(self, event=None):
-        """
-        Unschedule the tooltip and hide it when the mouse leaves the widget.
+    # def leave(self, event=None):
+    #     """
+    #     Unschedule the tooltip and hide it when the mouse leaves the widget.
 
-        :param event: The event object.
-        :type event: tkinter.Event, optional
-        """
-        self.unschedule()
-        self.hidetip()
+    #     :param event: The event object.
+    #     :type event: tkinter.Event, optional
+    #     """
+    #     self.unschedule()
+    #     self.hidetip()
 
-    def schedule(self):
-        """
-        Schedule the tooltip to be shown after a delay.
-        """
-        self.unschedule()
-        self.ttid = self.widget.after(self.waittime, self.showtip)
+    # def schedule(self):
+    #     """
+    #     Schedule the tooltip to be shown after a delay.
+    #     """
+    #     self.unschedule()
+    #     self.ttid = self.widget.after(self.waittime, self.showtip)
 
-    def unschedule(self):
-        """
-        Cancel the scheduled tooltip if it exists.
-        """
-        ttid = self.ttid
-        self.ttid = None
-        if ttid:
-            self.widget.after_cancel(ttid)
+    # def unschedule(self):
+    #     """
+    #     Cancel the scheduled tooltip if it exists.
+    #     """
+    #     ttid = self.ttid
+    #     self.ttid = None
+    #     if ttid:
+    #         self.widget.after_cancel(ttid)
 
-    def showtip(self, event=None):
-        """
-        Show the tooltip.
+    # def showtip(self, event=None):
+    #     """
+    #     Show the tooltip.
 
-        :param event: The event object.
-        :type event: tkinter.Event, optional
-        """
-        x = y = 0
-        x, y, cx, cy = self.widget.bbox("insert")
-        x += self.widget.winfo_rootx() + 25
-        y += self.widget.winfo_rooty() + 20
-        # creates a toplevel window
-        self.tw = tk.Toplevel(self.widget)
-        # Leaves only the label and removes the app window
-        self.tw.wm_overrideredirect(True)
-        self.tw.wm_geometry("+%d+%d" % (x, y))
-        label = tk.Label(self.tw, text=self.text, justify='left',
-                       background="#ffffff", relief='solid', borderwidth=1,
-                       wraplength = self.wraplength)
-        label.pack(ipadx=1)
+    #     :param event: The event object.
+    #     :type event: tkinter.Event, optional
+    #     """
+    #     x = y = 0
+    #     x, y, cx, cy = self.widget.bbox("insert")
+    #     x += self.widget.winfo_rootx() + 25
+    #     y += self.widget.winfo_rooty() + 20
+    #     # creates a toplevel window
+    #     self.tw = tk.Toplevel(self.widget)
+    #     # Leaves only the label and removes the app window
+    #     self.tw.wm_overrideredirect(True)
+    #     self.tw.wm_geometry("+%d+%d" % (x, y))
+    #     label = tk.Label(self.tw, text=self.text, justify='left',
+    #                    background="#ffffff", relief='solid', borderwidth=1,
+    #                    wraplength = self.wraplength)
+    #     label.pack(ipadx=1)
 
-    def hidetip(self):
-        """
-        Hide the tooltip.
-        """
-        tw = self.tw
-        self.tw= None
-        if tw:
-            tw.destroy()
+    # def hidetip(self):
+    #     """
+    #     Hide the tooltip.
+    #     """
+    #     tw = self.tw
+    #     self.tw= None
+    #     if tw:
+    #         tw.destroy()

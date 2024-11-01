@@ -163,10 +163,11 @@ def record_audio():
                 # Check if the last 1 second of the current_chunk is silent
                 last_second_data = b''.join(current_chunk[-RATE // CHUNK:])
                 last_second_buffer = np.frombuffer(last_second_data, dtype=np.int16).astype(np.float32) / 32768
-                if app_settings.editable_settings["Real Time"]:
-                    audio_queue.put(b''.join(current_chunk))
-                current_chunk = []
-                silent_duration = 0
+                if silent_duration >= minimum_silent_duration:
+                    if app_settings.editable_settings["Real Time"]:
+                        audio_queue.put(b''.join(current_chunk))
+                    current_chunk = []
+                    silent_duration = 0
 
     # Send any remaining audio chunk when recording stops
     if current_chunk:
