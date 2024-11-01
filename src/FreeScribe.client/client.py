@@ -517,9 +517,12 @@ def send_text_to_chatgpt(edited_text):
             "temperature": float(app_settings.editable_settings["temperature"]),
             "top_p": float(app_settings.editable_settings["top_p"]),
             "top_k": int(app_settings.editable_settings["top_k"]),
-            "best_of": int(app_settings.editable_settings["best_of"]),
             "tfs": float(app_settings.editable_settings["tfs"]),
         }
+
+        if app_settings.editable_settings["best_of"]:
+            payload["best_of"] = int(app_settings.editable_settings["best_of"])
+            
     except ValueError as e:
         payload = {
             "model": app_settings.editable_settings["Model"].strip(),
@@ -532,6 +535,9 @@ def send_text_to_chatgpt(edited_text):
             "best_of": 6,
             "tfs": 0.97,
         }
+
+        if app_settings.editable_settings["best_of"]:
+            payload["best_of"] = int(app_settings.editable_settings["best_of"])
 
         print(f"Error parsing settings: {e}. Using default settings.")
 
