@@ -121,7 +121,8 @@ class AudioMeter(tk.Frame):
         """
         # Create frame for slider
         self.slider_frame = tk.Frame(self)
-        self.slider_frame.pack(fill='x', padx=5, pady=5)
+        self.slider_frame.pack(fill='x')
+
         
         # Add threshold slider - adjusted range for int16 audio values
         self.threshold_slider = tk.Scale(
@@ -132,6 +133,7 @@ class AudioMeter(tk.Frame):
             command=self.update_threshold,
             length=self.width
         )
+
         self.threshold_slider.set(self.threshold)  # Set default threshold
         self.threshold_slider.pack(side='left', fill='x', expand=True, padx=0)
                
@@ -154,8 +156,8 @@ class AudioMeter(tk.Frame):
         
         # Create threshold line indicator
         self.threshold_line = self.canvas.create_line(
-            50, 0,
-            50, 30,
+            0, 0,
+            0, 30,
             fill='red',
             width=2
         )
