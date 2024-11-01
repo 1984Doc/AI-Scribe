@@ -108,9 +108,12 @@ class ContainerManager:
 
         :param widget: The widget representing the status icon.
         :type widget: tkinter.Widget
-        :param status: The status of the container (True for running, False otherwise).
-        :type status: bool
+        :param status: The status of the container.
+        :type status: ContainerState
         """
+        if status not in ContainerState:
+            raise ValueError(f"Invalid container state: {status}")
+        
         if status == ContainerState.CONTAINER_STARTED:
             widget.config(fg='green')
         elif status == ContainerState.CONTAINER_STOPPED:
