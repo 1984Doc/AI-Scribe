@@ -10,10 +10,15 @@ Prof. Michael Yingbull (PI), Dr. Braedon Hendy (Partner),
 and Research Students - Software Developer Alex Simko, Pemba Sherpa (F24), and Naitik Patel.
 """
 
+from enum import Enum
 import docker
 import asyncio
 import time
 
+class ContainerState(Enum):
+    CONTAINER_STOPPED = "ContainerStopped"
+    CONTAINER_STARTED = "ContainerStarted"
+    
 class ContainerManager:
     """
     Manages Docker containers by starting and stopping them.
@@ -48,7 +53,7 @@ class ContainerManager:
         try:
             container = self.client.containers.get(container_name)
             container.start()
-            return True
+            return ContainerState.CONTAINER_STARTED
         except docker.errors.NotFound as e:
             raise docker.errors.NotFound(f"Container {container_name} not found.") from e
         except docker.errors.APIError as e:
@@ -103,7 +108,7 @@ class ContainerManager:
             container = self.client.containers.get(container_name)
             container.stop()
             print(f"Container {container_name} stopped successfully.")
-            return True
+            return ContainerState.CONTAINER_STOPPED
         except docker.errors.NotFound as e:
             raise docker.errors.NotFound(f"Container {container_name} not found.") from e
         except docker.errors.APIError as e:
@@ -133,18 +138,21 @@ class ContainerManager:
             print(f"An error occurred while checking the container status: {e}")
             return False
 
-    def set_status_icon_color(self, widget, status):
+    def set_status_icon_color(self, widget, status: ContainerState):
         """
         Set the color of the status icon based on the status of the container.
 
         :param widget: The widget representing the status icon.
         :type widget: tkinter.Widget
-        :param status: The status of the container (True for running, False otherwise).
-        :type status: bool
+        :param status: The status of the container.
+        :type status: ContainerState
         """
-        if status:
+        if status not in ContainerState:
+            raise ValueError(f"Invalid container state: {status}")
+        
+        if status == ContainerState.CONTAINER_STARTED:
             widget.config(fg='green')
-        else:
+        elif status == ContainerState.CONTAINER_STOPPED:
             widget.config(fg='red')
 
     def check_docker_status_thread(self, llm_dot, whisper_dot, app_settings):
@@ -165,9 +173,13 @@ class ContainerManager:
             print("Checking Docker container status...")
             # Check the status of the containers and set the color of the status icons.
             if self.check_container_status(app_settings.editable_settings["LLM Container Name"]) and self.check_container_status(app_settings.editable_settings["LLM Caddy Container Name"]):
-                self.set_status_icon_color(llm_dot, True)
+                self.set_status_icon_color(llm_dot, ContainerState.CONTAINER_STARTED)
+            else:
+                self.set_status_icon_color(llm_dot, ContainerState.CONTAINER_STOPPED)
 
             if self.check_container_status(app_settings.editable_settings["Whisper Container Name"]) and self.check_container_status(app_settings.editable_settings["Whisper Caddy Container Name"]):
-                self.set_status_icon_color(whisper_dot, True)
+                self.set_status_icon_color(whisper_dot, ContainerState.CONTAINER_STARTED)
+            else:
+                self.set_status_icon_color(whisper_dot, ContainerState.CONTAINER_STOPPED)
 
             llm_dot.after(10000, lambda: self.check_docker_status_thread(llm_dot, whisper_dot, app_settings))
