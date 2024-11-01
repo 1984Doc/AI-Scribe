@@ -163,13 +163,12 @@ def record_audio():
                 silent_duration = 0
             
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
-            if record_duration >= minimum_audio_duration:
-                if silent_duration >= minimum_silent_duration:
-                    if app_settings.editable_settings["Real Time"] and current_chunk:
-                        audio_queue.put(b''.join(current_chunk))
-                    current_chunk = []
-                    silent_duration = 0
-                    record_duration = 0
+            if record_duration >= minimum_audio_duration and silent_duration >= minimum_silent_duration:
+                if app_settings.editable_settings["Real Time"] and current_chunk:
+                    audio_queue.put(b''.join(current_chunk))
+                current_chunk = []
+                silent_duration = 0
+                record_duration = 0
 
     # Send any remaining audio chunk when recording stops
     if current_chunk:
