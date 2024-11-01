@@ -144,6 +144,7 @@ def record_audio():
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK, input_device_index=1)
     current_chunk = []
     silent_duration = 0
+    record_duration = 0
     minimum_silent_duration = int(app_settings.editable_settings["Real Time Silence Length"])
     minimum_audio_duration = int(app_settings.editable_settings["Real Time Audio Length"])
     
@@ -155,20 +156,21 @@ def record_audio():
             audio_buffer = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768
             if is_silent(audio_buffer, app_settings.editable_settings["Silence cut-off"]):
                 silent_duration += CHUNK / RATE
+                record_duration += CHUNK / RATE
             else:
                 current_chunk.append(data)
+                record_duration += CHUNK / RATE
                 silent_duration = 0
             
+            print(record_duration)
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
-            if len(current_chunk) >= minimum_audio_duration * RATE // CHUNK:
-                # Check if the last 1 second of the current_chunk is silent
-                last_second_data = b''.join(current_chunk[-RATE // CHUNK:])
-                last_second_buffer = np.frombuffer(last_second_data, dtype=np.int16).astype(np.float32) / 32768
+            if record_duration >= minimum_audio_duration:
                 if silent_duration >= minimum_silent_duration:
-                    if app_settings.editable_settings["Real Time"]:
+                    if app_settings.editable_settings["Real Time"] and current_chunk:
                         audio_queue.put(b''.join(current_chunk))
                     current_chunk = []
                     silent_duration = 0
+                    record_duration = 0
 
     # Send any remaining audio chunk when recording stops
     if current_chunk:
