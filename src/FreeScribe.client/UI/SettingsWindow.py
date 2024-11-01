@@ -119,7 +119,6 @@ class SettingsWindow():
             "best_of",
             "Use best_of",
             "Real Time Audio Length",
-            "Real Time Silence Length",
             "Enable Scribe Template",
             "Use Pre-Processing",
             "Use Post-Processing",
