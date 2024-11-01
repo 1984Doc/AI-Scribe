@@ -70,6 +70,9 @@ class MainWindowUI:
 
         # Add status dot for LLM (default: red)
         llm_dot = tk.Label(self.docker_status_bar, text='●', fg='red')
+        self.logic.container_manager.update_container_status_icon(llm_dot, self.app_settings.editable_settings["LLM Container Name"])
+
+
         llm_dot.pack(side=tk.LEFT)
         # Tooltip explaining the color of the status dot (green = running, red = stopped)
         tt.Tooltip(llm_dot, text="LLM Container Status: Green = Running, Red = Stopped")
@@ -82,6 +85,8 @@ class MainWindowUI:
 
         # Add status dot for Whisper (default: red)
         whisper_dot = tk.Label(self.docker_status_bar, text='●', fg='red')
+        self.logic.container_manager.update_container_status_icon(whisper_dot, self.app_settings.editable_settings["Whisper Container Name"])
+        
         whisper_dot.pack(side=tk.LEFT)
         # Tooltip explaining the color of the status dot (green = running, red = stopped)
         tt.Tooltip(whisper_dot, text="Whisper Status: Green = Running, Red = Stopped")
@@ -190,7 +195,7 @@ class MainWindowUI:
         self._show_md_content(self._get_file_path('welcome.md'), 'Welcome', True)
 
     def _get_file_path(self, *file_names):
-        return os.path.join('src', 'FreeScribe.client', 'markdown', *file_names)
+        return os.path.join('markdown', *file_names)
 
     
     def create_scribe_template(self, row=3, column=4, columnspan=3, pady=10, padx=10, sticky='nsew'):
