@@ -117,6 +117,7 @@ def threaded_toggle_recording():
 def threaded_realtime_text():
     thread = threading.Thread(target=realtime_text)
     thread.start()
+    return thread
 
 def threaded_handle_message(formatted_message):
     thread = threading.Thread(target=show_edit_transcription_popup, args=(formatted_message,))
@@ -143,8 +144,10 @@ def record_audio():
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK, input_device_index=1)
     current_chunk = []
     silent_duration = 0
+    record_duration = 0
     minimum_silent_duration = int(app_settings.editable_settings["Real Time Silence Length"])
     minimum_audio_duration = int(app_settings.editable_settings["Real Time Audio Length"])
+    
     while is_recording:
         if not is_paused:
             data = stream.read(CHUNK, exception_on_overflow=False)
@@ -156,15 +159,21 @@ def record_audio():
             else:
                 current_chunk.append(data)
                 silent_duration = 0
+            
+            record_duration += CHUNK / RATE
+            
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
-            if len(current_chunk) >= minimum_audio_duration * RATE // CHUNK:
-                # Check if the last 1 second of the current_chunk is silent
-                last_second_data = b''.join(current_chunk[-RATE // CHUNK:])
-                last_second_buffer = np.frombuffer(last_second_data, dtype=np.int16).astype(np.float32) / 32768
-                if app_settings.editable_settings["Real Time"]:
+            if record_duration >= minimum_audio_duration and silent_duration >= minimum_silent_duration:
+                if app_settings.editable_settings["Real Time"] and current_chunk:
                     audio_queue.put(b''.join(current_chunk))
                 current_chunk = []
                 silent_duration = 0
+                record_duration = 0
+
+    # Send any remaining audio chunk when recording stops
+    if current_chunk:
+        audio_queue.put(b''.join(current_chunk))
+
     stream.stop_stream()
     stream.close()
     audio_queue.put(None)
@@ -249,7 +258,8 @@ def save_audio():
 DEFUALT_BUTTON_COLOUR = None
 
 def toggle_recording():
-    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR
+    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue
+
     if not is_recording:
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
@@ -260,8 +270,12 @@ def toggle_recording():
         response_display.scrolled_text.configure(fg='black')
         response_display.scrolled_text.configure(state='disabled')
         is_recording = True
+        
+        realtime_thread = threaded_realtime_text()
+
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
+
         DEFUALT_BUTTON_COLOUR = mic_button.cget('background')
         mic_button.config(bg="red", text="Stop\nRecording")
         start_flashing()
@@ -269,6 +283,37 @@ def toggle_recording():
         is_recording = False
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
+
+
+        popup = tk.Toplevel()
+        popup.title("Processing Audio")
+        popup.geometry("200x100")
+        popup_label = tk.Label(popup, text="Processing Audio...")
+        popup_label.pack(expand=True, padx=10, pady=10)
+
+        # Disable closing of the popup manually
+        popup.protocol("WM_DELETE_WINDOW", lambda: None)
+
+        def animate_text():
+            # Create an animated text with moving ellipsis
+            current_text = popup_label.cget("text")
+            if current_text.endswith("..."):
+                popup_label.config(text="Processing Audio")
+            else:
+                popup_label.config(text=current_text + ".")
+            # Schedule the animation to update every 500 milliseconds
+            popup.after(500, animate_text)
+
+        # Start the animation
+        animate_text()
+
+        while audio_queue.empty() is False:
+            time.sleep(0.1)
+
+        if popup:
+            popup.destroy()
+
+
         save_audio()
         mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
 
@@ -730,7 +775,7 @@ user_input.scrolled_text.config(fg='grey')
 user_input.scrolled_text.bind("<FocusIn>", lambda event: remove_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
 user_input.scrolled_text.bind("<FocusOut>", lambda event: add_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
 
-mic_button = tk.Button(root, text="Start\nRecording", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
+mic_button = tk.Button(root, text="Start\nRecording", command=lambda: (threaded_toggle_recording()), height=2, width=11)
 mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
 tt.Tooltip(mic_button, "Alt+R to toggle recording, Begins recording for transcriptions")
 
