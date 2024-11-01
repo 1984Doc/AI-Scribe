@@ -162,7 +162,6 @@ def record_audio():
                 record_duration += CHUNK / RATE
                 silent_duration = 0
             
-            print(record_duration)
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
             if record_duration >= minimum_audio_duration:
                 if silent_duration >= minimum_silent_duration:
