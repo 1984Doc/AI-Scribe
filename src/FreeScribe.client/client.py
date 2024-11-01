@@ -569,38 +569,58 @@ def show_edit_transcription_popup(formatted_message):
     cancel_button = tk.Button(popup, text="Cancel", command=popup.destroy)
     cancel_button.pack(side=tk.LEFT, padx=10, pady=10)
 
-def process_text(edited_text): 
+def process_text(edited_text):
+    """
+    Process the edited text by either generating a medical note with AISCRIBE or sending the text directly to the AI.
+
+    :param edited_text: The text to be processed.
+    :type edited_text: str
+    """
     global use_aiscribe
     
     # If note generation is on
     if use_aiscribe:
+        medical_note = generate_note_with_aiscribe(edited_text)
+    else:
+        medical_note = send_text_to_chatgpt(edited_text)
+    
+    update_gui_with_response(medical_note)
 
-        # If pre-processing is enabled
-        if app_settings.editable_settings["Pre-Processing"] is True:
-            #Generate Facts List
-            list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
-            
-            #Make a note from the facts
-            medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
+def generate_note_with_aiscribe(edited_text):
+    """
+    Generate a medical note using AISCRIBE with optional pre-processing and post-processing.
 
-            # If post-processing is enabled check the note over
-            if app_settings.editable_settings["Post-Processing"] is True:
-                post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
-                update_gui_with_response(post_processed_note)
-            else:
-                update_gui_with_response(medical_note)
+    :param edited_text: The text to be processed.
+    :type edited_text: str
+    :return: The generated medical note.
+    :rtype: str
+    """
+    if app_settings.editable_settings["Pre-Processing"]:
+        list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
+        medical_note = send_text_to_chatgpt(f"{app_settings.editable_settings['AISCRIBE']} {list_of_facts} {app_settings.editable_settings['AISCRIBE2']}")
+        return post_process_if_enabled(list_of_facts, medical_note)
+    else:
+        medical_note = send_text_to_chatgpt(f"{app_settings.editable_settings['AISCRIBE']} {edited_text} {app_settings.editable_settings['AISCRIBE2']}")
+        return post_process_if_enabled(None, medical_note)
 
-        else: # If pre-processing is not enabled then just generate the note
-            medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
+def post_process_if_enabled(list_of_facts, medical_note):
+    """
+    Perform post-processing on the medical note if enabled in the settings.
 
-            if app_settings.editable_settings["Post-Processing"] is True:
-                post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
-                update_gui_with_response(post_processed_note)
-            else:
-                update_gui_with_response(medical_note)
-    else: # do not generate note just send text directly to AI 
-        ai_response = send_text_to_chatgpt(edited_text)
-        update_gui_with_response(ai_response)
+    :param list_of_facts: The list of facts generated during pre-processing.
+    :type list_of_facts: str or None
+    :param medical_note: The generated medical note.
+    :type medical_note: str
+    :return: The post-processed medical note.
+    :rtype: str
+    """
+    if app_settings.editable_settings["Post-Processing"]:
+        if list_of_facts:
+            post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
+        else:
+            post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
+        return post_processed_note
+    return medical_note
 
 def upload_file():
     global uploaded_file_path
