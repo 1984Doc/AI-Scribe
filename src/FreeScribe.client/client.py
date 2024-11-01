@@ -145,6 +145,7 @@ def record_audio():
     silent_duration = 0
     minimum_silent_duration = int(app_settings.editable_settings["Real Time Silence Length"])
     minimum_audio_duration = int(app_settings.editable_settings["Real Time Audio Length"])
+    
     while is_recording:
         if not is_paused:
             data = stream.read(CHUNK, exception_on_overflow=False)
@@ -156,6 +157,7 @@ def record_audio():
             else:
                 current_chunk.append(data)
                 silent_duration = 0
+            
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
             if len(current_chunk) >= minimum_audio_duration * RATE // CHUNK:
                 # Check if the last 1 second of the current_chunk is silent
@@ -165,6 +167,11 @@ def record_audio():
                     audio_queue.put(b''.join(current_chunk))
                 current_chunk = []
                 silent_duration = 0
+
+    # Send any remaining audio chunk when recording stops
+    if current_chunk:
+        audio_queue.put(b''.join(current_chunk))
+
     stream.stop_stream()
     stream.close()
     audio_queue.put(None)
