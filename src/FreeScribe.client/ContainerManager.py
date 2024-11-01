@@ -93,7 +93,7 @@ class ContainerManager:
         """
         if self.client is not None:
             status = self.check_container_status(container_name)
-            self.set_status_icon_color(dot, status)
+            self.set_status_icon_color(dot, ContainerState.CONTAINER_STARTED if status else ContainerState.CONTAINER_STOPPED)
 
     def stop_container(self, container_name):
         """
