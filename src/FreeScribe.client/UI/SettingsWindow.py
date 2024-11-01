@@ -146,7 +146,7 @@ class SettingsWindow():
             "singleline": False,
             "frmttriminc": False,
             "frmtrmblln": False,
-            "best_of": 6,
+            "best_of": 2,
             "Local Whisper": False,
             "Whisper Endpoint": "https://localhost:2224/whisperaudio",
             "Whisper Server API Key": "None",
