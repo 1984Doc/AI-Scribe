@@ -260,8 +260,6 @@ DEFUALT_BUTTON_COLOUR = None
 def toggle_recording():
     global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue
 
-    realtime_thread = threaded_realtime_text()
-
     if not is_recording:
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
@@ -273,6 +271,8 @@ def toggle_recording():
         response_display.scrolled_text.configure(state='disabled')
         is_recording = True
         
+        realtime_thread = threaded_realtime_text()
+
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
 
