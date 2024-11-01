@@ -117,6 +117,7 @@ def threaded_toggle_recording():
 def threaded_realtime_text():
     thread = threading.Thread(target=realtime_text)
     thread.start()
+    return thread
 
 def threaded_handle_message(formatted_message):
     thread = threading.Thread(target=show_edit_transcription_popup, args=(formatted_message,))
@@ -257,7 +258,10 @@ def save_audio():
 DEFUALT_BUTTON_COLOUR = None
 
 def toggle_recording():
-    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR
+    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue
+
+    realtime_thread = threaded_realtime_text()
+
     if not is_recording:
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
@@ -268,8 +272,10 @@ def toggle_recording():
         response_display.scrolled_text.configure(fg='black')
         response_display.scrolled_text.configure(state='disabled')
         is_recording = True
+        
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
+
         DEFUALT_BUTTON_COLOUR = mic_button.cget('background')
         mic_button.config(bg="red", text="Stop\nRecording")
         start_flashing()
@@ -277,6 +283,37 @@ def toggle_recording():
         is_recording = False
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
+
+
+        popup = tk.Toplevel()
+        popup.title("Processing Audio")
+        popup.geometry("200x100")
+        popup_label = tk.Label(popup, text="Processing Audio...")
+        popup_label.pack(expand=True, padx=10, pady=10)
+
+        # Disable closing of the popup manually
+        popup.protocol("WM_DELETE_WINDOW", lambda: None)
+
+        def animate_text():
+            # Create an animated text with moving ellipsis
+            current_text = popup_label.cget("text")
+            if current_text.endswith("..."):
+                popup_label.config(text="Processing Audio")
+            else:
+                popup_label.config(text=current_text + ".")
+            # Schedule the animation to update every 500 milliseconds
+            popup.after(500, animate_text)
+
+        # Start the animation
+        animate_text()
+
+        while audio_queue.empty() is False:
+            time.sleep(0.1)
+
+        if popup:
+            popup.destroy()
+
+
         save_audio()
         mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
 
@@ -732,7 +769,7 @@ user_input.scrolled_text.config(fg='grey')
 user_input.scrolled_text.bind("<FocusIn>", lambda event: remove_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
 user_input.scrolled_text.bind("<FocusOut>", lambda event: add_placeholder(event, user_input.scrolled_text, "Transcript of Conversation"))
 
-mic_button = tk.Button(root, text="Start\nRecording", command=lambda: (threaded_toggle_recording(), threaded_realtime_text()), height=2, width=11)
+mic_button = tk.Button(root, text="Start\nRecording", command=lambda: (threaded_toggle_recording()), height=2, width=11)
 mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
 tt.Tooltip(mic_button, "Alt+R to toggle recording, Begins recording for transcriptions")
 
