@@ -155,7 +155,7 @@ class SettingsWindow():
             "Real Time": False,
             "Real Time Audio Length": 5,
             "Real Time Silence Length": 1,
-            "Silence cut-off": 0.015,
+            "Silence cut-off": 0.035,
             "LLM Container Name": "llm-container-1",
             "LLM Caddy Container Name": "caddy-llm-container",
             "Whisper Container Name": "speech-container",
