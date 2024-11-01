@@ -539,6 +539,11 @@ def send_text_to_chatgpt(edited_text):
 
 
 def show_edit_transcription_popup(formatted_message):
+
+    if not app_settings.editable_settings["Show Scrub PHI"]:
+        process_text(formatted_message)
+        return
+    
     popup = tk.Toplevel(root)
     popup.title("Scrub PHI Prior to GPT")
     text_area = scrolledtext.ScrolledText(popup, height=20, width=80)
@@ -553,41 +558,9 @@ def show_edit_transcription_popup(formatted_message):
     text_area.insert(tk.END, cleaned_message)
 
     def on_proceed():
-        global use_aiscribe
         edited_text = text_area.get("1.0", tk.END).strip()
         popup.destroy()
-        
-        final_note = None
-        
-        # If note generation is on
-        if use_aiscribe:
-
-            # If pre-processing is enabled
-            if app_settings.editable_settings["Pre-Processing"] is True:
-                #Generate Facts List
-                list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
-                
-                #Make a note from the facts
-                medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
-
-                # If post-processing is enabled check the note over
-                if app_settings.editable_settings["Post-Processing"] is True:
-                    post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
-                    update_gui_with_response(post_processed_note)
-                else:
-                    update_gui_with_response(medical_note)
-
-            else: # If pre-processing is not enabled thhen just generate the note
-                medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
-
-                if app_settings.editable_settings["Post-Processing"] is True:
-                    post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
-                    update_gui_with_response(post_processed_note)
-                else:
-                    update_gui_with_response(medical_note)
-        else: # do not generate note just send text directly to AI 
-            ai_response = send_text_to_chatgpt(edited_text)
-            update_gui_with_response(ai_response)
+        process_text(edited_text)
 
     proceed_button = tk.Button(popup, text="Proceed", command=on_proceed)
     proceed_button.pack(side=tk.RIGHT, padx=10, pady=10)
@@ -596,6 +569,38 @@ def show_edit_transcription_popup(formatted_message):
     cancel_button = tk.Button(popup, text="Cancel", command=popup.destroy)
     cancel_button.pack(side=tk.LEFT, padx=10, pady=10)
 
+def process_text(edited_text): 
+    global use_aiscribe
+    
+    # If note generation is on
+    if use_aiscribe:
+
+        # If pre-processing is enabled
+        if app_settings.editable_settings["Pre-Processing"] is True:
+            #Generate Facts List
+            list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
+            
+            #Make a note from the facts
+            medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
+
+            # If post-processing is enabled check the note over
+            if app_settings.editable_settings["Post-Processing"] is True:
+                post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
+                update_gui_with_response(post_processed_note)
+            else:
+                update_gui_with_response(medical_note)
+
+        else: # If pre-processing is not enabled then just generate the note
+            medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
+
+            if app_settings.editable_settings["Post-Processing"] is True:
+                post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
+                update_gui_with_response(post_processed_note)
+            else:
+                update_gui_with_response(medical_note)
+    else: # do not generate note just send text directly to AI 
+        ai_response = send_text_to_chatgpt(edited_text)
+        update_gui_with_response(ai_response)
 
 def upload_file():
     global uploaded_file_path
