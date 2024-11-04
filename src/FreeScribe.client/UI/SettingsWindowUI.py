@@ -412,8 +412,9 @@ class SettingsWindowUI:
         This method creates and places buttons for saving settings, resetting to default,
         and closing the settings window.
         """
-        tk.Button(self.main_frame, text="Save", command=self.save_settings, width=10).pack(side="right", padx=2, pady=5)
+        tk.Button(self.main_frame, text="Save", command=lambda: self.save_settings(False), width=10).pack(side="right", padx=2, pady=5)
         tk.Button(self.main_frame, text="Default", width=10, command=self.reset_to_default).pack(side="right", padx=2, pady=5)
+        tk.Button(self.main_frame, text="Apply", command=self.save_settings, width=10).pack(side="right", padx=2, pady=5)
         tk.Button(self.main_frame, text="Close", width=10, command=self.settings_window.destroy).pack(side="right", padx=2, pady=5)
 
     def save_settings(self, close_window=True):
