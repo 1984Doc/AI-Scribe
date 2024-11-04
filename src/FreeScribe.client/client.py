@@ -13,7 +13,6 @@ and Research Students - Software Developer Alex Simko, Pemba Sherpa (F24), and N
 
 import tkinter as tk
 from tkinter import scrolledtext, ttk, filedialog
-import Tooltip as tt
 import requests
 import pyperclip
 import wave
@@ -777,36 +776,28 @@ user_input.scrolled_text.bind("<FocusOut>", lambda event: add_placeholder(event,
 
 mic_button = tk.Button(root, text="Start\nRecording", command=lambda: (threaded_toggle_recording()), height=2, width=11)
 mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
-tt.Tooltip(mic_button, "Alt+R to toggle recording, Begins recording for transcriptions")
 
 send_button = tk.Button(root, text="Generate Note", command=send_and_flash, height=2, width=11)
 send_button.grid(row=1, column=3, pady=5, sticky='nsew')
-tt.Tooltip(send_button, "Alt+G to send and receive, Generates a note from the transcript of the conversation")
 
 pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=11)
 pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
-tt.Tooltip(pause_button, "Alt+P to pause, Pauses the recording")
 
 clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=11)
 clear_button.grid(row=1, column=4, pady=5, sticky='nsew')
-tt.Tooltip(clear_button, "Clears both text fields")
 
 toggle_button = tk.Button(root, text="AI Scribe\nON", command=toggle_aiscribe, height=2, width=11)
 toggle_button.grid(row=1, column=5, pady=5, sticky='nsew')
-tt.Tooltip(toggle_button, "Toggles AI Scribe on and off, when off it will not request a note from the AI.")
 
 upload_button = tk.Button(root, text="Upload\nRecording", command=upload_file, height=2, width=11)
 upload_button.grid(row=1, column=6, pady=5, sticky='nsew')
-tt.Tooltip(upload_button, "Upload a recording for transcription")
 
 switch_view_button = tk.Button(root, text="Minimize View", command=toggle_view, height=2, width=11)
 switch_view_button.grid(row=1, column=7, pady=5, sticky='nsew')
-tt.Tooltip(switch_view_button, "Toggles between a minimal and full view")
 
 blinking_circle_canvas = tk.Canvas(root, width=20, height=20)
 blinking_circle_canvas.grid(row=1, column=8, pady=5)
 circle = blinking_circle_canvas.create_oval(5, 5, 15, 15, fill='white')
-tt.Tooltip(blinking_circle_canvas, "Flashing circle indicates recording in progress")
 
 response_display = CustomTextBox(root, height=13, state="disabled")
 response_display.grid(row=2, column=1, columnspan=8, padx=5, pady=15, sticky='nsew')

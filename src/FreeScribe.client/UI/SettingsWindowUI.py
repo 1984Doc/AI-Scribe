@@ -22,7 +22,6 @@ Classes:
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox
-import Tooltip as tt
 from UI.Widgets.AudioMeter import AudioMeter
 import threading
 
@@ -224,7 +223,6 @@ class SettingsWindowUI:
                                 command=lambda: (self.save_settings(False), threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,)).start(), self.on_model_selection_change(None)), 
                                 width=4)
         refresh_button.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
-        tt.Tooltip(refresh_button, text="Refresh the list of available models")
         left_row += 1
 
         # 6. Self-Signed Cert (Right Column)
