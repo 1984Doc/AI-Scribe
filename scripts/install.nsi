@@ -36,6 +36,8 @@ Section "MainSection" SEC01
     File /r "..\dist\freescribe-client\_internal"
     File /r "..\src\FreeScribe.client\markdown"
 
+    IfFileExists "$INSTDIR\settings.txt" +7
+
     ; Add default settings file
     File "..\default_settings.txt"
 
