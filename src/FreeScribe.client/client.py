@@ -595,12 +595,12 @@ def generate_note_with_aiscribe(edited_text):
     :return: The generated medical note.
     :rtype: str
     """
-    if app_settings.editable_settings["Pre-Processing"]:
+    if app_settings.editable_settings["Pre-Processing"] is True:
         list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
-        medical_note = send_text_to_chatgpt(f"{app_settings.editable_settings['AISCRIBE']} {list_of_facts} {app_settings.editable_settings['AISCRIBE2']}")
+        medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
         return post_process_if_enabled(list_of_facts, medical_note)
     else:
-        medical_note = send_text_to_chatgpt(f"{app_settings.editable_settings['AISCRIBE']} {edited_text} {app_settings.editable_settings['AISCRIBE2']}")
+        medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
         return post_process_if_enabled(None, medical_note)
 
 def post_process_if_enabled(list_of_facts, medical_note):
@@ -614,7 +614,7 @@ def post_process_if_enabled(list_of_facts, medical_note):
     :return: The post-processed medical note.
     :rtype: str
     """
-    if app_settings.editable_settings["Post-Processing"]:
+    if app_settings.editable_settings["Post-Processing"] is True:
         if list_of_facts:
             post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
         else:
