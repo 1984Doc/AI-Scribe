@@ -40,6 +40,8 @@ from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
+from UI.LoadingWindow import LoadingWindow
+from Model import Model
 
 # GUI Setup
 root = tk.Tk()
@@ -283,35 +285,12 @@ def toggle_recording():
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
 
-
-        popup = tk.Toplevel()
-        popup.title("Processing Audio")
-        popup.geometry("200x100")
-        popup_label = tk.Label(popup, text="Processing Audio...")
-        popup_label.pack(expand=True, padx=10, pady=10)
-
-        # Disable closing of the popup manually
-        popup.protocol("WM_DELETE_WINDOW", lambda: None)
-
-        def animate_text():
-            # Create an animated text with moving ellipsis
-            current_text = popup_label.cget("text")
-            if current_text.endswith("..."):
-                popup_label.config(text="Processing Audio")
-            else:
-                popup_label.config(text=current_text + ".")
-            # Schedule the animation to update every 500 milliseconds
-            popup.after(500, animate_text)
-
-        # Start the animation
-        animate_text()
+        loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait")
 
         while audio_queue.empty() is False:
             time.sleep(0.1)
 
-        if popup:
-            popup.destroy()
-
+        loading_window.destroy()
 
         save_audio()
         mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
@@ -498,7 +477,7 @@ def show_response(event):
         response_display.scrolled_text.configure(state='disabled')
         pyperclip.copy(response_text)
 
-def send_text_to_chatgpt(edited_text):
+def send_text_to_chatgpt(edited_text):  
     headers = {
         "Authorization": f"Bearer {app_settings.OPENAI_API_KEY}",
         "Content-Type": "application/json",
