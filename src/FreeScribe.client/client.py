@@ -607,7 +607,7 @@ def show_edit_transcription_popup(formatted_message):
         if use_aiscribe:
 
             # If pre-processing is enabled
-            if app_settings.editable_settings["Pre-Processing"] is True:
+            if app_settings.editable_settings["Use Pre-Processing"]:
                 #Generate Facts List
                 list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
                 
@@ -615,7 +615,7 @@ def show_edit_transcription_popup(formatted_message):
                 medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
 
                 # If post-processing is enabled check the note over
-                if app_settings.editable_settings["Post-Processing"] is True:
+                if app_settings.editable_settings["Use Post-Processing"]:
                     post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
                     update_gui_with_response(post_processed_note)
                 else:
@@ -624,7 +624,7 @@ def show_edit_transcription_popup(formatted_message):
             else: # If pre-processing is not enabled thhen just generate the note
                 medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
 
-                if app_settings.editable_settings["Post-Processing"] is True:
+                if app_settings.editable_settings["Use Post-Processing"]:
                     post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
                     update_gui_with_response(post_processed_note)
                 else:
