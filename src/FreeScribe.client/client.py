@@ -259,6 +259,8 @@ DEFUALT_BUTTON_COLOUR = None
 def toggle_recording():
     global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue
 
+    realtime_thread = threaded_realtime_text()
+
     if not is_recording:
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
@@ -283,34 +285,34 @@ def toggle_recording():
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
 
+        if app_settings.editable_settings["Real Time"]:
+            popup = tk.Toplevel()
+            popup.title("Processing Audio")
+            popup.geometry("200x100")
+            popup_label = tk.Label(popup, text="Processing Audio...")
+            popup_label.pack(expand=True, padx=10, pady=10)
 
-        popup = tk.Toplevel()
-        popup.title("Processing Audio")
-        popup.geometry("200x100")
-        popup_label = tk.Label(popup, text="Processing Audio...")
-        popup_label.pack(expand=True, padx=10, pady=10)
+            # Disable closing of the popup manually
+            popup.protocol("WM_DELETE_WINDOW", lambda: None)
 
-        # Disable closing of the popup manually
-        popup.protocol("WM_DELETE_WINDOW", lambda: None)
+            def animate_text():
+                # Create an animated text with moving ellipsis
+                current_text = popup_label.cget("text")
+                if current_text.endswith("..."):
+                    popup_label.config(text="Processing Audio")
+                else:
+                    popup_label.config(text=current_text + ".")
+                # Schedule the animation to update every 500 milliseconds
+                popup.after(500, animate_text)
 
-        def animate_text():
-            # Create an animated text with moving ellipsis
-            current_text = popup_label.cget("text")
-            if current_text.endswith("..."):
-                popup_label.config(text="Processing Audio")
-            else:
-                popup_label.config(text=current_text + ".")
-            # Schedule the animation to update every 500 milliseconds
-            popup.after(500, animate_text)
+            # Start the animation
+            animate_text()
 
-        # Start the animation
-        animate_text()
+            while audio_queue.empty() is False:
+                time.sleep(0.1)
 
-        while audio_queue.empty() is False:
-            time.sleep(0.1)
-
-        if popup:
-            popup.destroy()
+            if popup:
+                popup.destroy()
 
 
         save_audio()
