@@ -40,13 +40,32 @@ class LoadingWindow:
         :param initial_text: Initial text to display
         :type initial_text: str
         """
+
+        self.parent = parent
         self.popup = tk.Toplevel(parent)
         self.popup.title(title)
         self.popup.geometry("200x100")
-        
+
+        if parent:
+            # Center the popup window on the parent window
+            parent.update_idletasks()
+            x = parent.winfo_x() + (parent.winfo_width() - self.popup.winfo_reqwidth()) // 2
+            y = parent.winfo_y() + (parent.winfo_height() - self.popup.winfo_reqheight()) // 2
+            self.popup.geometry("+{}+{}".format(x, y))
+
+            #disable parent so we can prcoess with out anything else
+            parent.attributes('-disabled', True)
+            self.popup.transient(parent)
+
         # Create label
         self.popup_label = tk.Label(self.popup, text=initial_text)
         self.popup_label.pack(expand=True, padx=10, pady=10)
+
+        # Make it topmost window
+        self.popup.grab_set()
+
+        #Not Resizable
+        self.popup.resizable(False, False)
         
         # Disable closing of the popup manually
         self.popup.protocol("WM_DELETE_WINDOW", lambda: None)
@@ -97,6 +116,10 @@ class LoadingWindow:
         >>> # Do some processing
         >>> popup.destroy()  # Properly clean up and close the window
         """
+
+        if self.parent:
+            self.parent.attributes('-disabled', False)
+
         # Cancel any pending animation
         if hasattr(self, 'animation_id'):
             self.popup.after_cancel(self.animation_id)

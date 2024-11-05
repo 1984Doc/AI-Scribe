@@ -127,6 +127,7 @@ def threaded_handle_message(formatted_message):
 def threaded_send_audio_to_server():
     thread = threading.Thread(target=send_audio_to_server)
     thread.start()
+    return thread
 
 
 DEFAULT_PAUSE_BUTTON_COLOUR = None
@@ -342,6 +343,8 @@ def send_audio_to_server():
 
     global uploaded_file_path
 
+    loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait")
+
     # Check if Local Whisper is enabled in the editable settings
     if app_settings.editable_settings["Local Whisper"] == True:
         # Inform the user that Local Whisper is being used for transcription
@@ -418,6 +421,8 @@ def send_audio_to_server():
 
                 # Send the transcribed text and receive a response
                 send_and_receive()
+      
+    loading_window.destroy()
 
 def send_and_receive():
     global use_aiscribe, user_message
@@ -576,6 +581,8 @@ def show_edit_transcription_popup(formatted_message):
     text_area.insert(tk.END, cleaned_message)
 
     def on_proceed():
+
+        loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait")
         global use_aiscribe
         edited_text = text_area.get("1.0", tk.END).strip()
         popup.destroy()
@@ -611,6 +618,8 @@ def show_edit_transcription_popup(formatted_message):
         else: # do not generate note just send text directly to AI 
             ai_response = send_text_to_chatgpt(edited_text)
             update_gui_with_response(ai_response)
+
+        loading_window.destroy()
 
     proceed_button = tk.Button(popup, text="Proceed", command=on_proceed)
     proceed_button.pack(side=tk.RIGHT, padx=10, pady=10)
