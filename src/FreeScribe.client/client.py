@@ -58,6 +58,23 @@ app_settings.set_main_window(window)
 if app_settings.editable_settings["Use Docker Status Bar"]:
     window.create_docker_status_bar()
 
+model = None
+
+# If local llm load model now... 
+if app_settings.editable_settings["Local LLM"]:
+    loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
+
+    model = Model("C:\Work\local-llm-container\models\gemma-2-2b-it-Q4_K_M.gguf",
+    context_size=4096,
+    gpu_layers=-1,
+    main_gpu=1,
+    tensor_split=64,
+    n_batch=512,
+    n_threads=None,
+    seed=1337)
+
+    loading_window.destroy()
+
 NOTE_CREATION = "Note Creation...Please Wait"
 
 user_message = []
@@ -482,7 +499,7 @@ def show_response(event):
         response_display.scrolled_text.configure(state='disabled')
         pyperclip.copy(response_text)
 
-def send_text_to_chatgpt(edited_text):  
+def send_text_to_api(text):
     headers = {
         "Authorization": f"Bearer {app_settings.OPENAI_API_KEY}",
         "Content-Type": "application/json",
@@ -564,6 +581,27 @@ def send_text_to_chatgpt(edited_text):
     except requests.exceptions.RequestException as req_err:
         print(f"An error occurred: {req_err}")
         display_text(f"Connection error occurred: {req_err}")
+
+def send_text_to_localmodel(edited_text):
+    # Send prompt to local model and get response
+    if model is not None:
+        response = model.generate_response(edited_text,
+        max_tokens=app_settings.editable_settings["max_length"],
+        temperature=app_settings.editable_settings["temperature"],
+        top_p=app_settings.editable_settings["top_p"],
+        repeat_penalty=app_settings.editable_settings["rep_pen"])
+
+        return response
+    else:
+        return "Error: Local Model not loaded"
+    
+
+
+def send_text_to_chatgpt(edited_text):  
+    if app_settings.editable_settings["Local LLM"]:
+        return send_text_to_localmodel(edited_text)
+    else:
+        return send_text_to_api(edited_text)
 
 
 def show_edit_transcription_popup(formatted_message):
