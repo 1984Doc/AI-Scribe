@@ -86,11 +86,11 @@ class SettingsWindow():
         ]
 
         self.whisper_settings = [
-            "Local Whisper",
+            "Whisper Endpoint",
             "Whisper Server API Key",
             "Whisper Model",
+            "Local Whisper",
             "Real Time",
-            "Whisper Endpoint",
         ]
         self.llm_settings = [
             "Model Endpoint",
@@ -101,6 +101,7 @@ class SettingsWindow():
             "use_memory",
             "use_authors_note",
             "use_world_info",
+            "Enable Scribe Template",
             "max_context_length",
             "max_length",
             "rep_pen",
@@ -116,12 +117,9 @@ class SettingsWindow():
             "singleline",
             "frmttriminc",
             "frmtrmblln",
-            "best_of",
             "Use best_of",
+            "best_of",
             "Real Time Audio Length",
-            "Enable Scribe Template",
-            "Use Pre-Processing",
-            "Use Post-Processing",
         ]
 
         self.editable_settings = {
