@@ -453,14 +453,18 @@ class SettingsWindow():
         This method fetches the available models from the AI Scribe service and updates
         the dropdown widget in the settings window with the new list of models.
         """
-        dropdown["values"] = []
-        dropdown.set("Loading models...")
-        models = self.get_available_models()
-        dropdown["values"] = models
-        if self.editable_settings["Model"] in models:
-            dropdown.set(self.editable_settings["Model"])
+        if self.editable_settings["Use Local LLM"]:
+            dropdown["values"] = ["Gemma-2-2b-it Q4 (Faster, less accurate)", "Gemma-2-2b-it Q8 (Slower, more accurate)"]
+            dropdown.set("Gemma-2-2b-it Q4 (Faster, less accurate)")
         else:
-            dropdown.set(models[0])
+            dropdown["values"] = []
+            dropdown.set("Loading models...")
+            models = self.get_available_models()
+            dropdown["values"] = models
+            if self.editable_settings["Model"] in models:
+                dropdown.set(self.editable_settings["Model"])
+            else:
+                dropdown.set(models[0])
         
 
     def load_settings_preset(self, preset_name, settings_class):
