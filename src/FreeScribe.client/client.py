@@ -58,17 +58,16 @@ app_settings.set_main_window(window)
 if app_settings.editable_settings["Use Docker Status Bar"]:
     window.create_docker_status_bar()
 
-model = None
+OFFLINE_LLM_MODEL = None
 
 # If local llm load model now... 
-if app_settings.editable_settings["Local LLM"]:
+if app_settings.editable_settings["Use Local LLM"]:
     loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
 
-    model = Model("C:\Work\local-llm-container\models\gemma-2-2b-it-Q4_K_M.gguf",
+    OFFLINE_LLM_MODEL = Model("C:\Work\local-llm-container\models\gemma-2-2b-it-Q4_K_M.gguf",
     context_size=4096,
     gpu_layers=-1,
-    main_gpu=1,
-    tensor_split=64,
+    main_gpu=0,
     n_batch=512,
     n_threads=None,
     seed=1337)
@@ -140,6 +139,7 @@ def threaded_realtime_text():
 def threaded_handle_message(formatted_message):
     thread = threading.Thread(target=show_edit_transcription_popup, args=(formatted_message,))
     thread.start()
+    return thread
 
 def threaded_send_audio_to_server():
     thread = threading.Thread(target=send_audio_to_server)
@@ -583,22 +583,34 @@ def send_text_to_api(text):
         display_text(f"Connection error occurred: {req_err}")
 
 def send_text_to_localmodel(edited_text):
+    global OFFLINE_LLM_MODEL
+    
     # Send prompt to local model and get response
-    if model is not None:
-        response = model.generate_response(edited_text,
-        max_tokens=app_settings.editable_settings["max_length"],
-        temperature=app_settings.editable_settings["temperature"],
-        top_p=app_settings.editable_settings["top_p"],
-        repeat_penalty=app_settings.editable_settings["rep_pen"])
+    if OFFLINE_LLM_MODEL is None:
+        loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
 
-        return response
-    else:
-        return "Error: Local Model not loaded"
+        OFFLINE_LLM_MODEL = Model("C:\Work\local-llm-container\models\gemma-2-2b-it-Q4_K_M.gguf",
+        context_size=4096,
+        gpu_layers=-1,
+        n_batch=512,
+        n_threads=None,
+        seed=1337)
+
+        loading_window.destroy()
+
+    response = OFFLINE_LLM_MODEL.generate_response(edited_text,
+    max_tokens=int(app_settings.editable_settings["max_length"]),
+    temperature=float(app_settings.editable_settings["temperature"]),
+    top_p=float(app_settings.editable_settings["top_p"]),
+    repeat_penalty=float(app_settings.editable_settings["rep_pen"]))
+
+    return response
+
     
 
 
 def send_text_to_chatgpt(edited_text):  
-    if app_settings.editable_settings["Local LLM"]:
+    if app_settings.editable_settings["Use Local LLM"]:
         return send_text_to_localmodel(edited_text)
     else:
         return send_text_to_api(edited_text)
@@ -644,8 +656,8 @@ def show_edit_transcription_popup(formatted_message):
                     update_gui_with_response(post_processed_note)
                 else:
                     update_gui_with_response(medical_note)
-
             else: # If pre-processing is not enabled thhen just generate the note
+                print(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
                 medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
 
                 if app_settings.editable_settings["Post-Processing"] is True:

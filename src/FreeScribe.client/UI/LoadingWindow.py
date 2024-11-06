@@ -42,6 +42,7 @@ class LoadingWindow:
         """
 
         self.parent = parent
+        self.initial_text = initial_text
         self.popup = tk.Toplevel(parent)
         self.popup.title(title)
         self.popup.geometry("200x100")
@@ -87,7 +88,7 @@ class LoadingWindow:
         typically be called directly.
         """
         current_text = self.popup_label.cget("text")
-        base_text = "Processing Audio"
+        base_text = self.initial_text
         
         if current_text.endswith("..."):
             self.popup_label.config(text=base_text)
