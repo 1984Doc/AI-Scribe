@@ -364,7 +364,7 @@ def send_audio_to_server():
             model = whisper.load_model(model_name)
 
             # Determine the file to send for transcription
-            file_to_send = uploaded_file_path if uploaded_file_path else 'recording.wav'
+            file_to_send = uploaded_file_path or 'recording.wav'
             uploaded_file_path = None
 
             # Transcribe the audio file using the loaded model
