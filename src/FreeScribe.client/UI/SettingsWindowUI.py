@@ -254,33 +254,49 @@ class SettingsWindowUI:
         return self.models_drop_down.get()
 
     def create_editable_settings_col(self, left_frame, right_frame, left_row, right_row, settings_set):
-        # First calculate how to split the settings evenly between columns
+        """
+        Creates editable settings in two columns.
 
+        This method splits the settings evenly between two columns and creates the
+        corresponding UI elements in the left and right frames.
+
+        :param left_frame: The frame for the left column.
+        :param right_frame: The frame for the right column.
+        :param left_row: The starting row for the left column.
+        :param right_row: The starting row for the right column.
+        :param settings_set: The set of settings to be displayed.
+        :return: The updated row indices for the left and right columns.
+        """
         mid_point = (len(settings_set) + 1) // 2  # Round up for odd numbers
 
-        # Process left column first, then right
-        for idx, setting_name in enumerate(settings_set[:mid_point]):
-            
-            value = self.settings.editable_settings[setting_name]
-            if value in [True, False]:
-                self._create_checkbox(left_frame, setting_name, setting_name, left_row)
-            else:
-                self._create_entry(left_frame, setting_name, setting_name, left_row)
-            
-            left_row += 1
+        # Process left column
+        left_row = self._process_column(left_frame, settings_set[:mid_point], left_row)
 
         # Process right column
-        for idx, setting_name in enumerate(settings_set[mid_point:]):
-            
-            value = self.settings.editable_settings[setting_name]
-            if value in [True, False]:
-                self._create_checkbox(right_frame, setting_name, setting_name, right_row)
-            else:
-                self._create_entry(right_frame, setting_name, setting_name, right_row)
-            
-            right_row += 1
+        right_row = self._process_column(right_frame, settings_set[mid_point:], right_row)
 
         return left_row, right_row
+    
+    def _process_column(self, frame, settings, start_row):
+        """
+        Processes a column of settings.
+
+        This helper method creates the UI elements for a column of settings.
+
+        :param frame: The frame for the column.
+        :param settings: The settings to be displayed in the column.
+        :param start_row: The starting row for the column.
+        :return: The updated row index for the column.
+        """
+        row = start_row
+        for setting_name in settings:
+            value = self.settings.editable_settings[setting_name]
+            if value in [True, False]:
+                self._create_checkbox(frame, setting_name, setting_name, row)
+            else:
+                self._create_entry(frame, setting_name, setting_name, row)
+            row += 1
+        return row
 
     def create_advanced_settings(self):
         """
@@ -384,13 +400,7 @@ class SettingsWindowUI:
         
         i_frame = ttk.Frame(frame)
         i_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
-        for i, setting in enumerate(settings_set):
-            
-            value = self.settings.editable_settings[setting]
-            if value in [True, False]:
-                self._create_checkbox(i_frame, setting, setting, start_row+i)
-            else:
-                self._create_entry(i_frame, setting, setting, start_row+i)
+        self._process_column(i_frame, settings_set, start_row)
 
     def create_buttons(self):
         """
