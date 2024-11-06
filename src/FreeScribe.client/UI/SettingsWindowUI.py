@@ -265,11 +265,7 @@ class SettingsWindowUI:
             if value in [True, False]:
                 self._create_checkbox(left_frame, setting_name, setting_name, left_row)
             else:
-                tk.Label(left_frame, text=f"{setting_name}:").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-                entry = tk.Entry(left_frame)
-                entry.insert(0, str(value))
-                entry.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting_name] = entry
+                self._create_entry(left_frame, setting_name, setting_name, left_row)
             
             left_row += 1
 
@@ -280,11 +276,7 @@ class SettingsWindowUI:
             if value in [True, False]:
                 self._create_checkbox(right_frame, setting_name, setting_name, right_row)
             else:
-                tk.Label(right_frame, text=f"{setting_name}:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
-                entry = tk.Entry(right_frame)
-                entry.insert(0, str(value))
-                entry.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting_name] = entry
+                self._create_entry(right_frame, setting_name, setting_name, right_row)
             
             right_row += 1
 
@@ -395,11 +387,7 @@ class SettingsWindowUI:
             if value in [True, False]:
                 self._create_checkbox(frame, setting, setting, start_row+i)
             else:
-                tk.Label(frame, text=f"{setting}:").grid(row=start_row+i, column=0, padx=10, pady=5, sticky="w")
-                entry = tk.Entry(frame)
-                entry.insert(0, str(value))
-                entry.grid(row=start_row+i, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting] = entry
+                self._create_entry(frame, setting, setting, start_row+i)
 
     def create_buttons(self):
         """
@@ -474,12 +462,29 @@ class SettingsWindowUI:
 
         Args:
             frame (tk.Frame): The frame in which to create the checkbox.
-            text (str): The text to display next to the checkbox.
+            label (str): The label to display next to the checkbox.
+            setting_name (str): The name of the setting to edit.
             row_idx (int): The row index at which to place the checkbox.
         """
-        label = tk.Label(frame, text=label)
-        label.grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(frame, text=label).grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
         value = tk.IntVar(value=int(self.settings.editable_settings[setting_name]))
         checkbox = tk.Checkbutton(frame, variable=value)
         checkbox.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
         self.settings.editable_settings_entries[setting_name] = value
+
+    def _create_entry(self, frame, label, setting_name, row_idx):
+        """
+        Creates an entry field in the given frame.
+        
+        Args:
+            frame (tk.Frame): The frame in which to create the entry field.
+            label (str): The label to display next to the entry field.
+            setting_name (str): The name of the setting to edit.
+            row_idx (int): The row index at which to place the entry field.
+        """
+        tk.Label(frame, text=label).grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        value = self.settings.editable_settings[setting_name]
+        entry = tk.Entry(frame)
+        entry.insert(0, str(value))
+        entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
+        self.settings.editable_settings_entries[setting_name] = entry
