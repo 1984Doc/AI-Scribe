@@ -289,7 +289,7 @@ def toggle_recording():
             recording_thread.join()  # Ensure the recording thread is terminated
 
         if app_settings.editable_settings["Real Time"]:
-            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait")
+            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.")
 
             while audio_queue.empty() is False:
                 time.sleep(0.1)
@@ -346,7 +346,7 @@ def send_audio_to_server():
 
     global uploaded_file_path
 
-    loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait")
+    loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.")
 
     # Check if Local Whisper is enabled in the editable settings
     if app_settings.editable_settings["Local Whisper"] == True:
@@ -608,7 +608,7 @@ def show_edit_transcription_popup(formatted_message):
 
     def on_proceed():
 
-        loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait")
+        loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait.")
         global use_aiscribe
         edited_text = text_area.get("1.0", tk.END).strip()
         popup.destroy()
