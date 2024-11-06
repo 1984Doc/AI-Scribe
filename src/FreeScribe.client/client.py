@@ -418,7 +418,6 @@ def send_audio_to_server():
                 "Authorization": f"Bearer {app_settings.editable_settings['Whisper Server API Key']}"
             }
 
-            response = -1
             try:
                 # Check for SSL and self-signed certificate settings
                 if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
