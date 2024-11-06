@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 
 class LoadingWindow:
     """
@@ -59,9 +60,12 @@ class LoadingWindow:
             parent.attributes('-disabled', True)
             self.popup.transient(parent)
 
-        # Create label
-        self.popup_label = tk.Label(self.popup, text=initial_text)
-        self.popup_label.pack(expand=True, padx=10, pady=10)
+        # Use label and progress bar instead of animated text
+        self.label = tk.Label(self.popup, text=initial_text)
+        self.label.pack(pady=(10,5))
+        self.progress = ttk.Progressbar(self.popup, mode='indeterminate')
+        self.progress.pack(padx=20, pady=(0,10), fill='x')
+        self.progress.start()
 
         # Make it topmost window
         self.popup.grab_set()
@@ -71,33 +75,7 @@ class LoadingWindow:
         
         # Disable closing of the popup manually
         self.popup.protocol("WM_DELETE_WINDOW", lambda: None)
-        
-        # Start the animation
-        self.animate_text()
     
-    def animate_text(self):
-        """
-        Animate the text by adding or removing ellipsis.
-        
-        This method updates the label text every 500ms, adding or removing
-        dots to create an ellipsis animation effect. The animation continues
-        until the popup is destroyed.
-        
-        Note
-        ----
-        This method is called automatically by __init__ and shouldn't
-        typically be called directly.
-        """
-        current_text = self.popup_label.cget("text")
-        base_text = self.initial_text
-        
-        if current_text.endswith("..."):
-            self.popup_label.config(text=base_text)
-        else:
-            self.popup_label.config(text=current_text + ".")
-            
-        # Schedule the next animation update
-        self.animation_id = self.popup.after(500, self.animate_text)
     
     def destroy(self):
         """
@@ -128,4 +106,5 @@ class LoadingWindow:
         
         # Destroy the window
         if self.popup:
+            self.progress.stop()
             self.popup.destroy()
