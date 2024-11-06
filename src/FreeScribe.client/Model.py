@@ -1,6 +1,9 @@
 from llama_cpp import Llama
 import os
 from typing import Optional, Dict, Any
+import threading
+from UI.LoadingWindow import LoadingWindow
+import tkinter.messagebox as messagebox
 
 class Model:
     """
@@ -20,6 +23,51 @@ class Model:
                         the specified sampling parameters.
         get_gpu_info: Returns the current GPU configuration and batch size details.
     """
+
+    local_model = None
+
+    @staticmethod
+    def setup_model(app_settings, root):
+        loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
+
+        def load_model():
+            gpu_layers = 0
+
+            if app_settings.editable_settings["Architecture"] == "CUDA (Nvidia GPU)":
+                gpu_layers = -1
+
+            model_to_use = None
+            if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
+                model_to_use = "gemma-2-2b-it-Q8_0.gguf"
+            elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
+                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
+                
+            model_path = f"./models/{model_to_use}"
+            try:
+                local_model = Model(model_path,
+                    context_size=4096,
+                    gpu_layers=gpu_layers,
+                    main_gpu=0,
+                    n_batch=512,
+                    n_threads=None,
+                    seed=1337)
+            except ValueError:
+                # model doesnt exist
+                #TODO: Logo to system log
+                    messagebox.showerror("Model Error", f"Model failed to load. Please ensure you have a valid model selected in the settings. Currently trying to load: {os.path.abspath(model_path)}")
+                
+        thread = threading.Thread(target=load_model)
+        thread.start()
+        
+        # Instead of joining, schedule a check
+
+        def check_thread_status(thread, loading_window, root):
+            if thread.is_alive():
+                root.after(500, lambda: check_thread_status(thread, loading_window, root))
+            else:
+                loading_window.destroy()
+
+        root.after(500, lambda: check_thread_status(thread, loading_window, root))
 
     def __init__(
         self,
@@ -121,4 +169,5 @@ class Model:
     
     def __del__(self):
         """Cleanup GPU memory on deletion"""
+        self.model.close()
         self.model = None

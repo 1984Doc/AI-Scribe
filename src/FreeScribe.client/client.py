@@ -58,8 +58,6 @@ app_settings.set_main_window(window)
 if app_settings.editable_settings["Use Docker Status Bar"]:
     window.create_docker_status_bar()
 
-OFFLINE_LLM_MODEL = None
-
 NOTE_CREATION = "Note Creation...Please Wait"
 
 user_message = []
@@ -568,15 +566,14 @@ def send_text_to_api(edited_text):
         print(f"An error occurred: {req_err}")
         display_text(f"Connection error occurred: {req_err}")
 
-def send_text_to_localmodel(edited_text):
-    global OFFLINE_LLM_MODEL
-    
+def send_text_to_localmodel(edited_text):  
     # Send prompt to local model and get response
-    if OFFLINE_LLM_MODEL is None:
-        setup_model()
+    print(Model.local_model)
+    if Model.local_model is None:
+        Model.setup_model(app_settings=app_settings, root=root)
 
 
-    response = OFFLINE_LLM_MODEL.generate_response(edited_text,
+    response = Model.local_model.generate_response(edited_text,
     max_tokens=int(app_settings.editable_settings["max_length"]),
     temperature=float(app_settings.editable_settings["temperature"]),
     top_p=float(app_settings.editable_settings["top_p"]),
@@ -843,55 +840,11 @@ root.bind('<Alt-r>', lambda event: mic_button.invoke())
 root.minsize(900, 400)
 
 
-def setup_model():
-    loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
-
-    def load_model():
-        global OFFLINE_LLM_MODEL
-
-        gpu_layers = 0
-
-        if app_settings.editable_settings["Architecture"] == "CUDA (Nvidia GPU)":
-            gpu_layers = -1
-
-        model_to_use = None
-        if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
-            model_to_use = "gemma-2-2b-it-Q8_0.gguf"
-        elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
-            model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
-            
-        model_path = f"./models/{model_to_use}"
-        try:
-            OFFLINE_LLM_MODEL = Model(model_path,
-                context_size=4096,
-                gpu_layers=gpu_layers,
-                main_gpu=0,
-                n_batch=512,
-                n_threads=None,
-                seed=1337)
-        except ValueError as e:
-            # model doesnt exist
-            #TODO: Logo to system log
-                messagebox.showerror("Model Error", f"Model failed to load. Please ensure you have a valid model selected in the settings. Currently trying to load: {os.path.abspath(model_path)}")
-            
-            
-
-    thread = threading.Thread(target=load_model)
-    thread.start()
-    
-    # Instead of joining, schedule a check
-
-    def check_thread_status(thread, loading_window, root):
-        if thread.is_alive():
-            root.after(500, lambda: check_thread_status(thread, loading_window, root))
-        else:
-            loading_window.destroy()
-
-    root.after(500, lambda: check_thread_status(thread, loading_window, root))
 
 #Wait for the UI root to be intialized then load the model. If using local llm.
 if app_settings.editable_settings["Use Local LLM"]:
-    root.after(100, setup_model)
+    root.after(100, lambda:(Model.setup_model(app_settings=app_settings, root=root)))
+    
 
 root.mainloop()
 

@@ -214,6 +214,15 @@ class SettingsWindowUI:
         thread = threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,))
         thread.start()
 
+        # Create custom model entry (initially hidden)
+        self.custom_model_entry = tk.Entry(left_frame, width=15)
+        self.custom_model_entry.insert(0, self.settings.editable_settings["Model"])
+
+        refresh_button = ttk.Button(left_frame, text="↻", 
+                                command=lambda: (self.save_settings(False), threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,)).start(), self.on_model_selection_change(None)), 
+                                width=4)
+        refresh_button.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
+
         left_row += 1
 
         #6. GPU OR CPU SELECTION (Right Column)
@@ -223,18 +232,12 @@ class SettingsWindowUI:
         self.architecture_dropdown.current(architecture_options.index(self.settings.editable_settings["Architecture"]))
 
         self.architecture_dropdown.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
+
         
         right_row += 1
 
-        # Create custom model entry (initially hidden)
-        self.custom_model_entry = tk.Entry(left_frame, width=15)
-        self.custom_model_entry.insert(0, self.settings.editable_settings["Model"])
-
-        refresh_button = ttk.Button(left_frame, text="↻", 
-                                command=lambda: (self.save_settings(False), threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,)).start(), self.on_model_selection_change(None)), 
-                                width=4)
-        refresh_button.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
-        left_row += 1
+        # # Restart Local Llm Button
+        # restart_llm_button = ttk.Button(right_frame, text="Restart LLM", width=15, command=lambda: self.restart_local_llm())
 
         # 6. Self-Signed Cert (Right Column)
         self.ssl_selfcert_var = tk.IntVar(value=int(self.settings.SSL_SELFCERT))
