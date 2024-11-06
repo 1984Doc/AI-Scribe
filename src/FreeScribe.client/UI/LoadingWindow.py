@@ -55,9 +55,6 @@ class LoadingWindow:
             x = parent.winfo_x() + (parent.winfo_width() - self.popup.winfo_reqwidth()) // 2
             y = parent.winfo_y() + (parent.winfo_height() - self.popup.winfo_reqheight()) // 2
             self.popup.geometry(f"+{x}+{y}")
-
-            #disable parent so we can prcoess with out anything else
-            parent.attributes('-disabled', True)
             self.popup.transient(parent)
 
         # Use label and progress bar instead of animated text
@@ -96,10 +93,6 @@ class LoadingWindow:
         >>> # Do some processing
         >>> popup.destroy()  # Properly clean up and close the window
         """
-
-        if self.parent:
-            self.parent.attributes('-disabled', False)
-
         # Cancel any pending animation
         if hasattr(self, 'animation_id'):
             self.popup.after_cancel(self.animation_id)
