@@ -592,7 +592,7 @@ def send_text_to_chatgpt(edited_text):
         return send_text_to_localmodel(edited_text)
     else:
         return send_text_to_api(edited_text)
-    
+
 
 def show_edit_transcription_popup(formatted_message):
     popup = tk.Toplevel(root)
@@ -849,9 +849,14 @@ def setup_model():
     def load_model():
         global OFFLINE_LLM_MODEL
 
+        gpu_layers = 0
+
+        if app_settings.editable_settings["Architecture"] == "CUDA (Nvidia GPU)":
+            gpu_layers = -1
+
         OFFLINE_LLM_MODEL = Model("C:\Work\local-llm-container\models\gemma-2-2b-it-Q4_K_M.gguf",
             context_size=4096,
-            gpu_layers=-1,
+            gpu_layers=gpu_layers,
             main_gpu=0,
             n_batch=512,
             n_threads=None,
