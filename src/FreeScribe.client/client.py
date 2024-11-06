@@ -289,11 +289,10 @@ def toggle_recording():
             recording_thread.join()  # Ensure the recording thread is terminated
 
         if app_settings.editable_settings["Real Time"]:
-                loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait")
+            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait")
 
         while audio_queue.empty() is False:
             time.sleep(0.1)
-          
             loading_window.destroy()
 
         save_audio()
