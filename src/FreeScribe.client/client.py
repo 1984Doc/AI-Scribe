@@ -291,10 +291,10 @@ def toggle_recording():
         if app_settings.editable_settings["Real Time"]:
             loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait")
 
-        while audio_queue.empty() is False:
-            time.sleep(0.1)
-        
-        loading_window.destroy()
+            while audio_queue.empty() is False:
+                time.sleep(0.1)
+            
+            loading_window.destroy()
 
         save_audio()
         mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
