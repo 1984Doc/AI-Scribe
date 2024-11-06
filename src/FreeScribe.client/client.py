@@ -613,8 +613,6 @@ def show_edit_transcription_popup(formatted_message):
         edited_text = text_area.get("1.0", tk.END).strip()
         popup.destroy()
         
-        final_note = None
-        
         # If note generation is on
         if use_aiscribe:
 
