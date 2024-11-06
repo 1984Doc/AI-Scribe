@@ -27,7 +27,7 @@ class Model:
         chat_template: str = None,
         context_size: int = 4096,
         gpu_layers: int = -1,  # -1 means load all layers to GPU
-        main_gpu: int = 1,     # Primary GPU device index
+        main_gpu: int = 0,     # Primary GPU device index
         tensor_split: Optional[list] = None,  # For multi-GPU setup
         n_batch: int = 512,    # Batch size for inference
         n_threads: Optional[int] = None,  # CPU threads when needed
@@ -46,28 +46,31 @@ class Model:
             n_threads: Number of CPU threads
             seed: Random seed for reproducibility
         """
-        # Set environment variables for GPU
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(main_gpu)
+        try:
+            # Set environment variables for GPU
+            os.environ["CUDA_VISIBLE_DEVICES"] = str(main_gpu)
+            
+            # Initialize model with GPU settings
+            self.model = Llama(
+                model_path=model_path,
+                n_ctx=context_size,
+                n_gpu_layers=gpu_layers,
+                n_batch=n_batch,
+                n_threads=n_threads or os.cpu_count(),
+                seed=seed,
+                tensor_split=tensor_split,
+                chat_format=chat_template,
+            )
         
-        # Initialize model with GPU settings
-        self.model = Llama(
-            model_path=model_path,
-            n_ctx=context_size,
-            n_gpu_layers=gpu_layers,
-            n_batch=n_batch,
-            n_threads=n_threads or os.cpu_count(),
-            seed=seed,
-            tensor_split=tensor_split,
-            chat_format=chat_template,
-        )
-      
-        # Store configuration
-        self.config = {
-            "gpu_layers": gpu_layers,
-            "main_gpu": main_gpu,
-            "context_size": context_size,
-            "n_batch": n_batch
-        }
+            # Store configuration
+            self.config = {
+                "gpu_layers": gpu_layers,
+                "main_gpu": main_gpu,
+                "context_size": context_size,
+                "n_batch": n_batch
+            }
+        except Exception as e:
+            raise e
         
     def generate_response(
         self,

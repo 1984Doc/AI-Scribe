@@ -854,13 +854,25 @@ def setup_model():
         if app_settings.editable_settings["Architecture"] == "CUDA (Nvidia GPU)":
             gpu_layers = -1
 
-        OFFLINE_LLM_MODEL = Model("C:\Work\local-llm-container\models\gemma-2-2b-it-Q4_K_M.gguf",
-            context_size=4096,
-            gpu_layers=gpu_layers,
-            main_gpu=0,
-            n_batch=512,
-            n_threads=None,
-            seed=1337)
+        model_to_use = None
+        if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
+            model_to_use = "gemma-2-2b-it-Q8_0.gguf"
+        elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
+            model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
+            
+        model_path = f"./models/{model_to_use}"
+        try:
+            OFFLINE_LLM_MODEL = Model(model_path,
+                context_size=4096,
+                gpu_layers=gpu_layers,
+                main_gpu=0,
+                n_batch=512,
+                n_threads=None,
+                seed=1337)
+        except ValueError as e:
+            # model doesnt exist
+            #TODO: Logo to system log
+                messagebox.showerror("Model Error", f"Model failed to load. Please ensure you have a valid model selected in the settings. Currently trying to load: {os.path.abspath(model_path)}")
             
             
 
