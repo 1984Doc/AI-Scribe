@@ -24,6 +24,7 @@ class Model:
     def __init__(
         self,
         model_path: str,
+        chat_template: str = None,
         context_size: int = 4096,
         gpu_layers: int = -1,  # -1 means load all layers to GPU
         main_gpu: int = 1,     # Primary GPU device index
@@ -56,9 +57,10 @@ class Model:
             n_batch=n_batch,
             n_threads=n_threads or os.cpu_count(),
             seed=seed,
-            tensor_split=tensor_split
+            tensor_split=tensor_split,
+            chat_format=chat_template,
         )
-        
+      
         # Store configuration
         self.config = {
             "gpu_layers": gpu_layers,
