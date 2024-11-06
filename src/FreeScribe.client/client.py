@@ -60,20 +60,6 @@ if app_settings.editable_settings["Use Docker Status Bar"]:
 
 OFFLINE_LLM_MODEL = None
 
-# If local llm load model now... 
-if app_settings.editable_settings["Use Local LLM"]:
-    loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
-
-    OFFLINE_LLM_MODEL = Model("C:\Work\local-llm-container\models\gemma-2-2b-it-Q4_K_M.gguf",
-    context_size=4096,
-    gpu_layers=-1,
-    main_gpu=0,
-    n_batch=512,
-    n_threads=None,
-    seed=1337)
-
-    loading_window.destroy()
-
 NOTE_CREATION = "Note Creation...Please Wait"
 
 user_message = []
@@ -499,7 +485,7 @@ def show_response(event):
         response_display.scrolled_text.configure(state='disabled')
         pyperclip.copy(response_text)
 
-def send_text_to_api(text):
+def send_text_to_api(edited_text):
     headers = {
         "Authorization": f"Bearer {app_settings.OPENAI_API_KEY}",
         "Content-Type": "application/json",
@@ -587,16 +573,8 @@ def send_text_to_localmodel(edited_text):
     
     # Send prompt to local model and get response
     if OFFLINE_LLM_MODEL is None:
-        loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
+        setup_model()
 
-        OFFLINE_LLM_MODEL = Model("C:\Work\local-llm-container\models\gemma-2-2b-it-Q4_K_M.gguf",
-        context_size=4096,
-        gpu_layers=-1,
-        n_batch=512,
-        n_threads=None,
-        seed=1337)
-
-        loading_window.destroy()
 
     response = OFFLINE_LLM_MODEL.generate_response(edited_text,
     max_tokens=int(app_settings.editable_settings["max_length"]),
@@ -614,7 +592,7 @@ def send_text_to_chatgpt(edited_text):
         return send_text_to_localmodel(edited_text)
     else:
         return send_text_to_api(edited_text)
-
+    
 
 def show_edit_transcription_popup(formatted_message):
     popup = tk.Toplevel(root)
@@ -657,9 +635,8 @@ def show_edit_transcription_popup(formatted_message):
                 else:
                     update_gui_with_response(medical_note)
             else: # If pre-processing is not enabled thhen just generate the note
-                print(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
                 medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
-
+                  
                 if app_settings.editable_settings["Post-Processing"] is True:
                     post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
                     update_gui_with_response(post_processed_note)
@@ -864,6 +841,40 @@ root.bind('<Alt-r>', lambda event: mic_button.invoke())
 
 #set min size
 root.minsize(900, 400)
+
+
+def setup_model():
+    loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
+
+    def load_model():
+        global OFFLINE_LLM_MODEL
+
+        OFFLINE_LLM_MODEL = Model("C:\Work\local-llm-container\models\gemma-2-2b-it-Q4_K_M.gguf",
+            context_size=4096,
+            gpu_layers=-1,
+            main_gpu=0,
+            n_batch=512,
+            n_threads=None,
+            seed=1337)
+            
+            
+
+    thread = threading.Thread(target=load_model)
+    thread.start()
+    
+    # Instead of joining, schedule a check
+
+    def check_thread_status(thread, loading_window, root):
+        if thread.is_alive():
+            root.after(500, lambda: check_thread_status(thread, loading_window, root))
+        else:
+            loading_window.destroy()
+
+    root.after(500, lambda: check_thread_status(thread, loading_window, root))
+
+#Wait for the UI root to be intialized then load the model. If using local llm.
+if app_settings.editable_settings["Use Local LLM"]:
+    root.after(100, setup_model)
 
 root.mainloop()
 
