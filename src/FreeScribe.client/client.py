@@ -262,6 +262,8 @@ DEFUALT_BUTTON_COLOUR = None
 def toggle_recording():
     global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue
 
+    realtime_thread = threaded_realtime_text()
+
     if not is_recording:
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
@@ -286,12 +288,13 @@ def toggle_recording():
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
 
-        loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait")
+        if app_settings.editable_settings["Real Time"]:
+                loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait")
 
-        while audio_queue.empty() is False:
+          while audio_queue.empty() is False:
             time.sleep(0.1)
-
-        loading_window.destroy()
+          
+          loading_window.destroy()
 
         save_audio()
         mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
@@ -593,7 +596,7 @@ def show_edit_transcription_popup(formatted_message):
         if use_aiscribe:
 
             # If pre-processing is enabled
-            if app_settings.editable_settings["Pre-Processing"] is True:
+            if app_settings.editable_settings["Use Pre-Processing"]:
                 #Generate Facts List
                 list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
                 
@@ -601,7 +604,7 @@ def show_edit_transcription_popup(formatted_message):
                 medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
 
                 # If post-processing is enabled check the note over
-                if app_settings.editable_settings["Post-Processing"] is True:
+                if app_settings.editable_settings["Use Post-Processing"]:
                     post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
                     update_gui_with_response(post_processed_note)
                 else:
@@ -610,7 +613,7 @@ def show_edit_transcription_popup(formatted_message):
             else: # If pre-processing is not enabled thhen just generate the note
                 medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
 
-                if app_settings.editable_settings["Post-Processing"] is True:
+                if app_settings.editable_settings["Use Post-Processing"]:
                     post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
                     update_gui_with_response(post_processed_note)
                 else:
