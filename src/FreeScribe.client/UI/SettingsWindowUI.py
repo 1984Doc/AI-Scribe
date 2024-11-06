@@ -260,15 +260,12 @@ class SettingsWindowUI:
 
         # Process left column first, then right
         for idx, setting_name in enumerate(settings_set[:mid_point]):
-            tk.Label(left_frame, text=f"{setting_name}:").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
             
             value = self.settings.editable_settings[setting_name]
             if value in [True, False]:
-                var = tk.IntVar(value=int(value))
-                checkbox = tk.Checkbutton(left_frame, variable=var)
-                checkbox.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting_name] = var
+                self._create_checkbox(left_frame, setting_name, setting_name, left_row)
             else:
+                tk.Label(left_frame, text=f"{setting_name}:").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
                 entry = tk.Entry(left_frame)
                 entry.insert(0, str(value))
                 entry.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
@@ -278,15 +275,12 @@ class SettingsWindowUI:
 
         # Process right column
         for idx, setting_name in enumerate(settings_set[mid_point:]):
-            tk.Label(right_frame, text=f"{setting_name}:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
             
             value = self.settings.editable_settings[setting_name]
             if value in [True, False]:
-                var = tk.IntVar(value=int(value))
-                checkbox = tk.Checkbutton(right_frame, variable=var)
-                checkbox.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting_name] = var
+                self._create_checkbox(right_frame, setting_name, setting_name, right_row)
             else:
+                tk.Label(right_frame, text=f"{setting_name}:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
                 entry = tk.Entry(right_frame)
                 entry.insert(0, str(value))
                 entry.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
@@ -333,56 +327,49 @@ class SettingsWindowUI:
 
         row_idx += 1
 
-        tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
         row_idx += 1
 
         self.aiscribe_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.aiscribe_text.insert(tk.END, self.settings.AISCRIBE)
-        self.aiscribe_text.grid(row=row_idx, column=0, columnspan=2, padx=0, pady=5, sticky="w")
+        self.aiscribe_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
         row_idx += 1
 
-        tk.Label(self.advanced_settings_frame, text="Post Prompting").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(self.advanced_settings_frame, text="Post Prompting").grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
 
         row_idx += 1
         self.aiscribe2_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.aiscribe2_text.insert(tk.END, self.settings.AISCRIBE2)
-        self.aiscribe2_text.grid(row=row_idx, column=0, columnspan=2, padx=0, pady=5, sticky="w")
+        self.aiscribe2_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
         row_idx += 1
-        use_preprocess_label = tk.Label(self.advanced_settings_frame, text="Use Pre-Processing")
-        use_preprocess_label.grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        use_preprocess_value = tk.IntVar(value=int(self.settings.editable_settings["Use Pre-Processing"]))
-        checkbox = tk.Checkbutton(self.advanced_settings_frame, variable=use_preprocess_value)
-        checkbox.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
-        self.settings.editable_settings_entries["Use Pre-Processing"] = use_preprocess_value
+        preprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
+        preprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
+        self._create_checkbox(preprocess_frame, "Use Pre-Processing", "Use Pre-Processing", 0)
 
         row_idx += 1
         self.preprocess_label = tk.Label(self.advanced_settings_frame, text="Pre-Processing")
-        self.preprocess_label.grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        self.preprocess_label.grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
         
         row_idx += 1
         self.preprocess_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.preprocess_text.insert(tk.END, self.settings.editable_settings["Pre-Processing"])
-        self.preprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=0, pady=5, sticky="w")
+        self.preprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
         row_idx += 1
-        use_postprocess_label = tk.Label(self.advanced_settings_frame, text="Use Post-Processing")
-        use_postprocess_label.grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
-        use_postprocess_value = tk.IntVar(value=int(self.settings.editable_settings["Use Post-Processing"]))
-        checkbox = tk.Checkbutton(self.advanced_settings_frame, variable=use_postprocess_value)
-        checkbox.grid(row=row_idx, column=1,  padx=0, pady=5, sticky="w")
-        self.settings.editable_settings_entries["Use Post-Processing"] = use_postprocess_value
+        postprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
+        postprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
+        self._create_checkbox(postprocess_frame, "Use Post-Processing", "Use Post-Processing", row_idx)
 
-
-        row_idx += 1        
+        row_idx += 1
         self.postprocess_label = tk.Label(self.advanced_settings_frame, text="Post-Processing")
-        self.postprocess_label.grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        self.postprocess_label.grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
         
         row_idx += 1
         self.postprocess_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.postprocess_text.insert(tk.END, self.settings.editable_settings["Post-Processing"])
-        self.postprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=0, pady=5, sticky="w")
+        self.postprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
 
     def create_docker_settings(self):
@@ -403,15 +390,12 @@ class SettingsWindowUI:
             start_row (int): The starting row for placing the settings.
         """
         for i, setting in enumerate(settings_set):
-            tk.Label(frame, text=f"{setting}:").grid(row=start_row+i, column=0, padx=10, pady=5, sticky="w")
             
             value = self.settings.editable_settings[setting]
             if value in [True, False]:
-                var = tk.IntVar(value=int(value))
-                checkbox = tk.Checkbutton(frame, variable=var)
-                checkbox.grid(row=start_row+i, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting] = var
+                self._create_checkbox(frame, setting, setting, start_row+i)
             else:
+                tk.Label(frame, text=f"{setting}:").grid(row=start_row+i, column=0, padx=10, pady=5, sticky="w")
                 entry = tk.Entry(frame)
                 entry.insert(0, str(value))
                 entry.grid(row=start_row+i, column=1, padx=0, pady=5, sticky="w")
@@ -484,3 +468,18 @@ class SettingsWindowUI:
         self.create_editable_settings(self.general_settings_frame, self.settings.general_settings)
 
 
+    def _create_checkbox(self, frame, label, setting_name, row_idx):
+        """
+        Creates a checkbox in the given frame.
+
+        Args:
+            frame (tk.Frame): The frame in which to create the checkbox.
+            text (str): The text to display next to the checkbox.
+            row_idx (int): The row index at which to place the checkbox.
+        """
+        label = tk.Label(frame, text=label)
+        label.grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        value = tk.IntVar(value=int(self.settings.editable_settings[setting_name]))
+        checkbox = tk.Checkbutton(frame, variable=value)
+        checkbox.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
+        self.settings.editable_settings_entries[setting_name] = value
