@@ -376,6 +376,7 @@ def send_audio_to_server():
 
         # Send the transcribed text and receive a response
         send_and_receive()
+        loading_window.destroy()
     else:
         # Inform the user that Remote Whisper is being used for transcription
         print("Using Remote Whisper for transcription.")
@@ -403,26 +404,38 @@ def send_audio_to_server():
                 "Authorization": f"Bearer {app_settings.editable_settings['Whisper Server API Key']}"
             }
 
-            # Check for SSL and self-signed certificate settings
-            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                # Send the request without verifying the SSL certificate
-                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=False)
-            else:
-                # Send the request with the audio file and headers/authorization
-                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files)
-            
-            # On successful response (status code 200)
-            if response.status_code == 200:
-                # Update the UI with the transcribed text
-                transcribed_text = response.json()['text']
+            response = -1
+            try:
+                # Check for SSL and self-signed certificate settings
+                if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
+                    # Send the request without verifying the SSL certificate
+                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=False)
+                else:
+                    # Send the request with the audio file and headers/authorization
+                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files)
+
+                    # On successful response (status code 200)
+                    if response.status_code == 200:
+                        # Update the UI with the transcribed text
+                        transcribed_text = response.json()['text']
+                        user_input.scrolled_text.configure(state='normal')
+                        user_input.scrolled_text.delete("1.0", tk.END)
+                        user_input.scrolled_text.insert(tk.END, transcribed_text)
+
+                        # Send the transcribed text and receive a response
+                        send_and_receive()
+
+            except Exception as e:
+                # log error message
+                #TODO: Implment proper logging to system
+                print(f"An error occurred: {e}")
+                # Display an error message to the user
                 user_input.scrolled_text.configure(state='normal')
                 user_input.scrolled_text.delete("1.0", tk.END)
-                user_input.scrolled_text.insert(tk.END, transcribed_text)
-
-                # Send the transcribed text and receive a response
-                send_and_receive()
-      
-    loading_window.destroy()
+                user_input.scrolled_text.insert(tk.END, f"An error occurred: {e}")
+                user_input.scrolled_text.configure(state='disabled')
+            finally:
+                loading_window.destroy()
 
 def send_and_receive():
     global use_aiscribe, user_message
