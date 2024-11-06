@@ -128,7 +128,8 @@ class SettingsWindow():
         self.editable_settings = {
             "Model": "gpt-4",
             "Model Endpoint": "https://api.openai.com/v1/",
-            "Use Local LLM": False,     
+            "Use Local LLM": False,
+            "Architecture": "CPU",
             "use_story": False,
             "use_memory": False,
             "use_authors_note": False,

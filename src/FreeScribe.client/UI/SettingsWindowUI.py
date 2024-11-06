@@ -26,7 +26,6 @@ from UI.Widgets.AudioMeter import AudioMeter
 import threading
 
 
-
 class SettingsWindowUI:
     """
     Manages the settings window UI.
@@ -214,6 +213,18 @@ class SettingsWindowUI:
         self.models_drop_down.bind('<<ComboboxSelected>>', self.on_model_selection_change)
         thread = threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,))
         thread.start()
+
+        left_row += 1
+
+        #6. GPU OR CPU SELECTION (Right Column)
+        tk.Label(right_frame, text="Local Architecture").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
+        architecture_options = ["CPU", "CUDA (Nvidia GPU)"]
+        self.architecture_dropdown = ttk.Combobox(right_frame, values=architecture_options, width=15, state="readonly")
+        self.architecture_dropdown.current(architecture_options.index(self.settings.editable_settings["Architecture"]))
+
+        self.architecture_dropdown.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
+        
+        right_row += 1
 
         # Create custom model entry (initially hidden)
         self.custom_model_entry = tk.Entry(left_frame, width=15)
@@ -429,6 +440,9 @@ class SettingsWindowUI:
 
         self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", tk.END)
         self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", tk.END)
+
+        # save architecture
+        self.settings.editable_settings["Architecture"] = self.architecture_dropdown.get()
 
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
