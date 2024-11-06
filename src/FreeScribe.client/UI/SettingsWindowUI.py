@@ -381,13 +381,16 @@ class SettingsWindowUI:
             settings_set (list): The list of settings to create UI elements for.
             start_row (int): The starting row for placing the settings.
         """
+        
+        i_frame = ttk.Frame(frame)
+        i_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
         for i, setting in enumerate(settings_set):
             
             value = self.settings.editable_settings[setting]
             if value in [True, False]:
-                self._create_checkbox(frame, setting, setting, start_row+i)
+                self._create_checkbox(i_frame, setting, setting, start_row+i)
             else:
-                self._create_entry(frame, setting, setting, start_row+i)
+                self._create_entry(i_frame, setting, setting, start_row+i)
 
     def create_buttons(self):
         """
