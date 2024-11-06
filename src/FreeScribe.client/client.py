@@ -349,34 +349,45 @@ def send_audio_to_server():
     if app_settings.editable_settings["Local Whisper"] == True:
         # Inform the user that Local Whisper is being used for transcription
         print("Using Local Whisper for transcription.")
-
         # Configure the user input widget to be editable and clear its content
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
 
         # Display a message indicating that audio to text processing is in progress
         user_input.scrolled_text.insert(tk.END, "Audio to Text Processing...Please Wait")
+        try:
+            # Load the specified Whisper model
+            model_name = app_settings.editable_settings["Whisper Model"].strip()
+            model = whisper.load_model(model_name)
 
-        # Load the specified Whisper model
-        model_name = app_settings.editable_settings["Whisper Model"].strip()
-        model = whisper.load_model(model_name)
+            # Determine the file to send for transcription
+            file_to_send = uploaded_file_path if uploaded_file_path else 'recording.wav'
+            uploaded_file_path = None
 
-        # Determine the file to send for transcription
-        file_to_send = uploaded_file_path if uploaded_file_path else 'recording.wav'
-        uploaded_file_path = None
+            # Transcribe the audio file using the loaded model
+            result = model.transcribe(file_to_send)
+            transcribed_text = result["text"]
 
-        # Transcribe the audio file using the loaded model
-        result = model.transcribe(file_to_send)
-        transcribed_text = result["text"]
+            # Update the user input widget with the transcribed text
+            user_input.scrolled_text.configure(state='normal')
+            user_input.scrolled_text.delete("1.0", tk.END)
+            user_input.scrolled_text.insert(tk.END, transcribed_text)
 
-        # Update the user input widget with the transcribed text
-        user_input.scrolled_text.configure(state='normal')
-        user_input.scrolled_text.delete("1.0", tk.END)
-        user_input.scrolled_text.insert(tk.END, transcribed_text)
+            # Send the transcribed text and receive a response
+            send_and_receive()
+        except Exception as e:
+            # Log the error message
+            # TODO: Add system eventlogger
+            print(f"An error occurred: {e}")
 
-        # Send the transcribed text and receive a response
-        send_and_receive()
-        loading_window.destroy()
+            #log error to input window
+            user_input.scrolled_text.configure(state='normal')
+            user_input.scrolled_text.delete("1.0", tk.END)
+            user_input.scrolled_text.insert(tk.END, f"An error occurred: {e}")
+            user_input.scrolled_text.configure(state='disabled')
+        finally:
+            loading_window.destroy()
+            
     else:
         # Inform the user that Remote Whisper is being used for transcription
         print("Using Remote Whisper for transcription.")
