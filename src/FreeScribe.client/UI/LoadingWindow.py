@@ -41,6 +41,8 @@ class LoadingWindow:
         :type initial_text: str
         """
 
+        self.title = title
+        self.initial_text = initial_text
         self.parent = parent
         self.popup = tk.Toplevel(parent)
         self.popup.title(title)
@@ -87,7 +89,7 @@ class LoadingWindow:
         typically be called directly.
         """
         current_text = self.popup_label.cget("text")
-        base_text = "Processing Audio"
+        base_text = self.initial_text
         
         if current_text.endswith("..."):
             self.popup_label.config(text=base_text)
