@@ -54,7 +54,7 @@ class LoadingWindow:
             parent.update_idletasks()
             x = parent.winfo_x() + (parent.winfo_width() - self.popup.winfo_reqwidth()) // 2
             y = parent.winfo_y() + (parent.winfo_height() - self.popup.winfo_reqheight()) // 2
-            self.popup.geometry("+{}+{}".format(x, y))
+            self.popup.geometry(f"+{x}+{y}")
 
             #disable parent so we can prcoess with out anything else
             parent.attributes('-disabled', True)
