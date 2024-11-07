@@ -27,7 +27,7 @@ class Model:
     local_model = None
 
     @staticmethod
-    def setup_model(app_settings, root):
+    def setup_model(app_settings, root, model_path = None):
         loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
 
         def load_model():
@@ -37,14 +37,21 @@ class Model:
                 gpu_layers = -1
 
             model_to_use = None
-            if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
-                model_to_use = "gemma-2-2b-it-Q8_0.gguf"
-            elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
-                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
+
+            if model_path == None: 
+                if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
+                    model_to_use = "gemma-2-2b-it-Q8_0.gguf"
+                elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
+                    model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
+                else:
+                    # Default to Q4
+                    model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
+            else:
+                model_to_use = model_path
                 
             model_path = f"./models/{model_to_use}"
             try:
-                Model.local_model = Model(model_path,
+                Model.local_model = Llama(model_path,
                     context_size=4096,
                     gpu_layers=gpu_layers,
                     main_gpu=0,
@@ -68,6 +75,15 @@ class Model:
                 loading_window.destroy()
 
         root.after(500, lambda: check_thread_status(thread, loading_window, root))
+
+
+    @staticmethod
+    def unload_model():
+        if Model.local_model is not None:
+            Model.local_model.close()
+            del Model.local_model
+            Model.local_model = None
+            print("Unloaded model:", Model.local_model)
 
     def __init__(
         self,
