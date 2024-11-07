@@ -150,9 +150,6 @@ class Model:
                 repeat_penalty=repeat_penalty,
                 echo=False
             )
-
-            print("prompt: ", prompt)   
-            print(response)
            
             return response["choices"][0]["text"]
             
