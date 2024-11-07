@@ -588,6 +588,8 @@ def send_text_to_localmodel(edited_text):
     if Model.local_model is None:
         Model.setup_model(app_settings=app_settings, root=root)
 
+    while Model.local_model is None:
+        time.sleep(0.1)
 
     response = Model.local_model.generate_response(edited_text,
     max_tokens=int(app_settings.editable_settings["max_length"]),
