@@ -24,7 +24,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from UI.Widgets.AudioMeter import AudioMeter
 import threading
-from Model import Model
+from Model import Model, ModelManager
 
 
 class SettingsWindowUI:
@@ -446,8 +446,9 @@ class SettingsWindowUI:
 
             # If using local-llm and the model has changed, update the model (Unload old, load new)
             if self.settings.editable_settings["Use Local LLM"] and (old_model != new_model):
-                Model.unload_model()
-                Model.setup_model(self.settings, self.main_window.root)
+                ModelManager.unload_model()
+                thread = threading.Thread(target=ModelManager.setup_model, args=(self.settings, self.main_window.root))
+                thread.start()
 
         self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", tk.END)
         self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", tk.END)

@@ -23,63 +23,6 @@ class Model:
                         the specified sampling parameters.
         get_gpu_info: Returns the current GPU configuration and batch size details.
     """
-
-    local_model = None
-
-    @staticmethod
-    def setup_model(app_settings, root):
-        loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
-
-        def load_model():
-            gpu_layers = 0
-
-            if app_settings.editable_settings["Architecture"] == "CUDA (Nvidia GPU)":
-                gpu_layers = -1
-
-            model_to_use = None
-            if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
-                model_to_use = "gemma-2-2b-it-Q8_0.gguf"
-            elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
-                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
-            else:
-                # Default to Q4
-                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
-                
-            model_path = f"./models/{model_to_use}"
-            try:
-                Model.local_model = Llama(model_path,
-                    context_size=4096,
-                    gpu_layers=gpu_layers,
-                    main_gpu=0,
-                    n_batch=512,
-                    n_threads=None,
-                    seed=1337)
-            except ValueError:
-                # model doesnt exist
-                #TODO: Logo to system log
-                    messagebox.showerror("Model Error", f"Model failed to load. Please ensure you have a valid model selected in the settings. Currently trying to load: {os.path.abspath(model_path)}")
-                
-        thread = threading.Thread(target=load_model)
-        thread.start()
-        
-        # Instead of joining, schedule a check
-
-        def check_thread_status(thread, loading_window, root):
-            if thread.is_alive():
-                root.after(500, lambda: check_thread_status(thread, loading_window, root))
-            else:
-                loading_window.destroy()
-
-        root.after(500, lambda: check_thread_status(thread, loading_window, root))
-
-
-    @staticmethod
-    def unload_model():
-        if Model.local_model is not None:
-            Model.local_model.close()
-            del Model.local_model
-            Model.local_model = None
-
     def __init__(
         self,
         model_path: str,
@@ -177,8 +120,117 @@ class Model:
             "batch_size": self.config["n_batch"],
             "context_size": self.config["context_size"]
         }
+
+    def unload_model(self):
+        """
+        Unloads the model from GPU memory.
+        """
+        self.model.close()
+        self.model = None
     
     def __del__(self):
         """Cleanup GPU memory on deletion"""
         self.model.close()
         self.model = None
+
+class ModelManager:
+    """
+    Manages the lifecycle of a local LLM model including setup and unloading operations.
+
+    This class provides static methods to handle model initialization, loading, and cleanup
+    using the llama.cpp Python bindings. It supports different model architectures and
+    quantization levels.
+
+    Attributes:
+        local_model (Llama): Static reference to the loaded model instance. None if no model is loaded.
+    """
+    local_model = None
+
+    @staticmethod
+    def setup_model(app_settings, root):
+        """
+        Initialize and load the LLM model based on application settings.
+
+        Creates a loading window and starts model loading in a separate thread to prevent
+        UI freezing. Automatically checks thread status and closes the loading window
+        when complete.
+
+        Args:
+            app_settings: Application settings object containing model preferences
+            root: Tkinter root window for creating the loading dialog
+
+        Raises:
+            ValueError: If the specified model file cannot be loaded
+        
+        Note:
+            The method uses threading to avoid blocking the UI while loading the model.
+            GPU layers are set to -1 for CUDA architecture and 0 for CPU.
+        """
+        loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
+
+        def load_model():
+            """
+            Internal function to handle the actual model loading process.
+            
+            Determines the model file based on settings and initializes the Llama instance
+            with appropriate parameters.
+            """
+            gpu_layers = 0
+
+            if app_settings.editable_settings["Architecture"] == "CUDA (Nvidia GPU)":
+                gpu_layers = -1
+
+            model_to_use = None
+            if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
+                model_to_use = "gemma-2-2b-it-Q8_0.gguf"
+            elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
+                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
+            else:
+                # Default to Q4
+                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
+                
+            model_path = f"./models/{model_to_use}"
+            try:
+                ModelManager.local_model = Llama(model_path,
+                    context_size=4096,
+                    gpu_layers=gpu_layers,
+                    main_gpu=0,
+                    n_batch=512,
+                    n_threads=None,
+                    seed=1337)
+            except ValueError:
+                # model doesnt exist
+                #TODO: Logo to system log
+                    messagebox.showerror("Model Error", f"Model failed to load. Please ensure you have a valid model selected in the settings. Currently trying to load: {os.path.abspath(model_path)}")
+
+        thread = threading.Thread(target=load_model)
+        thread.start()
+
+        def check_thread_status(thread, loading_window, root):
+            """
+            Recursive function to check the status of the model loading thread.
+
+            Args:
+                thread: The thread to monitor
+                loading_window: LoadingWindow instance to close when complete
+                root: Tkinter root window for scheduling checks
+            """
+            if thread.is_alive():
+                root.after(500, lambda: check_thread_status(thread, loading_window, root))
+            else:
+                loading_window.destroy()
+
+        root.after(500, lambda: check_thread_status(thread, loading_window, root))
+
+    @staticmethod
+    def unload_model():
+        """
+        Safely unload and cleanup the currently loaded model.
+
+        Closes the model if it exists and sets the local_model reference to None.
+        This method should be called before loading a new model or shutting down
+        the application.
+        """
+        if ModelManager.local_model is not None:
+            ModelManager.local_model.close()
+            ModelManager.local_model = None
