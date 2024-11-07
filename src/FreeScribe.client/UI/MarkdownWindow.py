@@ -36,8 +36,14 @@ class MarkdownWindow:
         self.window.transient(parent)
         self.window.grab_set()
 
-        with open(file_path, "r") as file:
-            content = md.markdown(file.read(), extensions=["extra", "smarty"])
+        try:
+          with open(file_path, "r") as file:
+              content = md.markdown(file.read(), extensions=["extra", "smarty"])
+              
+        except FileNotFoundError:
+          print(f"File not found: {file_path}")
+          self.window.destroy()
+          return
 
         html_label = HTMLLabel(self.window, html=content)
         html_label.pack(fill="both", expand=True, padx=10, pady=10)
