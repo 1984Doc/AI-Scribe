@@ -36,6 +36,14 @@ Section "MainSection" SEC01
     File /r "..\dist\freescribe-client\_internal"
     File /r "..\src\FreeScribe.client\markdown"
 
+    IfFileExists "$INSTDIR\settings.txt" +7
+
+    ; Add default settings file
+    File "..\default_settings.txt"
+
+    ; Rename default_settings.txt to settings.txt
+    Rename "$INSTDIR\default_settings.txt" "$INSTDIR\settings.txt"
+
     ; add presets
     CreateDirectory "$INSTDIR\presets"
     SetOutPath "$INSTDIR\presets"
