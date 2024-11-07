@@ -27,7 +27,7 @@ class Model:
     local_model = None
 
     @staticmethod
-    def setup_model(app_settings, root, model_file_name = None):
+    def setup_model(app_settings, root):
         loading_window = LoadingWindow(root, "Loading Model", "Loading Model. Please wait")
 
         def load_model():
@@ -37,17 +37,13 @@ class Model:
                 gpu_layers = -1
 
             model_to_use = None
-
-            if model_file_name is None: 
-                if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
-                    model_to_use = "gemma-2-2b-it-Q8_0.gguf"
-                elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
-                    model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
-                else:
-                    # Default to Q4
-                    model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
+            if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
+                model_to_use = "gemma-2-2b-it-Q8_0.gguf"
+            elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
+                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
             else:
-                model_to_use = model_file_name
+                # Default to Q4
+                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
                 
             model_path = f"./models/{model_to_use}"
             try:
