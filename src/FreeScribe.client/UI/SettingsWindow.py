@@ -456,7 +456,10 @@ class SettingsWindow():
         """
         if self.editable_settings["Use Local LLM"]:
             dropdown["values"] = ["Gemma-2-2b-it Q4 (Faster, less accurate)", "Gemma-2-2b-it Q8 (Slower, more accurate)"]
-            dropdown.set("Gemma-2-2b-it Q4 (Faster, less accurate)")
+            if self.editable_settings["Model"] not in ["Gemma-2-2b-it Q8 (Slower, more accurate)", "Gemma-2-2b-it Q4 (Faster, less accurate)"]:
+                dropdown.set("Gemma-2-2b-it Q4 (Faster, less accurate)")
+            else:
+                dropdown.set(self.editable_settings["Model"])
         else:
             dropdown["values"] = []
             dropdown.set("Loading models...")
