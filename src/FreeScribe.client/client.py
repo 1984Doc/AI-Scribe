@@ -41,6 +41,7 @@ from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
 from UI.LoadingWindow import LoadingWindow
+from utils.file_utils import get_file_path
 
 # GUI Setup
 root = tk.Tk()
@@ -584,6 +585,7 @@ def send_text_to_chatgpt(edited_text):
 
 def show_edit_transcription_popup(formatted_message):
     popup = tk.Toplevel(root)
+    popup.iconbitmap(get_file_path('assets','logo.ico'))
     popup.title("Scrub PHI Prior to GPT")
     text_area = scrolledtext.ScrolledText(popup, height=20, width=80)
     text_area.pack(padx=10, pady=10)

@@ -2,6 +2,7 @@ from tkinter import Toplevel
 import markdown as md
 import tkinter as tk
 from tkhtmlview import HTMLLabel
+from utils.file_utils import get_file_path
 
 """
 A class to create a window displaying rendered Markdown content.
@@ -35,6 +36,7 @@ class MarkdownWindow:
         self.window.title(title)
         self.window.transient(parent)
         self.window.grab_set()
+        self.window.iconbitmap(get_file_path('assets','logo.ico'))
 
         try:
           with open(file_path, "r") as file:

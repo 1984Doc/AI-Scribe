@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from utils.file_utils import get_file_path
 
 class LoadingWindow:
     """
@@ -48,6 +49,7 @@ class LoadingWindow:
         self.popup = tk.Toplevel(parent)
         self.popup.title(title)
         self.popup.geometry("200x100")
+        self.popup.iconbitmap(get_file_path('assets','logo.ico'))
 
         if parent:
             # Center the popup window on the parent window
