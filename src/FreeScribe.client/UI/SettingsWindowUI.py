@@ -450,8 +450,8 @@ class SettingsWindowUI:
                 thread = threading.Thread(target=ModelManager.setup_model, args=(self.settings, self.main_window.root))
                 thread.start()
 
-        self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", tk.END)
-        self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", tk.END)
+        self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", "end-1c") # end-1c removes the trailing newline
+        self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", "end-1c") # end-1c removes the trailing newline
 
         # save architecture
         self.settings.editable_settings["Architecture"] = self.architecture_dropdown.get()
