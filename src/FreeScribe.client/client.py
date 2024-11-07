@@ -628,42 +628,54 @@ def show_edit_transcription_popup(formatted_message):
         edited_text = text_area.get("1.0", tk.END).strip()
         popup.destroy()
         
-        try:
-            # If note generation is on
-            if use_aiscribe:
-                # If pre-processing is enabled
-                if app_settings.editable_settings["Use Pre-Processing"]:
-                    #Generate Facts List
-                    list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
-                    
-                    #Make a note from the facts
-                    medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
+        def generate_note(formatted_message):
+            try:
+                # If note generation is on
+                if use_aiscribe:
+                    # If pre-processing is enabled
+                    if app_settings.editable_settings["Use Pre-Processing"]:
+                        #Generate Facts List
+                        list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
+                        
+                        #Make a note from the facts
+                        medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
 
-                    # If post-processing is enabled check the note over
-                    if app_settings.editable_settings["Use Post-Processing"]:
-                        post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
-                        update_gui_with_response(post_processed_note)
-                    else:
-                        update_gui_with_response(medical_note)
+                        # If post-processing is enabled check the note over
+                        if app_settings.editable_settings["Use Post-Processing"]:
+                            post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
+                            update_gui_with_response(post_processed_note)
+                        else:
+                            update_gui_with_response(medical_note)
 
-                else: # If pre-processing is not enabled thhen just generate the note
-                    medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
+                    else: # If pre-processing is not enabled thhen just generate the note
+                        medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
 
-                    if app_settings.editable_settings["Use Post-Processing"]:
-                        post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
-                        update_gui_with_response(post_processed_note)
-                    else:
-                        update_gui_with_response(medical_note)
-            else: # do not generate note just send text directly to AI 
-                ai_response = send_text_to_chatgpt(edited_text)
-                update_gui_with_response(ai_response)
-        except Exception as e:
-            #Logg
-            #TODO: Implement proper logging to system event logger
-            print(f"An error occurred: {e}")
-            display_text(f"An error occurred: {e}")
-        finally:
-            loading_window.destroy()
+                        if app_settings.editable_settings["Use Post-Processing"]:
+                            post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
+                            update_gui_with_response(post_processed_note)
+                        else:
+                            update_gui_with_response(medical_note)
+                else: # do not generate note just send text directly to AI 
+                    ai_response = send_text_to_chatgpt(edited_text)
+                    update_gui_with_response(ai_response)
+            except Exception as e:
+                #Logg
+                #TODO: Implement proper logging to system event logger
+                print(f"An error occurred: {e}")
+                display_text(f"An error occurred: {e}")
+            finally:
+                loading_window.destroy()
+
+        thread = threading.Thread(target=generate_note, args=(formatted_message,))
+        thread.start()
+
+        def check_thread_status(thread, loading_window):
+            if thread.is_alive():
+                root.after(500, lambda: check_thread_status(thread, loading_window))
+            else:
+                loading_window.destroy()
+
+        root.after(500, lambda: check_thread_status(thread, loading_window))
 
     proceed_button = tk.Button(popup, text="Proceed", command=on_proceed)
     proceed_button.pack(side=tk.RIGHT, padx=10, pady=10)
