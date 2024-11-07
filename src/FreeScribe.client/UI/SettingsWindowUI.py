@@ -440,13 +440,14 @@ class SettingsWindowUI:
         """
 
         if self.get_selected_model() not in ["Loading models...", "Failed to load models"]:
-            
-            # If using local-llm and the model has changed, update the model (Unload old, load new)
-            if self.settings.editable_settings["Use Local LLM"] and (self.settings.editable_settings["Model"] != self.get_selected_model()):
-                Model.unload_model()
-                Model.setup_model(self.settings, self.main_window.root, model_file_name=self.get_selected_model())
+            old_model = self.settings.editable_settings["Model"]
+            new_model = self.get_selected_model()
+            self.settings.editable_settings["Model"] = new_model
 
-            self.settings.editable_settings["Model"] = self.get_selected_model()
+            # If using local-llm and the model has changed, update the model (Unload old, load new)
+            if self.settings.editable_settings["Use Local LLM"] and (old_model != new_model):
+                Model.unload_model()
+                Model.setup_model(self.settings, self.main_window.root)
 
         self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", tk.END)
         self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", tk.END)
