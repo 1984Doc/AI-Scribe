@@ -3,8 +3,7 @@ from tkinter import ttk
 import UI.MainWindow as mw
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.MarkdownWindow import MarkdownWindow
-import os
-import sys
+from utils.file_utils import get_file_path
 
 class MainWindowUI:
     """
@@ -145,7 +144,7 @@ class MainWindowUI:
         # Add Help menu
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About", command=lambda: self._show_md_content(self._get_file_path('help','about.md'), 'About'))
+        help_menu.add_command(label="About", command=lambda: self._show_md_content(self.get_file_path('help','about.md'), 'About'))
 
     
     def _show_md_content(self, file_path: str, title: str, show_checkbox: bool = False):
@@ -180,16 +179,7 @@ class MainWindowUI:
         Display a welcome message when the application is launched.
         This method shows a welcome message in a message box when the application is launched.
         """
-        self._show_md_content(self._get_file_path('welcome.md'), 'Welcome', True)
-
-    def _get_file_path(self, *file_names):
-        try:
-            base_path = sys._MEIPASS
-            return os.path.join(base_path, 'markdown', *file_names)
-        except AttributeError:
-            return os.path.join('markdown', *file_names)
-            
-
+        self._show_md_content(self.get_file_path('markdown','welcome.md'), 'Welcome', True)
     
     def create_scribe_template(self, row=3, column=4, columnspan=3, pady=10, padx=10, sticky='nsew'):
         """
