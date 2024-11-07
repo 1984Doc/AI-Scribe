@@ -83,7 +83,6 @@ class Model:
             Model.local_model.close()
             del Model.local_model
             Model.local_model = None
-            print("Unloaded model:", Model.local_model)
 
     def __init__(
         self,
