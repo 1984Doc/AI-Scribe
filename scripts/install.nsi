@@ -97,6 +97,7 @@ SectionEnd
 
 ; Define the installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
+!insertmacro MUI_PAGE_LICENSE ".\assets\Gemma_License.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\freescribe-client.exe"
