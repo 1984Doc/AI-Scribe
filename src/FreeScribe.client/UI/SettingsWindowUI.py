@@ -351,11 +351,13 @@ class SettingsWindowUI:
         self.aiscribe2_text.insert(tk.END, self.settings.AISCRIBE2)
         self.aiscribe2_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
+        # Pre-Processing Checkbox
         row_idx += 1
         preprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
         preprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
         self._create_checkbox(preprocess_frame, "Use Pre-Processing", "Use Pre-Processing", 0)
 
+        # Pre-Processing Label and Text Area
         row_idx += 1
         self.preprocess_label = tk.Label(self.advanced_settings_frame, text="Pre-Processing")
         self.preprocess_label.grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
@@ -365,11 +367,13 @@ class SettingsWindowUI:
         self.preprocess_text.insert(tk.END, self.settings.editable_settings["Pre-Processing"])
         self.preprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
+        # Post-Processing Checkbox
         row_idx += 1
         postprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
         postprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
         self._create_checkbox(postprocess_frame, "Use Post-Processing", "Use Post-Processing", row_idx)
 
+        # Post-Processing Label and Text Area
         row_idx += 1
         self.postprocess_label = tk.Label(self.advanced_settings_frame, text="Post-Processing")
         self.postprocess_label.grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
@@ -473,6 +477,8 @@ class SettingsWindowUI:
         """
         Creates a checkbox in the given frame.
 
+        This method creates a label and a checkbox in the given frame for editing.
+
         Args:
             frame (tk.Frame): The frame in which to create the checkbox.
             label (str): The label to display next to the checkbox.
@@ -488,6 +494,8 @@ class SettingsWindowUI:
     def _create_entry(self, frame, label, setting_name, row_idx):
         """
         Creates an entry field in the given frame.
+
+        This method creates a label and an entry field in the given frame for editing.
         
         Args:
             frame (tk.Frame): The frame in which to create the entry field.
