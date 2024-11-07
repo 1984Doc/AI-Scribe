@@ -40,6 +40,8 @@ from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
+from UI.LoadingWindow import LoadingWindow
+from Model import Model
 
 # GUI Setup
 root = tk.Tk()
@@ -125,6 +127,7 @@ def threaded_handle_message(formatted_message):
 def threaded_send_audio_to_server():
     thread = threading.Thread(target=send_audio_to_server)
     thread.start()
+    return thread
 
 
 DEFAULT_PAUSE_BUTTON_COLOUR = None
@@ -286,34 +289,12 @@ def toggle_recording():
             recording_thread.join()  # Ensure the recording thread is terminated
 
         if app_settings.editable_settings["Real Time"]:
-            popup = tk.Toplevel()
-            popup.title("Processing Audio")
-            popup.geometry("200x100")
-            popup_label = tk.Label(popup, text="Processing Audio...")
-            popup_label.pack(expand=True, padx=10, pady=10)
-
-            # Disable closing of the popup manually
-            popup.protocol("WM_DELETE_WINDOW", lambda: None)
-
-            def animate_text():
-                # Create an animated text with moving ellipsis
-                current_text = popup_label.cget("text")
-                if current_text.endswith("..."):
-                    popup_label.config(text="Processing Audio")
-                else:
-                    popup_label.config(text=current_text + ".")
-                # Schedule the animation to update every 500 milliseconds
-                popup.after(500, animate_text)
-
-            # Start the animation
-            animate_text()
+            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.")
 
             while audio_queue.empty() is False:
                 time.sleep(0.1)
-
-            if popup:
-                popup.destroy()
-
+            
+            loading_window.destroy()
 
         save_audio()
         mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
@@ -365,37 +346,51 @@ def send_audio_to_server():
 
     global uploaded_file_path
 
+    loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.")
+
     # Check if Local Whisper is enabled in the editable settings
     if app_settings.editable_settings["Local Whisper"] == True:
         # Inform the user that Local Whisper is being used for transcription
         print("Using Local Whisper for transcription.")
-
         # Configure the user input widget to be editable and clear its content
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
 
         # Display a message indicating that audio to text processing is in progress
         user_input.scrolled_text.insert(tk.END, "Audio to Text Processing...Please Wait")
+        try:
+            # Load the specified Whisper model
+            model_name = app_settings.editable_settings["Whisper Model"].strip()
+            model = whisper.load_model(model_name)
 
-        # Load the specified Whisper model
-        model_name = app_settings.editable_settings["Whisper Model"].strip()
-        model = whisper.load_model(model_name)
+            # Determine the file to send for transcription
+            file_to_send = uploaded_file_path or 'recording.wav'
+            uploaded_file_path = None
 
-        # Determine the file to send for transcription
-        file_to_send = uploaded_file_path if uploaded_file_path else 'recording.wav'
-        uploaded_file_path = None
+            # Transcribe the audio file using the loaded model
+            result = model.transcribe(file_to_send)
+            transcribed_text = result["text"]
 
-        # Transcribe the audio file using the loaded model
-        result = model.transcribe(file_to_send)
-        transcribed_text = result["text"]
+            # Update the user input widget with the transcribed text
+            user_input.scrolled_text.configure(state='normal')
+            user_input.scrolled_text.delete("1.0", tk.END)
+            user_input.scrolled_text.insert(tk.END, transcribed_text)
 
-        # Update the user input widget with the transcribed text
-        user_input.scrolled_text.configure(state='normal')
-        user_input.scrolled_text.delete("1.0", tk.END)
-        user_input.scrolled_text.insert(tk.END, transcribed_text)
+            # Send the transcribed text and receive a response
+            send_and_receive()
+        except Exception as e:
+            # Log the error message
+            # TODO: Add system eventlogger
+            print(f"An error occurred: {e}")
 
-        # Send the transcribed text and receive a response
-        send_and_receive()
+            #log error to input window
+            user_input.scrolled_text.configure(state='normal')
+            user_input.scrolled_text.delete("1.0", tk.END)
+            user_input.scrolled_text.insert(tk.END, f"An error occurred: {e}")
+            user_input.scrolled_text.configure(state='disabled')
+        finally:
+            loading_window.destroy()
+            
     else:
         # Inform the user that Remote Whisper is being used for transcription
         print("Using Remote Whisper for transcription.")
@@ -423,24 +418,38 @@ def send_audio_to_server():
                 "Authorization": f"Bearer {app_settings.editable_settings['Whisper Server API Key']}"
             }
 
-            # Check for SSL and self-signed certificate settings
-            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                # Send the request without verifying the SSL certificate
-                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=False)
-            else:
-                # Send the request with the audio file and headers/authorization
-                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files)
-            
-            # On successful response (status code 200)
-            if response.status_code == 200:
-                # Update the UI with the transcribed text
-                transcribed_text = response.json()['text']
+            try:
+                response = None
+                # Check for SSL and self-signed certificate settings
+                if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
+                    # Send the request without verifying the SSL certificate
+                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=False)
+                else:
+                    # Send the request with the audio file and headers/authorization
+                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files)
+
+                # On successful response (status code 200)
+                if response.status_code == 200:
+                    # Update the UI with the transcribed text
+                    transcribed_text = response.json()['text']
+                    user_input.scrolled_text.configure(state='normal')
+                    user_input.scrolled_text.delete("1.0", tk.END)
+                    user_input.scrolled_text.insert(tk.END, transcribed_text)
+
+                    # Send the transcribed text and receive a response
+                    send_and_receive()
+
+            except Exception as e:
+                # log error message
+                #TODO: Implment proper logging to system
+                print(f"An error occurred: {e}")
+                # Display an error message to the user
                 user_input.scrolled_text.configure(state='normal')
                 user_input.scrolled_text.delete("1.0", tk.END)
-                user_input.scrolled_text.insert(tk.END, transcribed_text)
-
-                # Send the transcribed text and receive a response
-                send_and_receive()
+                user_input.scrolled_text.insert(tk.END, f"An error occurred: {e}")
+                user_input.scrolled_text.configure(state='disabled')
+            finally:
+                loading_window.destroy()
 
 def send_and_receive():
     global use_aiscribe, user_message
@@ -500,7 +509,7 @@ def show_response(event):
         response_display.scrolled_text.configure(state='disabled')
         pyperclip.copy(response_text)
 
-def send_text_to_chatgpt(edited_text):
+def send_text_to_chatgpt(edited_text):  
     headers = {
         "Authorization": f"Bearer {app_settings.OPENAI_API_KEY}",
         "Content-Type": "application/json",
@@ -570,18 +579,8 @@ def send_text_to_chatgpt(edited_text):
                 response_text = response_text.replace("  ", " ").strip()
                 return response_text
 
-    except requests.exceptions.HTTPError as http_err:
-        print(f"HTTP error occurred: {http_err}")
-        display_text(f"HTTP error occurred: {http_err}")
-    except requests.exceptions.ConnectionError as conn_err:
-        print(f"Connection error occurred: {conn_err}")
-        display_text(f"Connection error occurred: {conn_err}")
-    except requests.exceptions.Timeout as timeout_err:
-        print(f"Timeout error occurred: {timeout_err}")
-        display_text(f"Connection error occurred: {timeout_err}")
-    except requests.exceptions.RequestException as req_err:
-        print(f"An error occurred: {req_err}")
-        display_text(f"Connection error occurred: {req_err}")
+    except Exception as e:
+        raise e
 
 
 def show_edit_transcription_popup(formatted_message):
@@ -599,41 +598,48 @@ def show_edit_transcription_popup(formatted_message):
     text_area.insert(tk.END, cleaned_message)
 
     def on_proceed():
+
+        loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait.")
         global use_aiscribe
         edited_text = text_area.get("1.0", tk.END).strip()
         popup.destroy()
         
-        final_note = None
-        
-        # If note generation is on
-        if use_aiscribe:
+        try:
+            # If note generation is on
+            if use_aiscribe:
+                # If pre-processing is enabled
+                if app_settings.editable_settings["Use Pre-Processing"]:
+                    #Generate Facts List
+                    list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
+                    
+                    #Make a note from the facts
+                    medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
 
-            # If pre-processing is enabled
-            if app_settings.editable_settings["Use Pre-Processing"]:
-                #Generate Facts List
-                list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
-                
-                #Make a note from the facts
-                medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
+                    # If post-processing is enabled check the note over
+                    if app_settings.editable_settings["Use Post-Processing"]:
+                        post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
+                        update_gui_with_response(post_processed_note)
+                    else:
+                        update_gui_with_response(medical_note)
 
-                # If post-processing is enabled check the note over
-                if app_settings.editable_settings["Use Post-Processing"]:
-                    post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
-                    update_gui_with_response(post_processed_note)
-                else:
-                    update_gui_with_response(medical_note)
+                else: # If pre-processing is not enabled thhen just generate the note
+                    medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
 
-            else: # If pre-processing is not enabled thhen just generate the note
-                medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
-
-                if app_settings.editable_settings["Use Post-Processing"]:
-                    post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
-                    update_gui_with_response(post_processed_note)
-                else:
-                    update_gui_with_response(medical_note)
-        else: # do not generate note just send text directly to AI 
-            ai_response = send_text_to_chatgpt(edited_text)
-            update_gui_with_response(ai_response)
+                    if app_settings.editable_settings["Use Post-Processing"]:
+                        post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
+                        update_gui_with_response(post_processed_note)
+                    else:
+                        update_gui_with_response(medical_note)
+            else: # do not generate note just send text directly to AI 
+                ai_response = send_text_to_chatgpt(edited_text)
+                update_gui_with_response(ai_response)
+        except Exception as e:
+            #Logg
+            #TODO: Implement proper logging to system event logger
+            print(f"An error occurred: {e}")
+            display_text(f"An error occurred: {e}")
+        finally:
+            loading_window.destroy()
 
     proceed_button = tk.Button(popup, text="Proceed", command=on_proceed)
     proceed_button.pack(side=tk.RIGHT, padx=10, pady=10)
