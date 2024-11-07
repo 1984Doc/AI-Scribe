@@ -45,7 +45,7 @@ class MarkdownWindow:
         except FileNotFoundError:
           print(f"File not found: {file_path}")
           self.window.destroy()
-          messagebox.showerror("Error: File not found.")
+          messagebox.showerror("Error", "File not found")
           return
 
         html_label = HTMLLabel(self.window, html=content)

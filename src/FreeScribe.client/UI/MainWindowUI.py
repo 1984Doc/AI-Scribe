@@ -145,7 +145,7 @@ class MainWindowUI:
         # Add Help menu
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About", command=lambda: self._show_md_content(get_file_path('help','about.md'), 'About'))
+        help_menu.add_command(label="About", command=lambda: self._show_md_content(get_file_path('markdown','help','about.md'), 'About'))
 
     
     def _show_md_content(self, file_path: str, title: str, show_checkbox: bool = False):
