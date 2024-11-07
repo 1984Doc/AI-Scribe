@@ -439,16 +439,14 @@ class SettingsWindowUI:
         `save_settings` method of the `settings` object to save the settings.
         """
 
-        if self.get_selected_model() not in ["Loading models...", "Failed to load models"]:
-            old_model = self.settings.editable_settings["Model"]
-            new_model = self.get_selected_model()
-            self.settings.editable_settings["Model"] = new_model
+        self.settings.load_or_unload_model(self.settings.editable_settings["Model"],
+            self.get_selected_model(),
+            self.settings.editable_settings["Use Local LLM"],
+            self.settings.editable_settings_entries["Use Local LLM"].get())
 
-            # If using local-llm and the model has changed, update the model (Unload old, load new)
-            if self.settings.editable_settings["Use Local LLM"] and (old_model != new_model):
-                ModelManager.unload_model()
-                thread = threading.Thread(target=ModelManager.setup_model, args=(self.settings, self.main_window.root))
-                thread.start()
+        if self.get_selected_model() not in ["Loading models...", "Failed to load models"]:
+            self.settings.editable_settings["Model"] = self.get_selected_model()
+
 
         self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", "end-1c") # end-1c removes the trailing newline
         self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", "end-1c") # end-1c removes the trailing newline

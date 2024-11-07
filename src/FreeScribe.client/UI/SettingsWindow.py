@@ -23,6 +23,8 @@ from tkinter import ttk, messagebox
 import requests
 import numpy as np
 import pyaudio
+from Model import ModelManager
+import threading
 
 
 p = pyaudio.PyAudio()
@@ -170,8 +172,8 @@ class SettingsWindow():
             "Enable Scribe Template": False,
             "Use Pre-Processing": True,
             "Use Post-Processing": False, # Disabled for now causes unexcepted behaviour
-            "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:",
-            "Post-Processing": "Please check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts. Then please provide the revised SOAP Note:",
+            "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:\n\n",
+            "Post-Processing": "\n\nPlease check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts. Then please provide the revised SOAP Note:",
         }
 
         self.docker_settings = {
@@ -509,3 +511,21 @@ class SettingsWindow():
         """
         self.main_window = window
 
+    def load_or_unload_model(self, old_model, new_model, old_use_local_llm, new_use_local_llm):
+        # Check if old model and new model are different if they are reload and make sure new model is checked.
+        if old_model != new_model and new_use_local_llm == 1:
+            ModelManager.unload_model()
+            thread = threading.Thread(target=ModelManager.setup_model, args=(self, self.main_window.root))
+            thread.start()
+            print("Reloading model")
+
+        # Load the model if check box is now selected
+        if old_use_local_llm == 0 and new_use_local_llm == 1:
+            thread = threading.Thread(target=ModelManager.setup_model, args=(self, self.main_window.root))
+            thread.start()
+            print("Loading model")
+
+        # Check if Local LLM was on and if turned off unload model.abs
+        if old_use_local_llm == 1 and new_use_local_llm == 0:
+            ModelManager.unload_model()
+            print("Unloading model")
