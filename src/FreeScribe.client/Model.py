@@ -104,7 +104,10 @@ class Model:
                 repeat_penalty=repeat_penalty,
                 echo=False
             )
-           
+
+            # reset the model tokens
+            self.model.reset()
+
             return response["choices"][0]["text"]
             
         except Exception as e:
@@ -121,7 +124,7 @@ class Model:
             "context_size": self.config["context_size"]
         }
 
-    def unload_model(self):
+    def close(self):
         """
         Unloads the model from GPU memory.
         """
@@ -191,7 +194,7 @@ class ModelManager:
                 
             model_path = f"./models/{model_to_use}"
             try:
-                ModelManager.local_model = Llama(model_path,
+                ModelManager.local_model = Model(model_path,
                     context_size=4096,
                     gpu_layers=gpu_layers,
                     main_gpu=0,
@@ -232,5 +235,7 @@ class ModelManager:
         the application.
         """
         if ModelManager.local_model is not None:
-            ModelManager.local_model.close()
+            ModelManager.local_model.model.close()
+            del ModelManager.local_model
             ModelManager.local_model = None
+            
