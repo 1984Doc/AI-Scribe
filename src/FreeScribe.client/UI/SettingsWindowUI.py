@@ -458,8 +458,8 @@ class SettingsWindowUI:
 
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
-            self.aiscribe_text.get("1.0", tk.END),
-            self.aiscribe2_text.get("1.0", tk.END),
+            self.aiscribe_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
+            self.aiscribe2_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
             self.settings_window,
             self.ssl_enable_var.get(),
             self.ssl_selfcert_var.get(),
