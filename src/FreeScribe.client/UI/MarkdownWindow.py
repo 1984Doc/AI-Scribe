@@ -1,4 +1,4 @@
-from tkinter import Toplevel
+from tkinter import Toplevel, messagebox
 import markdown as md
 import tkinter as tk
 from tkhtmlview import HTMLLabel
@@ -45,6 +45,7 @@ class MarkdownWindow:
         except FileNotFoundError:
           print(f"File not found: {file_path}")
           self.window.destroy()
+          messagebox.showerror("Error: File not found.")
           return
 
         html_label = HTMLLabel(self.window, html=content)
