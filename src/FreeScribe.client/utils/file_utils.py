@@ -1,7 +1,7 @@
 import os
 import sys
 
-def get_file_path(*file_names):
+def get_file_path(*file_names: str) -> str:
   """
   Get the full path to a file in the application directory.
 
