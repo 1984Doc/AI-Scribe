@@ -22,7 +22,7 @@ jobs:
           pip install -r client_requirements.txt
       - name: Run PyInstaller
         run: |
-          pyinstaller --add-data ".\src\FreeScribe.client\whisper-assets:whisper\assets" --name freescribe-client --noconsole .\src\FreeScribe.client\client.py
+          pyinstaller --add-data ".\src\FreeScribe.client\whisper-assets:whisper\assets" --name freescribe-client --icon=.\scripts\assets\logo.ico --noconsole .\src\FreeScribe.client\client.py
 
       - name: Set up NSIS
         uses: joncloud/makensis-action@1c9f4bf2ea0c771147db31a2f3a7f5d8705c0105 # v4.1 commit hash
