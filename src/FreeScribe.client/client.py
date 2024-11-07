@@ -41,7 +41,6 @@ from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
 from UI.LoadingWindow import LoadingWindow
-from Model import Model
 
 # GUI Setup
 root = tk.Tk()
