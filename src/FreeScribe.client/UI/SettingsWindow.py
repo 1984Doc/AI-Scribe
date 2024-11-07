@@ -169,9 +169,9 @@ class SettingsWindow():
             "Show Welcome Message": True,
             "Enable Scribe Template": False,
             "Use Pre-Processing": True,
-            "Use Post-Processing": True,
+            "Use Post-Processing": False, # Disabled for now causes unexcepted behaviour
             "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:",
-            "Post-Processing": "Please check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts.",
+            "Post-Processing": "Please check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts. Then please provide the revised SOAP Note:",
         }
 
         self.docker_settings = {
