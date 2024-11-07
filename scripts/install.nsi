@@ -34,7 +34,6 @@ Section "MainSection" SEC01
     ; Add files to the installer
     File /r "..\dist\freescribe-client\freescribe-client.exe"
     File /r "..\dist\freescribe-client\_internal"
-    File /r "..\src\FreeScribe.client\markdown"
 
     IfFileExists "$INSTDIR\settings.txt" +7
 

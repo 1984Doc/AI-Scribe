@@ -4,6 +4,7 @@ import UI.MainWindow as mw
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.MarkdownWindow import MarkdownWindow
 import os
+import sys
 
 class MainWindowUI:
     """
@@ -182,7 +183,12 @@ class MainWindowUI:
         self._show_md_content(self._get_file_path('welcome.md'), 'Welcome', True)
 
     def _get_file_path(self, *file_names):
-        return os.path.join('markdown', *file_names)
+        try:
+            base_path = sys._MEIPASS
+            return os.path.join(base_path, 'markdown', *file_names)
+        except AttributeError:
+            return os.path.join('markdown', *file_names)
+            
 
     
     def create_scribe_template(self, row=3, column=4, columnspan=3, pady=10, padx=10, sticky='nsew'):
