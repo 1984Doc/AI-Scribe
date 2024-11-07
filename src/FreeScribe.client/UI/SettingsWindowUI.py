@@ -444,7 +444,7 @@ class SettingsWindowUI:
             # If using local-llm and the model has changed, update the model (Unload old, load new)
             if self.settings.editable_settings["Use Local LLM"] and (self.settings.editable_settings["Model"] != self.get_selected_model()):
                 Model.unload_model()
-                Model.setup_model(self.settings, self.main_window.root, model=self.get_selected_model())
+                Model.setup_model(self.settings, self.main_window.root, model_file_name=self.get_selected_model())
 
             self.settings.editable_settings["Model"] = self.get_selected_model()
 
