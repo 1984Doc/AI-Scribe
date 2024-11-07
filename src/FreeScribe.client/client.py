@@ -41,6 +41,7 @@ from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
 from UI.LoadingWindow import LoadingWindow
+from Model import Model
 
 # GUI Setup
 root = tk.Tk()
@@ -584,7 +585,6 @@ def send_text_to_api(edited_text):
 
 def send_text_to_localmodel(edited_text):  
     # Send prompt to local model and get response
-    print(Model.local_model)
     if Model.local_model is None:
         Model.setup_model(app_settings=app_settings, root=root)
 
@@ -863,8 +863,7 @@ root.minsize(900, 400)
 
 #Wait for the UI root to be intialized then load the model. If using local llm.
 if app_settings.editable_settings["Use Local LLM"]:
-    root.after(100, lambda:(Model.setup_model(app_settings=app_settings, root=root)))
-    
+    root.after(100, lambda:(Model.setup_model(app_settings=app_settings, root=root)))  
 
 root.mainloop()
 

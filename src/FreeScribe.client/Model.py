@@ -44,7 +44,7 @@ class Model:
                 
             model_path = f"./models/{model_to_use}"
             try:
-                local_model = Model(model_path,
+                Model.local_model = Model(model_path,
                     context_size=4096,
                     gpu_layers=gpu_layers,
                     main_gpu=0,
@@ -150,6 +150,9 @@ class Model:
                 repeat_penalty=repeat_penalty,
                 echo=False
             )
+
+            print("prompt: ", prompt)   
+            print(response)
            
             return response["choices"][0]["text"]
             
