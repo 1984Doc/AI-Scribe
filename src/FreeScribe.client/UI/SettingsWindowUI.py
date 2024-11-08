@@ -24,6 +24,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from UI.Widgets.AudioMeter import AudioMeter
 import threading
+from utils.file_utils import get_file_path
 
 
 
@@ -79,6 +80,7 @@ class SettingsWindowUI:
         self.settings_window.minsize(600, 500)    # Set minimum window size
         self.settings_window.resizable(True, True)
         self.settings_window.grab_set()
+        self.settings_window.iconbitmap(get_file_path('assets','logo.ico'))
 
         self.main_frame = tk.Frame(self.settings_window)
         self.main_frame.pack(expand=True, fill='both')
