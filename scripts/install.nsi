@@ -65,6 +65,9 @@ Section "GGUF Installs" GGUF_INSTALLS
     CreateDirectory "$INSTDIR\models"
     SetOutPath "$INSTDIR\models"
 
+    ; Copy the license
+    File ".\assets\gemma_license.txt"
+
     ; install the gemma 2 q4
     inetc::get /TIMEOUT=30000 "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf?download=true" "$INSTDIR\models\gemma-2-2b-it-Q4_K_M.gguf" /END
 
@@ -97,7 +100,6 @@ SectionEnd
 
 ; Define the installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
-!insertmacro MUI_PAGE_LICENSE ".\assets\Gemma_License.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\freescribe-client.exe"
