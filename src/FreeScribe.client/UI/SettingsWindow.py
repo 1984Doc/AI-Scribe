@@ -23,6 +23,8 @@ from tkinter import ttk, messagebox
 import requests
 import numpy as np
 import pyaudio
+from Model import ModelManager
+import threading
 
 
 p = pyaudio.PyAudio()
@@ -94,6 +96,7 @@ class SettingsWindow():
         }
         self.llm_settings = {
             "Model Endpoint",
+            "Use Local LLM",
         }
 
         self.advanced_settings = {
@@ -117,8 +120,8 @@ class SettingsWindow():
             "frmttriminc",
             "frmtrmblln",
             "best_of",
+            "Use best_of",
             "Real Time Audio Length",
-            "Real Time Silence Length",
             "Enable Scribe Template",
             "Use Pre-Processing",
             "Use Post-Processing",
@@ -127,6 +130,8 @@ class SettingsWindow():
         self.editable_settings = {
             "Model": "gpt-4",
             "Model Endpoint": "https://api.openai.com/v1/",
+            "Use Local LLM": False,
+            "Architecture": "CPU",
             "use_story": False,
             "use_memory": False,
             "use_authors_note": False,
@@ -146,7 +151,8 @@ class SettingsWindow():
             "singleline": False,
             "frmttriminc": False,
             "frmtrmblln": False,
-            "best_of": 6,
+            "best_of": 2,
+            "Use best_of": False,
             "Local Whisper": False,
             "Whisper Endpoint": "https://localhost:2224/whisperaudio",
             "Whisper Server API Key": "None",
@@ -154,7 +160,7 @@ class SettingsWindow():
             "Real Time": False,
             "Real Time Audio Length": 5,
             "Real Time Silence Length": 1,
-            "Silence cut-off": 0.015,
+            "Silence cut-off": 0.035,
             "LLM Container Name": "llm-container-1",
             "LLM Caddy Container Name": "caddy-llm-container",
             "Whisper Container Name": "speech-container",
@@ -165,9 +171,9 @@ class SettingsWindow():
             "Show Welcome Message": True,
             "Enable Scribe Template": False,
             "Use Pre-Processing": True,
-            "Use Post-Processing": True,
-            "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:",
-            "Post-Processing": "Please check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts.",
+            "Use Post-Processing": False, # Disabled for now causes unexcepted behaviour
+            "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:\n\n",
+            "Post-Processing": "\n\nPlease check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts. Then please provide the revised SOAP Note:",
         }
 
         self.docker_settings = {
@@ -432,7 +438,7 @@ class SettingsWindow():
         }
 
         try:
-            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0)
+            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0, verify=not (self.SSL_SELFCERT and self.SSL_ENABLE))
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
             available_models = [model["id"] for model in models]
@@ -440,6 +446,7 @@ class SettingsWindow():
             return available_models
         except requests.RequestException as e:
             # messagebox.showerror("Error", f"Failed to fetch models: {e}. Please ensure your OpenAI API key is correct.") 
+            print(e)
             return ["Failed to load models", "Custom"]
 
     def update_models_dropdown(self, dropdown):
@@ -449,14 +456,21 @@ class SettingsWindow():
         This method fetches the available models from the AI Scribe service and updates
         the dropdown widget in the settings window with the new list of models.
         """
-        dropdown["values"] = []
-        dropdown.set("Loading models...")
-        models = self.get_available_models()
-        dropdown["values"] = models
-        if self.editable_settings["Model"] in models:
-            dropdown.set(self.editable_settings["Model"])
+        if self.editable_settings["Use Local LLM"]:
+            dropdown["values"] = ["Gemma-2-2b-it Q4 (Faster, less accurate)", "Gemma-2-2b-it Q8 (Slower, more accurate)"]
+            if self.editable_settings["Model"] not in ["Gemma-2-2b-it Q8 (Slower, more accurate)", "Gemma-2-2b-it Q4 (Faster, less accurate)"]:
+                dropdown.set("Gemma-2-2b-it Q4 (Faster, less accurate)")
+            else:
+                dropdown.set(self.editable_settings["Model"])
         else:
-            dropdown.set(models[0])
+            dropdown["values"] = []
+            dropdown.set("Loading models...")
+            models = self.get_available_models()
+            dropdown["values"] = models
+            if self.editable_settings["Model"] in models:
+                dropdown.set(self.editable_settings["Model"])
+            else:
+                dropdown.set(models[0])
         
 
     def load_settings_preset(self, preset_name, settings_class):
@@ -497,3 +511,21 @@ class SettingsWindow():
         """
         self.main_window = window
 
+    def load_or_unload_model(self, old_model, new_model, old_use_local_llm, new_use_local_llm):
+        # Check if old model and new model are different if they are reload and make sure new model is checked.
+        if old_model != new_model and new_use_local_llm == 1:
+            ModelManager.unload_model()
+            thread = threading.Thread(target=ModelManager.setup_model, args=(self, self.main_window.root))
+            thread.start()
+            print("Reloading model")
+
+        # Load the model if check box is now selected
+        if old_use_local_llm == 0 and new_use_local_llm == 1:
+            thread = threading.Thread(target=ModelManager.setup_model, args=(self, self.main_window.root))
+            thread.start()
+            print("Loading model")
+
+        # Check if Local LLM was on and if turned off unload model.abs
+        if old_use_local_llm == 1 and new_use_local_llm == 0:
+            ModelManager.unload_model()
+            print("Unloading model")

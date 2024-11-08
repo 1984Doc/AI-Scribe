@@ -36,6 +36,14 @@ Section "MainSection" SEC01
     File /r "..\dist\freescribe-client\_internal"
     File /r "..\src\FreeScribe.client\markdown"
 
+    IfFileExists "$INSTDIR\settings.txt" +7
+
+    ; Add default settings file
+    File "..\default_settings.txt"
+
+    ; Rename default_settings.txt to settings.txt
+    Rename "$INSTDIR\default_settings.txt" "$INSTDIR\settings.txt"
+
     ; add presets
     CreateDirectory "$INSTDIR\presets"
     SetOutPath "$INSTDIR\presets"
@@ -49,6 +57,26 @@ Section "MainSection" SEC01
 
     ; Create an uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
+SectionEnd
+
+Section "GGUF Installs" GGUF_INSTALLS
+    AddSize 4493079 ; Add the size in kilobyes for the models
+
+    CreateDirectory "$INSTDIR\models"
+    SetOutPath "$INSTDIR\models"
+
+    ; Copy the license
+    File ".\assets\gemma_license.txt"
+
+    ; install the gemma 2 q4
+    inetc::get /TIMEOUT=30000 "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf?download=true" "$INSTDIR\models\gemma-2-2b-it-Q4_K_M.gguf" /END
+
+
+    ; install the gemma 2 q8
+    inetc::get /TIMEOUT=30000 "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q8_0.gguf?download=true" "$INSTDIR\models\gemma-2-2b-it-Q8_0.gguf" /END
+
+    SetOutPath "$INSTDIR"
+
 SectionEnd
 
 ; Define the uninstaller section

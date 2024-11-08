@@ -49,6 +49,14 @@ class MarkdownWindow:
             self.window.protocol("WM_DELETE_WINDOW", 
                                lambda: self._on_close(var, callback))
 
+            # Add a close button at the bottom center
+            close_button = tk.Button(self.window, text="Close", command=lambda: self._on_close(var, callback))
+            close_button.pack(side=tk.BOTTOM)  # Extra padding for separation from the checkbox
+
+        # Add a close button at the bottom center
+        close_button = tk.Button(self.window, text="Close", command= self.window.destroy)
+        close_button.pack(side=tk.BOTTOM , pady=5)  # Extra padding for separation from the checkbox
+
         self.window.geometry("900x900")
         self.window.lift()
 

@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 import UI.MainWindow as mw
-import Tooltip as tt
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.MarkdownWindow import MarkdownWindow
 import os
@@ -48,7 +47,7 @@ class MainWindowUI:
     def create_docker_status_bar(self):
         """
         Create a Docker status bar to display the status of the LLM and Whisper containers.
-        Adds start and stop buttons for each container and tooltips for their status.
+        Adds start and stop buttons for each container.
         """
         
         if self.docker_status_bar is not None:
@@ -65,31 +64,20 @@ class MainWindowUI:
         # Add LLM container status label
         llm_status = tk.Label(self.docker_status_bar, text="LLM Container Status:", padx=10)
         llm_status.pack(side=tk.LEFT)
-        # Tooltip explaining the LLM container's purpose
-        tt.Tooltip(llm_status, text="The LLM container is essential for generating responses and creating the SOAP notes. This service must be running.")
 
         # Add status dot for LLM (default: red)
         llm_dot = tk.Label(self.docker_status_bar, text='●', fg='red')
         self.logic.container_manager.update_container_status_icon(llm_dot, self.app_settings.editable_settings["LLM Container Name"])
-
-
         llm_dot.pack(side=tk.LEFT)
-        # Tooltip explaining the color of the status dot (green = running, red = stopped)
-        tt.Tooltip(llm_dot, text="LLM Container Status: Green = Running, Red = Stopped")
 
         # Add Whisper server status label
         whisper_status = tk.Label(self.docker_status_bar, text="Whisper Server Status:", padx=10)
         whisper_status.pack(side=tk.LEFT)
-        # Tooltip explaining the Whisper server's purpose
-        tt.Tooltip(whisper_status, text="The whisper server is responsible for transcribing microphone input to text. This service must be running.")
 
         # Add status dot for Whisper (default: red)
         whisper_dot = tk.Label(self.docker_status_bar, text='●', fg='red')
         self.logic.container_manager.update_container_status_icon(whisper_dot, self.app_settings.editable_settings["Whisper Container Name"])
-        
         whisper_dot.pack(side=tk.LEFT)
-        # Tooltip explaining the color of the status dot (green = running, red = stopped)
-        tt.Tooltip(whisper_dot, text="Whisper Status: Green = Running, Red = Stopped")
 
         # Start button for Whisper container with a command to invoke the start method from logic
         start_whisper_button = tk.Button(self.docker_status_bar, text="Start Whisper", command=lambda: self.logic.start_whisper_container(whisper_dot, self.app_settings))
@@ -111,7 +99,6 @@ class MainWindowUI:
             self.enable_docker_ui()
         else:
             docker_status.config(text="(Docker not found)")
-            tt.Tooltip(docker_status, text="Docker is not installed or running on this system. Please ensure it is running before using its functionality")
             self.disable_docker_ui()
 
     def disable_docker_ui(self):

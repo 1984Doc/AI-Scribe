@@ -22,10 +22,9 @@ Classes:
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox
-import Tooltip as tt
 from UI.Widgets.AudioMeter import AudioMeter
 import threading
-
+from Model import Model, ModelManager
 
 
 class SettingsWindowUI:
@@ -224,8 +223,22 @@ class SettingsWindowUI:
                                 command=lambda: (self.save_settings(False), threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,)).start(), self.on_model_selection_change(None)), 
                                 width=4)
         refresh_button.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
-        tt.Tooltip(refresh_button, text="Refresh the list of available models")
+
         left_row += 1
+
+        #6. GPU OR CPU SELECTION (Right Column)
+        tk.Label(right_frame, text="Local Architecture").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
+        architecture_options = ["CPU", "CUDA (Nvidia GPU)"]
+        self.architecture_dropdown = ttk.Combobox(right_frame, values=architecture_options, width=15, state="readonly")
+        self.architecture_dropdown.current(architecture_options.index(self.settings.editable_settings["Architecture"]))
+
+        self.architecture_dropdown.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
+
+        
+        right_row += 1
+
+        # # Restart Local Llm Button
+        # restart_llm_button = ttk.Button(right_frame, text="Restart LLM", width=15, command=lambda: self.restart_local_llm())
 
         # 6. Self-Signed Cert (Right Column)
         self.ssl_selfcert_var = tk.IntVar(value=int(self.settings.SSL_SELFCERT))
@@ -426,16 +439,25 @@ class SettingsWindowUI:
         `save_settings` method of the `settings` object to save the settings.
         """
 
+        self.settings.load_or_unload_model(self.settings.editable_settings["Model"],
+            self.get_selected_model(),
+            self.settings.editable_settings["Use Local LLM"],
+            self.settings.editable_settings_entries["Use Local LLM"].get())
+
         if self.get_selected_model() not in ["Loading models...", "Failed to load models"]:
             self.settings.editable_settings["Model"] = self.get_selected_model()
 
-        self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", tk.END)
-        self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", tk.END)
+
+        self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", "end-1c") # end-1c removes the trailing newline
+        self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", "end-1c") # end-1c removes the trailing newline
+
+        # save architecture
+        self.settings.editable_settings["Architecture"] = self.architecture_dropdown.get()
 
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
-            self.aiscribe_text.get("1.0", tk.END),
-            self.aiscribe2_text.get("1.0", tk.END),
+            self.aiscribe_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
+            self.aiscribe2_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
             self.settings_window,
             self.ssl_enable_var.get(),
             self.ssl_selfcert_var.get(),
