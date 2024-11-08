@@ -81,26 +81,27 @@ class SettingsWindow():
         self.scribe_template_mapping = {}
 
         
-        self.general_settings = {
+        self.general_settings = [
             "Show Welcome Message"            
-        }
+        ]
 
-        self.whisper_settings = {
-            "Local Whisper",
+        self.whisper_settings = [
+            "Whisper Endpoint",
             "Whisper Server API Key",
             "Whisper Model",
+            "Local Whisper",
             "Real Time",
-            "Whisper Endpoint",
-        }
-        self.llm_settings = {
+        ]
+        self.llm_settings = [
             "Model Endpoint",
-        }
+        ]
 
-        self.advanced_settings = {
+        self.advanced_settings = [
             "use_story",
             "use_memory",
             "use_authors_note",
             "use_world_info",
+            "Enable Scribe Template",
             "max_context_length",
             "max_length",
             "rep_pen",
@@ -116,13 +117,10 @@ class SettingsWindow():
             "singleline",
             "frmttriminc",
             "frmtrmblln",
-            "best_of",
             "Use best_of",
+            "best_of",
             "Real Time Audio Length",
-            "Enable Scribe Template",
-            "Use Pre-Processing",
-            "Use Post-Processing",
-        }
+        ]
 
         self.editable_settings = {
             "Model": "gpt-4",
@@ -171,14 +169,14 @@ class SettingsWindow():
             "Post-Processing": "Please check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts.",
         }
 
-        self.docker_settings = {
+        self.docker_settings = [
             "LLM Container Name",
             "LLM Caddy Container Name",
             "Whisper Container Name",
             "Whisper Caddy Container Name",
             "Auto Shutdown Containers on Exit",
             "Use Docker Status Bar",
-        }
+        ]
 
         self.editable_settings_entries = {}
 
