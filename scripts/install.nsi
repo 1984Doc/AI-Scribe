@@ -35,6 +35,12 @@ Section "MainSection" SEC01
     File /r "..\dist\freescribe-client\freescribe-client.exe"
     File /r "..\dist\freescribe-client\_internal"
     File /r "..\src\FreeScribe.client\markdown"
+    
+    ;; upload llama_cpp to _internal folder
+    SetOutPath "$INSTDIR\_internal"
+    File /r "..\.venv\Lib\site-packages\llama_cpp"
+
+    SetOutPath "$INSTDIR"
 
     IfFileExists "$INSTDIR\settings.txt" +7
 
