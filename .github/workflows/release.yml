@@ -19,6 +19,11 @@ jobs:
         with:
           python-version: "3.10"
           architecture: "x64"
+
+      - name: Install cuda enabled llama_cpp
+        run: |
+          pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121
+
       - name: Install requirements
         run: |
           pip install -r client_requirements.txt
