@@ -183,14 +183,7 @@ class ModelManager:
             if app_settings.editable_settings["Architecture"] == "CUDA (Nvidia GPU)":
                 gpu_layers = -1
 
-            model_to_use = None
-            if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
-                model_to_use = "gemma-2-2b-it-Q8_0.gguf"
-            elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
-                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
-            else:
-                # Default to Q4
-                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
+            model_to_use = "gemma-2-2b-it-Q8_0.gguf"
                 
             model_path = f"./models/{model_to_use}"
             try:
@@ -224,6 +217,27 @@ class ModelManager:
                 loading_window.destroy()
 
         root.after(500, lambda: check_thread_status(thread, loading_window, root))
+
+
+    @staticmethod
+    def start_model_threaded(settings, root_window):
+        """
+        Start the model in a separate thread.
+
+        :param settings: Configuration settings for the model
+        :type settings: dict
+        :param root_window: The main application window reference
+        :type root_window: tkinter.Tk
+        :return: The created thread instance
+        :rtype: threading.Thread
+        
+        This method creates and starts a new thread that runs the model's start 
+        function with the provided settings and root window reference. The model
+        is accessed through ModelManager's local_model attribute.
+        """
+        thread = threading.Thread(target=ModelManager.setup_model, args=(settings, root_window))
+        thread.start()
+        return thread
 
     @staticmethod
     def unload_model():
