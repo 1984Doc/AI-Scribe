@@ -183,14 +183,7 @@ class ModelManager:
             if app_settings.editable_settings["Architecture"] == "CUDA (Nvidia GPU)":
                 gpu_layers = -1
 
-            model_to_use = None
-            if app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q8 (Slower, more accurate)":
-                model_to_use = "gemma-2-2b-it-Q8_0.gguf"
-            elif app_settings.editable_settings["Model"] == "Gemma-2-2b-it Q4 (Faster, less accurate)":
-                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
-            else:
-                # Default to Q4
-                model_to_use = "gemma-2-2b-it-Q4_K_M.gguf"
+            model_to_use = "gemma-2-2b-it-Q8_0.gguf"
                 
             model_path = f"./models/{model_to_use}"
             try:

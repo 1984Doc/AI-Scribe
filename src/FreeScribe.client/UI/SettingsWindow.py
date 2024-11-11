@@ -457,11 +457,8 @@ class SettingsWindow():
         the dropdown widget in the settings window with the new list of models.
         """
         if self.editable_settings["Use Local LLM"]:
-            dropdown["values"] = ["Gemma-2-2b-it Q4 (Faster, less accurate)", "Gemma-2-2b-it Q8 (Slower, more accurate)"]
-            if self.editable_settings["Model"] not in ["Gemma-2-2b-it Q8 (Slower, more accurate)", "Gemma-2-2b-it Q4 (Faster, less accurate)"]:
-                dropdown.set("Gemma-2-2b-it Q4 (Faster, less accurate)")
-            else:
-                dropdown.set(self.editable_settings["Model"])
+            dropdown["values"] = ["gemma-2-2b-it-Q8_0.gguf"]
+            dropdown.set("gemma-2-2b-it-Q8_0.gguf")
         else:
             dropdown["values"] = []
             dropdown.set("Loading models...")
@@ -511,21 +508,23 @@ class SettingsWindow():
         """
         self.main_window = window
 
-    def load_or_unload_model(self, old_model, new_model, old_use_local_llm, new_use_local_llm):
+    def load_or_unload_model(self, old_model, new_model, old_use_local_llm, new_use_local_llm, old_architecture, new_architecture):
         # Check if old model and new model are different if they are reload and make sure new model is checked.
         if old_model != new_model and new_use_local_llm == 1:
             ModelManager.unload_model()
             thread = threading.Thread(target=ModelManager.setup_model, args=(self, self.main_window.root))
             thread.start()
-            print("Reloading model")
 
         # Load the model if check box is now selected
         if old_use_local_llm == 0 and new_use_local_llm == 1:
             thread = threading.Thread(target=ModelManager.setup_model, args=(self, self.main_window.root))
             thread.start()
-            print("Loading model")
 
         # Check if Local LLM was on and if turned off unload model.abs
         if old_use_local_llm == 1 and new_use_local_llm == 0:
             ModelManager.unload_model()
-            print("Unloading model")
+
+        if old_architecture != new_architecture and new_use_local_llm == 1:
+            ModelManager.unload_model()
+            thread = threading.Thread(target=ModelManager.setup_model, args=(self, self.main_window.root))
+            thread.start()

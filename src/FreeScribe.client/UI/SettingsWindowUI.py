@@ -442,7 +442,9 @@ class SettingsWindowUI:
         self.settings.load_or_unload_model(self.settings.editable_settings["Model"],
             self.get_selected_model(),
             self.settings.editable_settings["Use Local LLM"],
-            self.settings.editable_settings_entries["Use Local LLM"].get())
+            self.settings.editable_settings_entries["Use Local LLM"].get(),
+            self.settings.editable_settings["Architecture"],
+            self.architecture_dropdown.get())
 
         if self.get_selected_model() not in ["Loading models...", "Failed to load models"]:
             self.settings.editable_settings["Model"] = self.get_selected_model()
