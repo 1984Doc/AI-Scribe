@@ -96,6 +96,7 @@ class SettingsWindow():
         ]
         self.llm_settings = [
             "Model Endpoint",
+            "Use Local LLM",
         ]
 
         self.advanced_settings = [
@@ -158,8 +159,9 @@ class SettingsWindow():
             "Real Time Audio Length": 5,
             "Real Time Silence Length": 1,
             "Silence cut-off": 0.035,
-            "LLM Container Name": "llm-container-1",
-            "LLM Caddy Container Name": "caddy-llm-container",
+            "LLM Container Name": "ollama",
+            "LLM Caddy Container Name": "caddy-ollama",
+            "LLM Authentication Container Name": "authentication-ollama",
             "Whisper Container Name": "speech-container",
             "Whisper Caddy Container Name": "caddy",
             "Auto Shutdown Containers on Exit": True,
@@ -176,6 +178,7 @@ class SettingsWindow():
         self.docker_settings = [
             "LLM Container Name",
             "LLM Caddy Container Name",
+            "LLM Authentication Container Name",
             "Whisper Container Name",
             "Whisper Caddy Container Name",
             "Auto Shutdown Containers on Exit",
