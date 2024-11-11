@@ -1,7 +1,8 @@
-from tkinter import Toplevel
+from tkinter import Toplevel, messagebox
 import markdown as md
 import tkinter as tk
 from tkhtmlview import HTMLLabel
+from utils.file_utils import get_file_path
 
 """
 A class to create a window displaying rendered Markdown content.
@@ -35,9 +36,17 @@ class MarkdownWindow:
         self.window.title(title)
         self.window.transient(parent)
         self.window.grab_set()
+        self.window.iconbitmap(get_file_path('assets','logo.ico'))
 
-        with open(file_path, "r") as file:
-            content = md.markdown(file.read(), extensions=["extra", "smarty"])
+        try:
+          with open(file_path, "r") as file:
+              content = md.markdown(file.read(), extensions=["extra", "smarty"])
+              
+        except FileNotFoundError:
+          print(f"File not found: {file_path}")
+          self.window.destroy()
+          messagebox.showerror("Error", "File not found")
+          return
 
         html_label = HTMLLabel(self.window, html=content)
         html_label.pack(fill="both", expand=True, padx=10, pady=10)
@@ -52,10 +61,10 @@ class MarkdownWindow:
             # Add a close button at the bottom center
             close_button = tk.Button(self.window, text="Close", command=lambda: self._on_close(var, callback))
             close_button.pack(side=tk.BOTTOM)  # Extra padding for separation from the checkbox
-
-        # Add a close button at the bottom center
-        close_button = tk.Button(self.window, text="Close", command= self.window.destroy)
-        close_button.pack(side=tk.BOTTOM , pady=5)  # Extra padding for separation from the checkbox
+        else:
+          # Add a close button at the bottom center
+          close_button = tk.Button(self.window, text="Close", command= self.window.destroy)
+          close_button.pack(side=tk.BOTTOM , pady=5)  # Extra padding for separation from the checkbox
 
         self.window.geometry("900x900")
         self.window.lift()
