@@ -235,7 +235,7 @@ class ModelManager:
         function with the provided settings and root window reference. The model
         is accessed through ModelManager's local_model attribute.
         """
-        thread = threading.Thread(target=ModelManager.local_model.model.start, args=(settings, root_window))
+        thread = threading.Thread(target=ModelManager.setup_model, args=(settings, root_window))
         thread.start()
         return thread
 
