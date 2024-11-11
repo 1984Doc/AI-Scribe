@@ -591,13 +591,13 @@ def send_text_to_localmodel(edited_text):
     while ModelManager.local_model is None:
         time.sleep(0.1)
 
-    response = ModelManager.local_model.generate_response(edited_text,
-    max_tokens=int(app_settings.editable_settings["max_length"]),
-    temperature=float(app_settings.editable_settings["temperature"]),
-    top_p=float(app_settings.editable_settings["top_p"]),
-    repeat_penalty=float(app_settings.editable_settings["rep_pen"]))
-
-    return response
+    return ModelManager.local_model.generate_response(
+        edited_text,
+        max_tokens=int(app_settings.editable_settings["max_length"]),
+        temperature=float(app_settings.editable_settings["temperature"]),
+        top_p=float(app_settings.editable_settings["top_p"]),
+        repeat_penalty=float(app_settings.editable_settings["rep_pen"]),
+    )
 
     
 
