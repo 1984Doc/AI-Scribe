@@ -591,15 +591,12 @@ def send_text_to_localmodel(edited_text):
     while ModelManager.local_model is None:
         time.sleep(0.1)
 
-    response = ModelManager.local_model.generate_response(edited_text,
+    return ModelManager.local_model.generate_response(edited_text,
     max_tokens=int(app_settings.editable_settings["max_length"]),
     temperature=float(app_settings.editable_settings["temperature"]),
     top_p=float(app_settings.editable_settings["top_p"]),
     repeat_penalty=float(app_settings.editable_settings["rep_pen"]))
-
-    return response
-
-    
+  
 
 
 def send_text_to_chatgpt(edited_text):  
@@ -608,29 +605,7 @@ def send_text_to_chatgpt(edited_text):
     else:
         return send_text_to_api(edited_text)
 
-
-def show_edit_transcription_popup(formatted_message):
-    popup = tk.Toplevel(root)
-    popup.title("Scrub PHI Prior to GPT")
-    text_area = scrolledtext.ScrolledText(popup, height=20, width=80)
-    text_area.pack(padx=10, pady=10)
-
-    scrubber = scrubadub.Scrubber()
-
-    scrubbed_message = scrubadub.clean(formatted_message)
-
-    pattern = r'\b\d{10}\b'     # Any 10 digit number, looks like OHIP
-    cleaned_message = re.sub(pattern,'{{OHIP}}',scrubbed_message)
-    text_area.insert(tk.END, cleaned_message)
-
-    def on_proceed():
-
-        loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait.")
-        global use_aiscribe
-        edited_text = text_area.get("1.0", tk.END).strip()
-        popup.destroy()
-        
-        def generate_note(formatted_message):
+def generate_note(formatted_message):
             try:
                 # If note generation is on
                 if use_aiscribe:
@@ -668,6 +643,28 @@ def show_edit_transcription_popup(formatted_message):
             finally:
                 loading_window.destroy()
 
+
+def show_edit_transcription_popup(formatted_message):
+    popup = tk.Toplevel(root)
+    popup.title("Scrub PHI Prior to GPT")
+    text_area = scrolledtext.ScrolledText(popup, height=20, width=80)
+    text_area.pack(padx=10, pady=10)
+
+    scrubber = scrubadub.Scrubber()
+
+    scrubbed_message = scrubadub.clean(formatted_message)
+
+    pattern = r'\b\d{10}\b'     # Any 10 digit number, looks like OHIP
+    cleaned_message = re.sub(pattern,'{{OHIP}}',scrubbed_message)
+    text_area.insert(tk.END, cleaned_message)
+
+    def on_proceed():
+
+        loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait.")
+        global use_aiscribe
+        edited_text = text_area.get("1.0", tk.END).strip()
+        popup.destroy()
+        
         thread = threading.Thread(target=generate_note, args=(formatted_message,))
         thread.start()
 
