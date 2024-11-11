@@ -218,6 +218,27 @@ class ModelManager:
 
         root.after(500, lambda: check_thread_status(thread, loading_window, root))
 
+
+    @staticmethod
+    def start_model_threaded(settings, root_window):
+        """
+        Start the model in a separate thread.
+
+        :param settings: Configuration settings for the model
+        :type settings: dict
+        :param root_window: The main application window reference
+        :type root_window: tkinter.Tk
+        :return: The created thread instance
+        :rtype: threading.Thread
+        
+        This method creates and starts a new thread that runs the model's start 
+        function with the provided settings and root window reference. The model
+        is accessed through ModelManager's local_model attribute.
+        """
+        thread = threading.Thread(target=ModelManager.local_model.model.start, args=(settings, root_window))
+        thread.start()
+        return thread
+
     @staticmethod
     def unload_model():
         """

@@ -512,13 +512,11 @@ class SettingsWindow():
         # Check if old model and new model are different if they are reload and make sure new model is checked.
         if old_model != new_model and new_use_local_llm == 1:
             ModelManager.unload_model()
-            thread = threading.Thread(target=ModelManager.setup_model, args=(self, self.main_window.root))
-            thread.start()
+            ModelManager.start_model_threaded(self, self.main_window.root)
 
         # Load the model if check box is now selected
         if old_use_local_llm == 0 and new_use_local_llm == 1:
-            thread = threading.Thread(target=ModelManager.setup_model, args=(self, self.main_window.root))
-            thread.start()
+            ModelManager.start_model_threaded(self, self.main_window.root)
 
         # Check if Local LLM was on and if turned off unload model.abs
         if old_use_local_llm == 1 and new_use_local_llm == 0:
@@ -526,5 +524,4 @@ class SettingsWindow():
 
         if old_architecture != new_architecture and new_use_local_llm == 1:
             ModelManager.unload_model()
-            thread = threading.Thread(target=ModelManager.setup_model, args=(self, self.main_window.root))
-            thread.start()
+            ModelManager.start_model_threaded(self, self.main_window.root)
