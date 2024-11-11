@@ -588,8 +588,9 @@ def send_text_to_localmodel(edited_text):
     if ModelManager.local_model is None:
         ModelManager.setup_model(app_settings=app_settings, root=root)
 
-    while ModelManager.local_model is None:
-        time.sleep(0.1)
+    model_ready = threading.Event()
+    if not model_ready.wait(timeout=30):
+        raise TimeoutError("Model initialization timed out after 30 seconds")
 
     return ModelManager.local_model.generate_response(edited_text,
     max_tokens=int(app_settings.editable_settings["max_length"]),
@@ -612,7 +613,7 @@ def generate_note(formatted_message):
                     # If pre-processing is enabled
                     if app_settings.editable_settings["Use Pre-Processing"]:
                         #Generate Facts List
-                        list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
+                        list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {formatted_message}")
                         
                         #Make a note from the facts
                         medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
@@ -625,7 +626,7 @@ def generate_note(formatted_message):
                             update_gui_with_response(medical_note)
 
                     else: # If pre-processing is not enabled thhen just generate the note
-                        medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
+                        medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {formatted_message} {app_settings.AISCRIBE2}")
 
                         if app_settings.editable_settings["Use Post-Processing"]:
                             post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
@@ -633,16 +634,16 @@ def generate_note(formatted_message):
                         else:
                             update_gui_with_response(medical_note)
                 else: # do not generate note just send text directly to AI 
-                    ai_response = send_text_to_chatgpt(edited_text)
+                    ai_response = send_text_to_chatgpt(formatted_message)
                     update_gui_with_response(ai_response)
+
+                return True
             except Exception as e:
                 #Logg
                 #TODO: Implement proper logging to system event logger
                 print(f"An error occurred: {e}")
                 display_text(f"An error occurred: {e}")
                 return False
-            finally:
-                return True
 
 
 def show_edit_transcription_popup(formatted_message):
@@ -666,7 +667,7 @@ def show_edit_transcription_popup(formatted_message):
         edited_text = text_area.get("1.0", tk.END).strip()
         popup.destroy()
         
-        thread = threading.Thread(target=generate_note, args=(formatted_message,))
+        thread = threading.Thread(target=generate_note, args=(edited_text,))
         thread.start()
 
         def check_thread_status(thread, loading_window):
