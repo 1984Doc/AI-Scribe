@@ -592,12 +592,15 @@ def send_text_to_localmodel(edited_text):
     if not model_ready.wait(timeout=30):
         raise TimeoutError("Model initialization timed out after 30 seconds")
 
-    return ModelManager.local_model.generate_response(edited_text,
-    max_tokens=int(app_settings.editable_settings["max_length"]),
-    temperature=float(app_settings.editable_settings["temperature"]),
-    top_p=float(app_settings.editable_settings["top_p"]),
-    repeat_penalty=float(app_settings.editable_settings["rep_pen"]))
-  
+    return ModelManager.local_model.generate_response(
+        edited_text,
+        max_tokens=int(app_settings.editable_settings["max_length"]),
+        temperature=float(app_settings.editable_settings["temperature"]),
+        top_p=float(app_settings.editable_settings["top_p"]),
+        repeat_penalty=float(app_settings.editable_settings["rep_pen"]),
+    )
+
+    
 
 
 def send_text_to_chatgpt(edited_text):  
