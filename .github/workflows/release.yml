@@ -22,7 +22,7 @@ jobs:
 
       - name: Install cuda enabled llama_cpp
         run: |
-          pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121
+          pip install --index-url https://abetlen.github.io/llama-cpp-python/whl/cu121 llama-cpp-python
 
       - name: Install requirements
         run: |
