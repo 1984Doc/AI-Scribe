@@ -68,10 +68,6 @@ Section "GGUF Installs" GGUF_INSTALLS
     ; Copy the license
     File ".\assets\gemma_license.txt"
 
-    ; install the gemma 2 q4
-    inetc::get /TIMEOUT=30000 "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf?download=true" "$INSTDIR\models\gemma-2-2b-it-Q4_K_M.gguf" /END
-
-
     ; install the gemma 2 q8
     inetc::get /TIMEOUT=30000 "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q8_0.gguf?download=true" "$INSTDIR\models\gemma-2-2b-it-Q8_0.gguf" /END
 
