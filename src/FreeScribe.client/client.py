@@ -640,8 +640,9 @@ def generate_note(formatted_message):
                 #TODO: Implement proper logging to system event logger
                 print(f"An error occurred: {e}")
                 display_text(f"An error occurred: {e}")
+                return False
             finally:
-                loading_window.destroy()
+                return True
 
 
 def show_edit_transcription_popup(formatted_message):
