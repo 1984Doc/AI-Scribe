@@ -23,7 +23,7 @@ from tkinter import ttk, messagebox
 import requests
 import numpy as np
 import pyaudio
-
+from utils.file_utils import get_resource_path
 
 p = pyaudio.PyAudio()
 
@@ -227,7 +227,7 @@ class SettingsWindow():
             tuple: A tuple containing the IPs, ports, SSL settings, and API key.
         """
         try:
-            with open(filename, 'r') as file:
+            with open(get_resource_path(filename), 'r') as file:
                 try:
                     settings = json.load(file)
                 except json.JSONDecodeError:
@@ -272,7 +272,7 @@ class SettingsWindow():
             "ssl_selfcert": str(self.SSL_SELFCERT),
             "api_style": self.API_STYLE
         }
-        with open('settings.txt', 'w') as file:
+        with open(get_resource_path('settings.txt'), 'w') as file:
             json.dump(settings, file)
 
     def save_settings(self, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
@@ -309,9 +309,9 @@ class SettingsWindow():
         self.AISCRIBE = aiscribe_text
         self.AISCRIBE2 = aiscribe2_text
 
-        with open('aiscribe.txt', 'w') as f:
+        with open(get_resource_path('aiscribe.txt'), 'w') as f:
             f.write(self.AISCRIBE)
-        with open('aiscribe2.txt', 'w') as f:
+        with open(get_resource_path('aiscribe2.txt'), 'w') as f:
             f.write(self.AISCRIBE2)
       
     def load_aiscribe_from_file(self):
@@ -322,7 +322,7 @@ class SettingsWindow():
         :rtype: str or None
         """
         try:
-            with open('aiscribe.txt', 'r') as f:
+            with open(get_resource_path('aiscribe.txt'), 'r') as f:
                 return f.read()
         except FileNotFoundError:
             return None
@@ -335,7 +335,7 @@ class SettingsWindow():
         :rtype: str or None
         """
         try:
-            with open('aiscribe2.txt', 'r') as f:
+            with open(get_resource_path('aiscribe2.txt'), 'r') as f:
                 return f.read()
         except FileNotFoundError:
             return None
@@ -399,9 +399,9 @@ class SettingsWindow():
         """
         try:
             # Open the files and immediately close them to clear their contents.
-            open('settings.txt', 'w').close()  
-            open('aiscribe.txt', 'w').close()
-            open('aiscribe2.txt', 'w').close()
+            open(get_resource_path('settings.txt'), 'w').close()  
+            open(get_resource_path('aiscribe.txt'), 'w').close()
+            open(get_resource_path('aiscribe2.txt'), 'w').close()
 
             # Display a message box informing the user of successful reset.
             messagebox.showinfo("Settings Reset", "Settings have been reset. Please restart.")
@@ -496,4 +496,3 @@ class SettingsWindow():
             window (MainWindow): The main window instance to set.
         """
         self.main_window = window
-
