@@ -589,9 +589,11 @@ def send_text_to_localmodel(edited_text):
     if ModelManager.local_model is None:
         ModelManager.setup_model(app_settings=app_settings, root=root)
 
-    model_ready = threading.Event()
-    if not model_ready.wait(timeout=30):
-        raise TimeoutError("Model initialization timed out after 30 seconds")
+        timer = 0
+        while ModelManager.local_model is None and timer < 30:
+            timer += 0.1
+            time.sleep(0.1)
+        
 
     return ModelManager.local_model.generate_response(
         edited_text,
