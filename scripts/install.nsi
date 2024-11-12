@@ -38,10 +38,11 @@ Section "MainSection" SEC01
     IfFileExists "$INSTDIR\settings.txt" +7
 
     ; Add default settings file
+    SetOutPath "$PROGRAMDATA\FreeScribe"
     File "..\default_settings.txt"
 
     ; Rename default_settings.txt to settings.txt
-    Rename "$INSTDIR\default_settings.txt" "$INSTDIR\settings.txt"
+    Rename "$PROGRAMDATA\FreeScribe\default_settings.txt" "$PROGRAMDATA\FreeScribe\settings.txt"
 
     ; add presets
     CreateDirectory "$INSTDIR\presets"
