@@ -40,39 +40,43 @@ class LoadingWindow:
         :param initial_text: Initial text to display
         :type initial_text: str
         """
+        try:
+            self.title = title
+            self.initial_text = initial_text
+            self.parent = parent
+            self.initial_text = initial_text
+            self.popup = tk.Toplevel(parent)
+            self.popup.title(title)
+            self.popup.geometry("200x100")
+            self.popup.iconbitmap(get_file_path('assets','logo.ico'))
 
-        self.title = title
-        self.initial_text = initial_text
-        self.parent = parent
-        self.initial_text = initial_text
-        self.popup = tk.Toplevel(parent)
-        self.popup.title(title)
-        self.popup.geometry("200x100")
-        self.popup.iconbitmap(get_file_path('assets','logo.ico'))
+            if parent:
+                # Center the popup window on the parent window
+                parent.update_idletasks()
+                x = parent.winfo_x() + (parent.winfo_width() - self.popup.winfo_reqwidth()) // 2
+                y = parent.winfo_y() + (parent.winfo_height() - self.popup.winfo_reqheight()) // 2
+                self.popup.geometry(f"+{x}+{y}")
+                self.popup.transient(parent)
+                
+                #disabled the window
+                parent.wm_attributes('-disabled', True)
 
-        if parent:
-            # Center the popup window on the parent window
-            parent.update_idletasks()
-            x = parent.winfo_x() + (parent.winfo_width() - self.popup.winfo_reqwidth()) // 2
-            y = parent.winfo_y() + (parent.winfo_height() - self.popup.winfo_reqheight()) // 2
-            self.popup.geometry(f"+{x}+{y}")
-            self.popup.transient(parent)
+            # Use label and progress bar instead of animated text
+            self.label = tk.Label(self.popup, text=initial_text)
+            self.label.pack(pady=(10,5))
+            self.progress = ttk.Progressbar(self.popup, mode='indeterminate')
+            self.progress.pack(padx=20, pady=(0,10), fill='x')
+            self.progress.start()
+
+            #Not Resizable
+            self.popup.resizable(False, False)
             
-            #disabled the window
-            parent.wm_attributes('-disabled', True)
-
-        # Use label and progress bar instead of animated text
-        self.label = tk.Label(self.popup, text=initial_text)
-        self.label.pack(pady=(10,5))
-        self.progress = ttk.Progressbar(self.popup, mode='indeterminate')
-        self.progress.pack(padx=20, pady=(0,10), fill='x')
-        self.progress.start()
-
-        #Not Resizable
-        self.popup.resizable(False, False)
-        
-        # Disable closing of the popup manually
-        self.popup.protocol("WM_DELETE_WINDOW", lambda: None)
+            # Disable closing of the popup manually
+            self.popup.protocol("WM_DELETE_WINDOW", lambda: None)
+        except Exception:
+            # enable the window on exception
+            parent.wm_attributes('-disabled', False)
+            
     
     
     def destroy(self):
