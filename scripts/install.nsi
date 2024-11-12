@@ -35,14 +35,18 @@ Section "MainSection" SEC01
     File /r "..\dist\freescribe-client\freescribe-client.exe"
     File /r "..\dist\freescribe-client\_internal"
 
-    IfFileExists "$INSTDIR\settings.txt" +7
+    IfFileExists "$COMMONPROGRAMDATA\FreeScribe\settings.txt" +12
+    CreateDirectory "$COMMONPROGRAMDATA\FreeScribe"
 
-    ; Add default settings file
-    SetOutPath "$PROGRAMDATA\FreeScribe"
+    ; Add default settings file to ProgramData
+    SetOutPath "$COMMONPROGRAMDATA\FreeScribe"
     File "..\default_settings.txt"
 
     ; Rename default_settings.txt to settings.txt
-    Rename "$PROGRAMDATA\FreeScribe\default_settings.txt" "$PROGRAMDATA\FreeScribe\settings.txt"
+    Rename "$COMMONPROGRAMDATA\FreeScribe\default_settings.txt" "$COMMONPROGRAMDATA\FreeScribe\settings.txt"
+
+    ; Set permissions on settings.txt to allow all users to modify it
+    AccessControl::GrantOnFile "$COMMONPROGRAMDATA\FreeScribe\settings.txt" "(S-1-1-0)" "FullAccess"
 
     ; add presets
     CreateDirectory "$INSTDIR\presets"
