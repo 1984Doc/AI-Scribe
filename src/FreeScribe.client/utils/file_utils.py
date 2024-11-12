@@ -38,9 +38,7 @@ def get_resource_path(filename: str) -> str:
     if hasattr(sys, '_MEIPASS'):
         # Running as a bundled executable
         programdata_path = get_programdata_path()
-        print(os.path.join(programdata_path, 'FreeScribe', filename))
         return os.path.join(programdata_path, 'FreeScribe', filename)
     else:
         # Running in development mode
-        print(os.path.join(os.path.abspath("."), filename))
         return os.path.join(os.path.abspath("."), filename)
