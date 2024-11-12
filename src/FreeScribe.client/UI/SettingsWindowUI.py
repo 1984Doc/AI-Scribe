@@ -117,33 +117,33 @@ class SettingsWindowUI:
 
 
     def add_scrollbar_to_frame(self, frame):
-            """
-            Adds a scrollbar to a given frame.
+        """
+        Adds a scrollbar to a given frame.
 
-            Args:
-                frame (tk.Frame): The frame to which the scrollbar will be added.
+        Args:
+            frame (tk.Frame): The frame to which the scrollbar will be added.
 
-            Returns:
-                tk.Frame: The scrollable frame.
-            """
-            canvas = tk.Canvas(frame)
-            scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
-            scrollable_frame = ttk.Frame(canvas)
+        Returns:
+            tk.Frame: The scrollable frame.
+        """
+        canvas = tk.Canvas(frame)
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
 
-            scrollable_frame.bind(
-                "<Configure>",
-                lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-            )
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
 
-            canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-            canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
 
-            canvas.pack(side="left", fill="both", expand=True)
-            scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
 
-            self.settings_window.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
+        self.settings_window.bind_all("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
 
-            return scrollable_frame
+        return scrollable_frame
 
     def create_whisper_settings(self):
         """
