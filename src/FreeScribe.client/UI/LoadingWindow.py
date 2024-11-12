@@ -20,8 +20,6 @@ class LoadingWindow:
     :type popup: tk.Toplevel
     :ivar popup_label: The label widget containing the animated text
     :type popup_label: tk.Label
-    :ivar animation_id: The identifier for the current animation timer
-    :type animation_id: str
     
     Example
     -------
@@ -59,6 +57,9 @@ class LoadingWindow:
             y = parent.winfo_y() + (parent.winfo_height() - self.popup.winfo_reqheight()) // 2
             self.popup.geometry(f"+{x}+{y}")
             self.popup.transient(parent)
+            
+            #disabled the window
+            parent.wm_attributes('-disabled', True)
 
         # Use label and progress bar instead of animated text
         self.label = tk.Label(self.popup, text=initial_text)
@@ -66,9 +67,6 @@ class LoadingWindow:
         self.progress = ttk.Progressbar(self.popup, mode='indeterminate')
         self.progress.pack(padx=20, pady=(0,10), fill='x')
         self.progress.start()
-
-        # Make it topmost window
-        self.popup.grab_set()
 
         #Not Resizable
         self.popup.resizable(False, False)
@@ -96,11 +94,9 @@ class LoadingWindow:
         >>> # Do some processing
         >>> popup.destroy()  # Properly clean up and close the window
         """
-        # Cancel any pending animation
-        if hasattr(self, 'animation_id'):
-            self.popup.after_cancel(self.animation_id)
-        
         # Destroy the window
         if self.popup:
+            #enable the window
+            self.parent.wm_attributes('-disabled', False)
             self.progress.stop()
             self.popup.destroy()
