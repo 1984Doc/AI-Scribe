@@ -34,9 +34,19 @@ class MainWindowUI:
         Load the main window of the application.
         This method initializes the main window components, including the menu bar.
         """
+        self._bring_to_focus()
         self._create_menu_bar()
         if (self.setting_window.settings.editable_settings['Show Welcome Message']):
             self._show_welcome_message()
+
+    def _bring_to_focus(self):
+        """
+        Bring the main window to focus.
+        """
+        self.root.lift()  # Lift the window to the top
+        self.root.attributes('-topmost', True)  # Set the window to be always on top
+        self.root.focus_force()  # Force focus on the window
+        self.root.after_idle(self.root.attributes, '-topmost', False)  # Reset the always on top attribute after idle
         
 
     def update_aiscribe_texts(self, event):
