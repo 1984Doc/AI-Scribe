@@ -4,7 +4,7 @@
 OutFile "..\dist\FreeScribeInstaller.exe"
 
 ; Define the default installation directory to AppData
-InstallDir "$APPDATA\FreeScribe"
+InstallDir "$PROGRAMFILES\FreeScribe"
 
 ; Define the name of the installer
 Name "FreeScribe"
