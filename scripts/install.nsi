@@ -21,8 +21,8 @@ VIAddVersionKey "FileDescription" "FreeScribe Installer"
 !define MUI_ICON ./assets/logo.ico
 
 ; Variables for checkboxes
-Var /GLOBAL CPU_CHECKBOX
-Var /GLOBAL NVIDIA_CHECKBOX
+Var /GLOBAL CPU_RADIO
+Var /GLOBAL NVIDIA_RADIO
 Var /GLOBAL SELECTED_OPTION
 
 ; Function to create a custom page with CPU/NVIDIA options
@@ -35,31 +35,31 @@ Function ARCHITECHTURE_SELECT
     ${EndIf}
 
     ; Text for selection instruction
-    ${NSD_CreateLabel} 0 0 100% 12u "Select an installation option (only one):"
+    ${NSD_CreateLabel} 0 0 100% 12u "Select an installation option:"
     Pop $0
 
-    ; Checkbox for CPU
-    ${NSD_CreateCheckbox} 10 15u 100% 10u "CPU"
-    Pop $CPU_CHECKBOX
+    ; Radio button for CPU (set as checked by default)
+    ${NSD_CreateRadioButton} 10 15u 100% 10u "CPU"
+    Pop $CPU_RADIO
+    ${NSD_Check} $CPU_RADIO ; Check CPU by default
+    StrCpy $SELECTED_OPTION "CPU" ; Initialize selected option to CPU
 
-    ; Checkbox for NVIDIA
-    ${NSD_CreateCheckbox} 10 30u 100% 10u "NVIDIA"
-    Pop $NVIDIA_CHECKBOX
+    ; Radio button for NVIDIA
+    ${NSD_CreateRadioButton} 10 30u 100% 10u "NVIDIA"
+    Pop $NVIDIA_RADIO
 
-    ; Register event handlers for mutually exclusive behavior
-    ${NSD_OnClick} $CPU_CHECKBOX OnCheckboxClick
-    ${NSD_OnClick} $NVIDIA_CHECKBOX OnCheckboxClick
+    ; Register event handlers for radio buttons
+    ${NSD_OnClick} $CPU_RADIO OnRadioClick
+    ${NSD_OnClick} $NVIDIA_RADIO OnRadioClick
 
     nsDialogs::Show
 FunctionEnd
 
-; Callback function to ensure only one checkbox is selected
-Function OnCheckboxClick
-    ${If} $0 == $CPU_CHECKBOX
-        ${NSD_SetState} $NVIDIA_CHECKBOX ${BST_UNCHECKED}
+; Callback function for radio button clicks
+Function OnRadioClick
+    ${If} $0 == $CPU_RADIO
         StrCpy $SELECTED_OPTION "CPU"
-    ${ElseIf} $0 == $NVIDIA_CHECKBOX
-        ${NSD_SetState} $CPU_CHECKBOX ${BST_UNCHECKED}
+    ${ElseIf} $0 == $NVIDIA_RADIO
         StrCpy $SELECTED_OPTION "NVIDIA"
     ${EndIf}
 FunctionEnd
@@ -79,12 +79,14 @@ Section "MainSection" SEC01
     ${If} $SELECTED_OPTION == "CPU"
         ; Add files to the installer
         File /r "..\dist\freescribe-client-cpu\freescribe-client-cpu.exe"
+        Rename "$INSTDIR\freescribe-client-cpu.exe" "$INSTDIR\freescribe-client.exe"
         File /r "..\dist\freescribe-client-cpu\_internal"
     ${EndIf}
 
     ${If} $SELECTED_OPTION == "NVIDIA"
         ; Add files to the installer
         File /r "..\dist\freescribe-client-nvidia\freescribe-client-nvidia.exe"
+        Rename "$INSTDIR\freescribe-client-nvidia.exe" "$INSTDIR\freescribe-client.exe"
         File /r "..\dist\freescribe-client-nvidia\_internal"
     ${EndIf}
 
