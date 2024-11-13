@@ -15,6 +15,22 @@ def get_file_path(*file_names: str) -> str:
     base = sys._MEIPASS if hasattr(sys, '_MEIPASS') else os.path.abspath('.')
     return os.path.join(base, *file_names)
 
+def get_resource_path(filename: str) -> str:
+    """
+    Get the path to the files. Use User data directory for bundled apps, otherwise use the current working directory.
+
+    :param filename: The name of the file.
+    :type filename: str
+    :return: The full path to the file.
+    :rtype: str
+    """
+    if hasattr(sys, '_MEIPASS'):
+        base = _get_user_data_dir()
+        return os.path.join(base, 'FreeScribe', filename)
+    else:
+        print(os.path.abspath(filename))
+        return os.path.abspath(filename)
+
 def _get_user_data_dir() -> str:
     """
     Get the user data directory for the current platform.
@@ -34,14 +50,3 @@ def _get_user_data_dir() -> str:
             path = os.path.expanduser("~/.local/share") 
         return self._append_app_name_and_version(path)
 
-def get_resource_path(filename: str) -> str:
-    """
-    Get the path to the files. Use User data directory for bundled apps, otherwise use the current working directory.
-
-    :param filename: The name of the file.
-    :type filename: str
-    :return: The full path to the file.
-    :rtype: str
-    """
-    base = _get_user_data_dir() if hasattr(sys, '_MEIPASS') else os.path.abspath('.')
-    return os.path.join(base, 'FreeScribe', filename)
