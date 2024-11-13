@@ -76,9 +76,17 @@ Section "MainSection" SEC01
     ; Set output path to the installation directory
     SetOutPath "$INSTDIR"
 
-    ; Add files to the installer
-    File /r "..\dist\freescribe-client\freescribe-client.exe"
-    File /r "..\dist\freescribe-client\_internal"
+    ${If} $SELECTED_OPTION == "CPU"
+        ; Add files to the installer
+        File /r "..\dist\freescribe-client-cpu\freescribe-client.exe"
+        File /r "..\dist\freescribe-client-cpu\_internal"
+    ${EndIf}
+
+    ${If} $SELECTED_OPTION == "NVIDIA"
+        ; Add files to the installer
+        File /r "..\dist\freescribe-client-nvidia\freescribe-client.exe"
+        File /r "..\dist\freescribe-client-nvidia\_internal"
+    ${EndIf}
 
     IfFileExists "$INSTDIR\settings.txt" +7
 
