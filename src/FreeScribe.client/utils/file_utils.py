@@ -11,10 +11,10 @@ def get_file_path(*file_names: str) -> str:
     :return: The full path to the file.
     :rtype: str
     """
-    base = _get_base_path(use_programdata=False)
-    return os.path.join(base, *file_names)  
+    base = _get_base_path(use_appdata=False)
+    return os.path.join(base, *file_names)
 
-def _get_programdata_path() -> str:
+def _get_appdata_path() -> str:
     """
     Get the path to the AppData directory using ctypes.
 
@@ -25,9 +25,9 @@ def _get_programdata_path() -> str:
     ctypes.windll.shell32.SHGetFolderPathW(None, 0x001a, None, 0, buf)
     return buf.value
 
-def _get_base_path(use_programdata: bool) -> str:
+def _get_base_path(use_appdata: bool) -> str:
     if hasattr(sys, '_MEIPASS'):
-        return _get_programdata_path() if use_programdata else sys._MEIPASS
+        return _get_appdata_path() if use_appdata else sys._MEIPASS
     return os.path.abspath(".")
 
 def get_resource_path(filename: str) -> str:
@@ -39,5 +39,5 @@ def get_resource_path(filename: str) -> str:
     :return: The full path to the file.
     :rtype: str
     """
-    base = _get_base_path(use_programdata=False)
+    base = _get_base_path(use_appdata=True)
     return os.path.join(base, 'FreeScribe', filename)
