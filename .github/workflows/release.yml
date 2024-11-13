@@ -19,19 +19,16 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: "3.10"
-          architecture: "x64"
+          architecture:
+            "x64"
 
-      - name: Install requirements
-        run: |
-          pip install -r client_requirements.txt
-
-      # Create CUDA-enabled executable
+            # Create CUDA-enabled executable
       - name: Install CUDA-enabled llama_cpp
         run: |
           pip install --index-url https://abetlen.github.io/llama-cpp-python/whl/cu121 --extra-index-url https://pypi.org/simple llama-cpp-python==v0.2.90
-      - name: Run PyInstaller for NVIDIA
+      - name: Install requirements
         run: |
-          pyinstaller --additional-hooks-dir=.\scripts\hooks --add-data ".\src\FreeScribe.client\whisper-assets:whisper\assets" --add-data ".\src\FreeScribe.client\markdown:markdown" --add-data ".\src\FreeScribe.client\assets:assets" --name freescribe-client-nvidia --icon=.\src\FreeScribe.client\assets\logo.ico --noconsole .\src\FreeScribe.client\client.py
+          pip install -r client_requirements.txt
       - name: Zip CUDA-enabled executable
         run: |
           Compress-Archive -Path dist\freescribe-client-nvidia -DestinationPath dist\freescribe-client-nvidia.zip
