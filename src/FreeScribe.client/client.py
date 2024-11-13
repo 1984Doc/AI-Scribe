@@ -635,7 +635,7 @@ def generate_note(formatted_message):
                         medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {formatted_message} {app_settings.AISCRIBE2}")
 
                         if app_settings.editable_settings["Use Post-Processing"]:
-                            post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
+                            post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
                             update_gui_with_response(post_processed_note)
                         else:
                             update_gui_with_response(medical_note)
