@@ -125,8 +125,6 @@ class SettingsWindow():
             "Use best_of",
             "best_of",
             "Real Time Audio Length",
-            "Use Pre-Processing",
-            "Use Post-Processing",
         ]
 
         self.editable_settings = {
