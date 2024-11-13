@@ -101,6 +101,9 @@ class SettingsWindowUI:
         self.notebook.add(self.advanced_frame, text="Advanced Settings")
         self.notebook.add(self.docker_settings_frame, text="Docker Settings")
 
+        self.settings_window.protocol("WM_DELETE_WINDOW", self.close_window)
+
+
         self.llm_settings_frame = self.add_scrollbar_to_frame(self.llm_settings_frame)
         self.whisper_settings_frame = self.add_scrollbar_to_frame(self.whisper_settings_frame)
         self.advanced_settings_frame = self.add_scrollbar_to_frame(self.advanced_frame)
@@ -112,6 +115,7 @@ class SettingsWindowUI:
         self.create_advanced_settings()
         self.create_docker_settings()
         self.create_buttons()
+
 
     def add_scrollbar_to_frame(self, frame):
         """
@@ -369,12 +373,6 @@ class SettingsWindowUI:
         self.aiscribe2_text.insert(tk.END, self.settings.AISCRIBE2)
         self.aiscribe2_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
-        # Pre-Processing Checkbox
-        row_idx += 1
-        preprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
-        preprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
-        self._create_checkbox(preprocess_frame, "Use Pre-Processing", "Use Pre-Processing", 0)
-
         # Pre-Processing Label and Text Area
         row_idx += 1
         self.preprocess_label = tk.Label(self.advanced_settings_frame, text="Pre-Processing")
@@ -384,12 +382,6 @@ class SettingsWindowUI:
         self.preprocess_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.preprocess_text.insert(tk.END, self.settings.editable_settings["Pre-Processing"])
         self.preprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
-
-        # Post-Processing Checkbox
-        row_idx += 1
-        postprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
-        postprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
-        self._create_checkbox(postprocess_frame, "Use Post-Processing", "Use Post-Processing", row_idx)
 
         # Post-Processing Label and Text Area
         row_idx += 1
@@ -433,7 +425,7 @@ class SettingsWindowUI:
         """
         tk.Button(self.main_frame, text="Save", command=self.save_settings, width=10).pack(side="right", padx=2, pady=5)
         tk.Button(self.main_frame, text="Default", width=10, command=self.reset_to_default).pack(side="right", padx=2, pady=5)
-        tk.Button(self.main_frame, text="Close", width=10, command=self.settings_window.destroy).pack(side="right", padx=2, pady=5)
+        tk.Button(self.main_frame, text="Close", width=10, command=self.close_window).pack(side="right", padx=2, pady=5)
 
     def save_settings(self, close_window=True):
         """
@@ -482,7 +474,7 @@ class SettingsWindowUI:
             self.main_window.destroy_scribe_template()
 
         if close_window:
-            self.settings_window.destroy()
+            self.close_window()
 
     def reset_to_default(self):
         """
@@ -538,3 +530,14 @@ class SettingsWindowUI:
         entry.insert(0, str(value))
         entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
         self.settings.editable_settings_entries[setting_name] = entry
+
+    def close_window(self):
+        """
+        Cleans up the settings window.
+
+        This method destroys the settings window and clears the settings entries.
+        """
+        self.settings_window.unbind_all("<MouseWheel>") # Unbind mouse wheel event causing errors
+        self.settings_window.unbind_all("<Configure>") # Unbind the configure event causing errors
+
+        self.settings_window.destroy()
