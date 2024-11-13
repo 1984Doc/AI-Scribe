@@ -26,6 +26,14 @@ def _get_appdata_path() -> str:
     return buf.value
 
 def _get_base_path(use_appdata: bool) -> str:
+    """
+    Get the base path for the files. Use AppData for bundled apps, otherwise use the current working directory.
+
+    :param use_appdata: Whether to use the AppData directory.
+    :type use_appdata: bool
+    :return: The base path for the files.
+    :rtype: str
+    """
     if hasattr(sys, '_MEIPASS'):
         return _get_appdata_path() if use_appdata else sys._MEIPASS
     return os.path.abspath(".")

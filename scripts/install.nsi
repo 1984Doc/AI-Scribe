@@ -38,7 +38,7 @@ Section "MainSection" SEC01
     IfFileExists "$APPDATA\FreeScribe\settings.txt" +9
     CreateDirectory "$APPDATA\FreeScribe"
 
-    ; Add default settings file to ProgramData
+    ; Add default settings file to AppData
     SetOutPath "$APPDATA\FreeScribe"
     File "..\default_settings.txt"
 
