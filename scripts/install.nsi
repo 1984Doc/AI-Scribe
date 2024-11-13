@@ -114,7 +114,7 @@ Section "MainSection" SEC01
 SectionEnd
 
 Section "GGUF Installs" GGUF_INSTALLS
-    AddSize 4493079 ; Add the size in kilobyes for the models
+    AddSize 2800000 ; Add the size in kilobyes for the models
 
     CreateDirectory "$INSTDIR\models"
     SetOutPath "$INSTDIR\models"
