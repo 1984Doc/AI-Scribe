@@ -96,22 +96,30 @@ class Model:
             Generated text response
         """
         try:
-            response = self.model.create_completion(
-                prompt,
+            # Generate response using the model
+
+            # Message template for chat completion
+            messages = [
+                {"role": "user", 
+                "content": prompt}
+            ]
+
+            response = self.model.create_chat_completion(
+                messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
                 top_p=top_p,
                 repeat_penalty=repeat_penalty,
-                echo=False
             )
 
             # reset the model tokens
             self.model.reset()
 
-            return response["choices"][0]["text"]
+            return response["choices"][0]["message"]["content"]
             
         except Exception as e:
-            print(f"GPU inference error: {str(e)}")
+            print(f"GPU inference error ({e.__class__.__name__}): {str(e)}")
+            return f"({e.__class__.__name__}): {str(e)}"
     
     def get_gpu_info(self) -> Dict[str, Any]:
         """
