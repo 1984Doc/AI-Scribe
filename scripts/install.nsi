@@ -78,13 +78,13 @@ Section "MainSection" SEC01
 
     ${If} $SELECTED_OPTION == "CPU"
         ; Add files to the installer
-        File /r "..\dist\freescribe-client-cpu\freescribe-client.exe"
+        File /r "..\dist\freescribe-client-cpu\freescribe-client-cpu.exe"
         File /r "..\dist\freescribe-client-cpu\_internal"
     ${EndIf}
 
     ${If} $SELECTED_OPTION == "NVIDIA"
         ; Add files to the installer
-        File /r "..\dist\freescribe-client-nvidia\freescribe-client.exe"
+        File /r "..\dist\freescribe-client-nvidia\freescribe-client-nvidia.exe"
         File /r "..\dist\freescribe-client-nvidia\_internal"
     ${EndIf}
 
