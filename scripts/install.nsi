@@ -100,8 +100,11 @@ SectionEnd
 !define MUI_FINISHPAGE_RUN "$INSTDIR\freescribe-client.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Run App now"
 !insertmacro MUI_PAGE_FINISH
-!insertmacro MUI_LANGUAGE English
 
 ; Define the uninstaller pages
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
+
+; Define the languages
+!insertmacro MUI_LANGUAGE English
