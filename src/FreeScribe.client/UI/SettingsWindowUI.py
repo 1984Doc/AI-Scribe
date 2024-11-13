@@ -24,6 +24,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from UI.Widgets.AudioMeter import AudioMeter
 import threading
+from Model import Model, ModelManager
 from utils.file_utils import get_file_path
 
 
@@ -100,6 +101,9 @@ class SettingsWindowUI:
         self.notebook.add(self.advanced_frame, text="Advanced Settings")
         self.notebook.add(self.docker_settings_frame, text="Docker Settings")
 
+        self.settings_window.protocol("WM_DELETE_WINDOW", self.close_window)
+
+
         self.llm_settings_frame = self.add_scrollbar_to_frame(self.llm_settings_frame)
         self.whisper_settings_frame = self.add_scrollbar_to_frame(self.whisper_settings_frame)
         self.advanced_settings_frame = self.add_scrollbar_to_frame(self.advanced_frame)
@@ -111,6 +115,7 @@ class SettingsWindowUI:
         self.create_advanced_settings()
         self.create_docker_settings()
         self.create_buttons()
+
 
     def add_scrollbar_to_frame(self, frame):
         """
@@ -225,7 +230,22 @@ class SettingsWindowUI:
                                 command=lambda: (self.save_settings(False), threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,)).start(), self.on_model_selection_change(None)), 
                                 width=4)
         refresh_button.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
+
         left_row += 1
+
+        #6. GPU OR CPU SELECTION (Right Column)
+        tk.Label(right_frame, text="Local Architecture").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
+        architecture_options = ["CPU", "CUDA (Nvidia GPU)"]
+        self.architecture_dropdown = ttk.Combobox(right_frame, values=architecture_options, width=15, state="readonly")
+        self.architecture_dropdown.current(architecture_options.index(self.settings.editable_settings["Architecture"]))
+
+        self.architecture_dropdown.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
+
+        
+        right_row += 1
+
+        # # Restart Local Llm Button
+        # restart_llm_button = ttk.Button(right_frame, text="Restart LLM", width=15, command=lambda: self.restart_local_llm())
 
         # 6. Self-Signed Cert (Right Column)
         self.ssl_selfcert_var = tk.IntVar(value=int(self.settings.SSL_SELFCERT))
@@ -417,7 +437,7 @@ class SettingsWindowUI:
         """
         tk.Button(self.main_frame, text="Save", command=self.save_settings, width=10).pack(side="right", padx=2, pady=5)
         tk.Button(self.main_frame, text="Default", width=10, command=self.reset_to_default).pack(side="right", padx=2, pady=5)
-        tk.Button(self.main_frame, text="Close", width=10, command=self.settings_window.destroy).pack(side="right", padx=2, pady=5)
+        tk.Button(self.main_frame, text="Close", width=10, command=self.close_window).pack(side="right", padx=2, pady=5)
 
     def save_settings(self, close_window=True):
         """
@@ -427,16 +447,27 @@ class SettingsWindowUI:
         `save_settings` method of the `settings` object to save the settings.
         """
 
+        self.settings.load_or_unload_model(self.settings.editable_settings["Model"],
+            self.get_selected_model(),
+            self.settings.editable_settings["Use Local LLM"],
+            self.settings.editable_settings_entries["Use Local LLM"].get(),
+            self.settings.editable_settings["Architecture"],
+            self.architecture_dropdown.get())
+
         if self.get_selected_model() not in ["Loading models...", "Failed to load models"]:
             self.settings.editable_settings["Model"] = self.get_selected_model()
 
-        self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", tk.END)
-        self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", tk.END)
+
+        self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", "end-1c") # end-1c removes the trailing newline
+        self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", "end-1c") # end-1c removes the trailing newline
+
+        # save architecture
+        self.settings.editable_settings["Architecture"] = self.architecture_dropdown.get()
 
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
-            self.aiscribe_text.get("1.0", tk.END),
-            self.aiscribe2_text.get("1.0", tk.END),
+            self.aiscribe_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
+            self.aiscribe2_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
             self.settings_window,
             self.ssl_enable_var.get(),
             self.ssl_selfcert_var.get(),
@@ -455,7 +486,7 @@ class SettingsWindowUI:
             self.main_window.destroy_scribe_template()
 
         if close_window:
-            self.settings_window.destroy()
+            self.close_window()
 
     def reset_to_default(self):
         """
@@ -511,3 +542,14 @@ class SettingsWindowUI:
         entry.insert(0, str(value))
         entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
         self.settings.editable_settings_entries[setting_name] = entry
+
+    def close_window(self):
+        """
+        Cleans up the settings window.
+
+        This method destroys the settings window and clears the settings entries.
+        """
+        self.settings_window.unbind_all("<MouseWheel>") # Unbind mouse wheel event causing errors
+        self.settings_window.unbind_all("<Configure>") # Unbind the configure event causing errors
+
+        self.settings_window.destroy()
