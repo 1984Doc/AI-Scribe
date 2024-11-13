@@ -18,6 +18,7 @@ WhisperAudio, and OpenAI services.
 """
 
 import json
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 import requests
@@ -195,6 +196,7 @@ class SettingsWindow():
         self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
 
         self.get_dropdown_values_and_mapping()
+        self._create_settings_and_aiscribe_if_not_exist()
 
     def get_dropdown_values_and_mapping(self):
         """
@@ -528,3 +530,16 @@ class SettingsWindow():
         if old_architecture != new_architecture and new_use_local_llm == 1:
             ModelManager.unload_model()
             ModelManager.start_model_threaded(self, self.main_window.root)
+
+    def _create_settings_and_aiscribe_if_not_exist(self):
+        if not os.path.exists(get_resource_path('settings.txt')):
+            print("Settings file not found. Creating default settings file.")
+            self.save_settings_to_file()
+        if not os.path.exists(get_resource_path('aiscribe.txt')):
+            print("AIScribe file not found. Creating default AIScribe file.")
+            with open(get_resource_path('aiscribe.txt'), 'w') as f:
+                f.write(self.AISCRIBE)
+        if not os.path.exists(get_resource_path('aiscribe2.txt')):
+            print("AIScribe2 file not found. Creating default AIScribe2 file.")
+            with open(get_resource_path('aiscribe2.txt'), 'w') as f:
+                f.write(self.AISCRIBE2)
