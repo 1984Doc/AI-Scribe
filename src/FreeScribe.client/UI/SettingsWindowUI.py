@@ -391,6 +391,13 @@ class SettingsWindowUI:
         self.preprocess_text.insert(tk.END, self.settings.editable_settings["Pre-Processing"])
         self.preprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
+        # Post-Processing Checkbox
+        row_idx += 1
+
+        preprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
+        preprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
+        self._create_checkbox(preprocess_frame, "Use Post-Processing", "Use Post-Processing", 0)
+
         # Post-Processing Label and Text Area
         row_idx += 1
         self.postprocess_label = tk.Label(self.advanced_settings_frame, text="Post-Processing")
