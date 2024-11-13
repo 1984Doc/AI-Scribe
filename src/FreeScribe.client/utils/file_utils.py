@@ -28,7 +28,6 @@ def get_resource_path(filename: str) -> str:
         base = _get_user_data_dir()
         return os.path.join(base, 'FreeScribe', filename)
     else:
-        # print(os.path.abspath(filename))
         return os.path.abspath(filename)
 
 def _get_user_data_dir() -> str:
