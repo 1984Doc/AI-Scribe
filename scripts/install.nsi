@@ -4,7 +4,7 @@
 OutFile "..\dist\FreeScribeInstaller.exe"
 
 ; Define the default installation directory to AppData
-InstallDir "$APPDATA\FreeScribe"
+InstallDir "$PROGRAMFILES\FreeScribe"
 
 ; Define the name of the installer
 Name "FreeScribe"
@@ -35,13 +35,15 @@ Section "MainSection" SEC01
     File /r "..\dist\freescribe-client\freescribe-client.exe"
     File /r "..\dist\freescribe-client\_internal"
 
-    IfFileExists "$INSTDIR\settings.txt" +7
+    IfFileExists "$APPDATA\FreeScribe\settings.txt" +9
+    CreateDirectory "$APPDATA\FreeScribe"
 
-    ; Add default settings file
+    ; Add default settings file to AppData
+    SetOutPath "$APPDATA\FreeScribe"
     File "..\default_settings.txt"
 
     ; Rename default_settings.txt to settings.txt
-    Rename "$INSTDIR\default_settings.txt" "$INSTDIR\settings.txt"
+    Rename "$APPDATA\FreeScribe\default_settings.txt" "$APPDATA\FreeScribe\settings.txt"
 
     ; add presets
     CreateDirectory "$INSTDIR\presets"
