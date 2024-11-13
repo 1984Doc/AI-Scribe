@@ -1,4 +1,5 @@
 !include "MUI2.nsh"
+!include "LogicLib.nsh"
 
 ; Define the name of the installer
 OutFile "..\dist\FreeScribeInstaller.exe"
@@ -19,6 +20,50 @@ VIAddVersionKey "FileDescription" "FreeScribe Installer"
 ; Define the logo image
 !define MUI_ICON ./assets/logo.ico
 
+; Variables for checkboxes
+Var /GLOBAL CPU_CHECKBOX
+Var /GLOBAL NVIDIA_CHECKBOX
+Var /GLOBAL SELECTED_OPTION
+
+; Function to create a custom page with CPU/NVIDIA options
+Function ARCHITECHTURE_SELECT
+    nsDialogs::Create 1018
+    Pop $0
+
+    ${If} $0 == error
+        Abort
+    ${EndIf}
+
+    ; Text for selection instruction
+    ${NSD_CreateLabel} 0 0 100% 12u "Select an installation option (only one):"
+    Pop $0
+
+    ; Checkbox for CPU
+    ${NSD_CreateCheckbox} 10 15u 100% 10u "CPU"
+    Pop $CPU_CHECKBOX
+
+    ; Checkbox for NVIDIA
+    ${NSD_CreateCheckbox} 10 30u 100% 10u "NVIDIA"
+    Pop $NVIDIA_CHECKBOX
+
+    ; Register event handlers for mutually exclusive behavior
+    ${NSD_OnClick} $CPU_CHECKBOX OnCheckboxClick
+    ${NSD_OnClick} $NVIDIA_CHECKBOX OnCheckboxClick
+
+    nsDialogs::Show
+FunctionEnd
+
+; Callback function to ensure only one checkbox is selected
+Function OnCheckboxClick
+    ${If} $0 == $CPU_CHECKBOX
+        ${NSD_SetState} $NVIDIA_CHECKBOX ${BST_UNCHECKED}
+        StrCpy $SELECTED_OPTION "CPU"
+    ${ElseIf} $0 == $NVIDIA_CHECKBOX
+        ${NSD_SetState} $CPU_CHECKBOX ${BST_UNCHECKED}
+        StrCpy $SELECTED_OPTION "NVIDIA"
+    ${EndIf}
+FunctionEnd
+
 ; Function to show message box on finish
 Function .onInstSuccess
     ; Check if silent, if is silent skip message box prompt
@@ -31,9 +76,17 @@ Section "MainSection" SEC01
     ; Set output path to the installation directory
     SetOutPath "$INSTDIR"
 
-    ; Add files to the installer
-    File /r "..\dist\freescribe-client\freescribe-client.exe"
-    File /r "..\dist\freescribe-client\_internal"
+    ${If} $SELECTED_OPTION == "CPU"
+        ; Add files to the installer
+        File /r "..\dist\freescribe-client-cpu\freescribe-client.exe"
+        File /r "..\dist\freescribe-client-cpu\_internal"
+    ${EndIf}
+
+    ${If} $SELECTED_OPTION == "NVIDIA"
+        ; Add files to the installer
+        File /r "..\dist\freescribe-client-nvidia\freescribe-client.exe"
+        File /r "..\dist\freescribe-client-nvidia\_internal"
+    ${EndIf}
 
     IfFileExists "$INSTDIR\settings.txt" +7
 
@@ -95,6 +148,7 @@ SectionEnd
 
 ; Define the installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
+Page Custom ARCHITECHTURE_SELECT
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\freescribe-client.exe"
