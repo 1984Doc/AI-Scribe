@@ -107,15 +107,8 @@ Section "MainSection" SEC01
         File /r "..\dist\freescribe-client-nvidia\_internal"
     ${EndIf}
 
-    IfFileExists "$APPDATA\FreeScribe\settings.txt" +9
+    IfFileExists "$APPDATA\FreeScribe\settings.txt" +2
     CreateDirectory "$APPDATA\FreeScribe"
-
-    ; Add default settings file to AppData
-    SetOutPath "$APPDATA\FreeScribe"
-    File "..\default_settings.txt"
-
-    ; Rename default_settings.txt to settings.txt
-    Rename "$APPDATA\FreeScribe\default_settings.txt" "$APPDATA\FreeScribe\settings.txt"
 
     ; add presets
     CreateDirectory "$INSTDIR\presets"
