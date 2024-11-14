@@ -27,6 +27,8 @@ Var /GLOBAL SELECTED_OPTION
 
 ; Function to create a custom page with CPU/NVIDIA options
 Function ARCHITECHTURE_SELECT
+    !insertmacro MUI_HEADER_TEXT "Architecture Selection" "Choose your preferred installation architecture based on your hardware"
+
     nsDialogs::Create 1018
     Pop $0
 
@@ -34,21 +36,34 @@ Function ARCHITECHTURE_SELECT
         Abort
     ${EndIf}
 
-    ; Text for selection instruction
-    ${NSD_CreateLabel} 0 0 100% 12u "Select an installation option:"
+    ; Main instruction text for architecture selection
+    ${NSD_CreateLabel} 0 0 100% 12u "Choose your preferred installation architecture based on your hardware:"
     Pop $0
 
-    ; Radio button for CPU (set as checked by default)
+    ; Radio button for CPU
     ${NSD_CreateRadioButton} 10 15u 100% 10u "CPU"
     Pop $CPU_RADIO
-    ${NSD_Check} $CPU_RADIO ; Check CPU by default
-    StrCpy $SELECTED_OPTION "CPU" ; Initialize selected option to CPU
+    ${NSD_Check} $CPU_RADIO
+    StrCpy $SELECTED_OPTION "CPU"
+
+    ; CPU explanation text (grey with padding)
+    ${NSD_CreateLabel} 20 25u 100% 20u "Recommended for most users. Runs on any modern processor and provides good performance for general use."
+    Pop $0
+    SetCtlColors $0 808080 transparent
 
     ; Radio button for NVIDIA
-    ${NSD_CreateRadioButton} 10 30u 100% 10u "NVIDIA"
+    ${NSD_CreateRadioButton} 10 55u 100% 10u "NVIDIA"
     Pop $NVIDIA_RADIO
 
-    ; Register event handlers for radio buttons
+    ; NVIDIA explanation text (grey with padding)
+    ${NSD_CreateLabel} 20 65u 100% 30u "Choose this option if you have an NVIDIA GPU. Provides accelerated performance. Only select if you have a Nvidia GPU installed."
+    Pop $0
+    SetCtlColors $0 808080 transparent
+
+    ; Bottom padding (10u of space)
+    ${NSD_CreateLabel} 0 95u 100% 10u ""
+    Pop $0
+
     ${NSD_OnClick} $CPU_RADIO OnRadioClick
     ${NSD_OnClick} $NVIDIA_RADIO OnRadioClick
 
