@@ -107,8 +107,6 @@ Section "MainSection" SEC01
         File /r "..\dist\freescribe-client-nvidia\_internal"
     ${EndIf}
 
-    IfFileExists "$APPDATA\FreeScribe\settings.txt" +2
-    CreateDirectory "$APPDATA\FreeScribe"
 
     ; add presets
     CreateDirectory "$INSTDIR\presets"
