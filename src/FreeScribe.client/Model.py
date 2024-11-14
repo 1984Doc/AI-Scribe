@@ -72,6 +72,7 @@ class Model:
                 "n_batch": n_batch
             }
         except Exception as e:
+            self.model = None
             raise e
         
     def generate_response(
@@ -141,7 +142,8 @@ class Model:
     
     def __del__(self):
         """Cleanup GPU memory on deletion"""
-        self.model.close()
+        if self.model is not None:
+            self.model.close()
         self.model = None
 
 class ModelManager:
