@@ -106,10 +106,8 @@ class LoadingWindow:
                 self.on_cancel()
             except Exception:
                 self.destroy()
-                
-        self.destroy()
 
-        
+        self.destroy()
     
     def destroy(self):
         """
