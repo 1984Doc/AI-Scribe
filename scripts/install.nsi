@@ -150,11 +150,9 @@ SectionEnd
 
 ; Define the uninstaller section
 Section "Uninstall"
-    ; Remove files
-    Delete "$INSTDIR\*"
 
-    ; Remove the installation directory
-    RMDir "$INSTDIR"
+    ; Remove the installation directory and all its contents
+    RMDir /r "$INSTDIR"
 
     ; Remove the start menu shortcut
     Delete "$SMPROGRAMS\FreeScribe\FreeScribe.lnk"
