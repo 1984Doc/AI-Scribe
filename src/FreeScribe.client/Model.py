@@ -72,7 +72,8 @@ class Model:
                 "n_batch": n_batch
             }
         except Exception as e:
-            raise e
+            messagebox.showerror("Model Error", f"Model failed to load. Please ensure you have a valid model selected in the settings. Currently trying to load: {os.path.abspath(model_path)}. Error received ({e.__class__.__name__}): {str(e)}")
+            return None
         
     def generate_response(
         self,
