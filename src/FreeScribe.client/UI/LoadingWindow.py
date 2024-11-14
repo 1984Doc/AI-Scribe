@@ -102,8 +102,14 @@ class LoadingWindow:
         """
         self.cancelled = True
         if callable(self.on_cancel):
-            self.on_cancel()
+            try:
+                self.on_cancel()
+            except Exception:
+                self.destroy()
+                
         self.destroy()
+
+        
     
     def destroy(self):
         """
