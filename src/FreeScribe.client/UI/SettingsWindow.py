@@ -132,7 +132,6 @@ class SettingsWindow():
 
         self.adv_general_settings = [
             "Enable Scribe Template",
-            
         ]
 
         self.editable_settings = {
