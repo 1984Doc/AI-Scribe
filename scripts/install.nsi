@@ -1,5 +1,6 @@
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
+!include "nsProcess.nsh"
 
 ; Define the name of the installer
 OutFile "..\dist\FreeScribeInstaller.exe"
@@ -88,24 +89,37 @@ Function .onInstSuccess
     MessageBox MB_OK "Installation completed successfully! Please note upon first launch start time may be slow. Please wait for the program to open!"
 FunctionEnd
 
+; Checks on installer start
+Function .onInit
+    nsExec::ExecToStack 'cmd /c tasklist /FI "IMAGENAME eq freescribe-client.exe" /NH | find /I "freescribe-client.exe" > nul'
+    Pop $0 ; Return value
+
+    ; Check if the process is running
+    ${If} $0 == 0
+        MessageBox MB_OK "FreeScribe is currently running. Please close the application before installing. Once closed please restart the installer."
+        Abort
+    ${EndIf}
+FunctionEnd
+
+
 ; Define the section of the installer
 Section "MainSection" SEC01
     ; Set output path to the installation directory
     SetOutPath "$INSTDIR"
 
-    ${If} $SELECTED_OPTION == "CPU"
-        ; Add files to the installer
-        File /r "..\dist\freescribe-client-cpu\freescribe-client-cpu.exe"
-        Rename "$INSTDIR\freescribe-client-cpu.exe" "$INSTDIR\freescribe-client.exe"
-        File /r "..\dist\freescribe-client-cpu\_internal"
-    ${EndIf}
+    ; ${If} $SELECTED_OPTION == "CPU"
+    ;     ; Add files to the installer
+    ;     File /r "..\dist\freescribe-client-cpu\freescribe-client-cpu.exe"
+    ;     Rename "$INSTDIR\freescribe-client-cpu.exe" "$INSTDIR\freescribe-client.exe"
+    ;     File /r "..\dist\freescribe-client-cpu\_internal"
+    ; ${EndIf}
 
-    ${If} $SELECTED_OPTION == "NVIDIA"
-        ; Add files to the installer
-        File /r "..\dist\freescribe-client-nvidia\freescribe-client-nvidia.exe"
-        Rename "$INSTDIR\freescribe-client-nvidia.exe" "$INSTDIR\freescribe-client.exe"
-        File /r "..\dist\freescribe-client-nvidia\_internal"
-    ${EndIf}
+    ; ${If} $SELECTED_OPTION == "NVIDIA"
+    ;     ; Add files to the installer
+    ;     File /r "..\dist\freescribe-client-nvidia\freescribe-client-nvidia.exe"
+    ;     Rename "$INSTDIR\freescribe-client-nvidia.exe" "$INSTDIR\freescribe-client.exe"
+    ;     File /r "..\dist\freescribe-client-nvidia\_internal"
+    ; ${EndIf}
 
 
     ; add presets
