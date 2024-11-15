@@ -323,14 +323,6 @@ class SettingsWindowUI:
 
     def create_advanced_settings(self):
         """Creates the advanced settings UI elements with a structured layout."""
-        def create_section_header(text, row, text_colour="black"):
-            ttk.Label(
-                self.advanced_settings_frame,
-                text=text,
-                font=("TkDefaultFont", 10, "bold"),
-                foreground=text_colour
-            ).grid(row=row, column=0, columnspan=2, padx=10, pady=(5 if text.startswith("⚠️") else 0, 10 if text.startswith("⚠️") else 0), sticky="w")
-            return row + 1
 
         def create_settings_columns(settings, row):
             left_frame = ttk.Frame(self.advanced_settings_frame)
@@ -340,32 +332,23 @@ class SettingsWindowUI:
             self.create_editable_settings_col(left_frame, right_frame, 0, 0, settings)
             return row + 1
 
-        def create_text_area(label_text, text_content, row):
-            tk.Label(self.advanced_settings_frame, text=label_text).grid(
-                row=row, column=0, padx=10, pady=5, sticky="w")
-            row += 1
-            text_area = tk.Text(self.advanced_settings_frame, height=10, width=50)
-            text_area.insert(tk.END, text_content)
-            text_area.grid(row=row, column=0, columnspan=2, padx=10, pady=5, sticky="w")
-            return text_area, row + 1
-
         def create_processing_section(label_text, setting_key, text_content, row):
             frame = tk.Frame(self.advanced_settings_frame, width=800)
             frame.grid(row=row, column=0, padx=10, pady=0, sticky="nw")
             self._create_checkbox(frame, f"Use {label_text}", f"Use {label_text}", 0)
             row += 1
             
-            text_area, row = create_text_area(label_text, text_content, row)
+            text_area, row = self._create_text_area(label_text, text_content, row)
             return text_area, row
 
-        row = create_section_header("⚠️ Advanced Settings (For Advanced Users Only)", 0, text_colour="red")
+        row = self._create_section_header("⚠️ Advanced Settings (For Advanced Users Only)", 0, text_colour="red")
         
         # General Settings
-        row = create_section_header("General Settings", row, text_colour="black")
+        row = self._create_section_header("General Settings", row, text_colour="black")
         row = create_settings_columns(self.settings.adv_general_settings, row)
 
         # Whisper Settings
-        row = create_section_header("Whisper Settings", row, text_colour="black")
+        row = self._create_section_header("Whisper Settings", row, text_colour="black")
         left_frame = ttk.Frame(self.advanced_settings_frame)
         left_frame.grid(row=row, column=0, padx=10, pady=5, sticky="nw")
         right_frame = ttk.Frame(self.advanced_settings_frame)
@@ -381,13 +364,13 @@ class SettingsWindowUI:
         row += 1
 
         # AI Settings
-        row = create_section_header("AI Settings", row, text_colour="black")
+        row = self._create_section_header("AI Settings", row, text_colour="black")
         row = create_settings_columns(self.settings.adv_ai_settings, row)
         
         # Prompting Settings
-        row = create_section_header("Prompting Settings", row, text_colour="black")
-        self.aiscribe_text, row = create_text_area("Pre Prompting", self.settings.AISCRIBE, row)
-        self.aiscribe2_text, row = create_text_area("Post Prompting", self.settings.AISCRIBE2, row)
+        row = self._create_section_header("Prompting Settings", row, text_colour="black")
+        self.aiscribe_text, row = self._create_text_area("Pre Prompting", self.settings.AISCRIBE, row)
+        self.aiscribe2_text, row = self._create_text_area("Post Prompting", self.settings.AISCRIBE2, row)
         
         # Processing Sections
         self.preprocess_text, row = create_processing_section(
@@ -550,6 +533,48 @@ class SettingsWindowUI:
         entry.insert(0, str(value))
         entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
         self.settings.editable_settings_entries[setting_name] = entry
+
+    def _create_section_header(self, text, row, text_colour="black"):
+        """
+        Creates a section header label in the advanced settings frame.
+        
+        Args:
+            text (str): Text to display in the header
+            row (int): Grid row position to place the header
+            text_colour (str): Color of header text (default "black")
+            
+        Returns:
+            int: Next available grid row number
+        """
+        ttk.Label(
+            self.advanced_settings_frame, 
+            text=text,
+            font=("TkDefaultFont", 10, "bold"),
+            foreground=text_colour
+        ).grid(row=row, column=0, columnspan=2, padx=10, 
+            pady=(5 if text.startswith("⚠️") else 0, 10 if text.startswith("⚠️") else 0), 
+            sticky="w")
+        return row + 1
+
+    def _create_text_area(self, label_text, text_content, row):
+        """
+        Creates a labeled text area widget in the advanced settings frame.
+        
+        Args:
+            label_text (str): Label text to display above text area
+            text_content (str): Initial text to populate the text area
+            row (int): Starting grid row position
+            
+        Returns:
+            tuple: (Text widget object, next available grid row number)
+        """
+        tk.Label(self.advanced_settings_frame, text=label_text).grid(
+            row=row, column=0, padx=10, pady=5, sticky="w")
+        row += 1
+        text_area = tk.Text(self.advanced_settings_frame, height=10, width=50)
+        text_area.insert(tk.END, text_content)
+        text_area.grid(row=row, column=0, columnspan=2, padx=10, pady=5, sticky="w")
+        return text_area, row + 1
 
     def close_window(self):
         """
