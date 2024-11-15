@@ -359,7 +359,7 @@ class SettingsWindowUI:
         row = create_settings_columns(self.settings.adv_general_settings, row)
 
         # Whisper Settings
-        row = self._create_section_header("Whisper Settings", row, text_colour="black")
+        row = self._create_section_header("Speech2Text Settings", row, text_colour="black")
         left_frame = ttk.Frame(self.advanced_settings_frame)
         left_frame.grid(row=row, column=0, padx=10, pady=5, sticky="nw")
         right_frame = ttk.Frame(self.advanced_settings_frame)
