@@ -245,9 +245,6 @@ class SettingsWindowUI:
         
         right_row += 1
 
-        # # Restart Local Llm Button
-        # restart_llm_button = ttk.Button(right_frame, text="Restart LLM", width=15, command=lambda: self.restart_local_llm())
-
         # 6. Self-Signed Cert (Right Column)
         self.ssl_selfcert_var = tk.IntVar(value=int(self.settings.SSL_SELFCERT))
         tk.Label(right_frame, text="Self-Signed Cert:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
@@ -258,6 +255,20 @@ class SettingsWindowUI:
         self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.llm_settings)
  
     def on_model_selection_change(self, event):
+        """
+        Handle switching between model dropdown and custom model entry.
+        
+        When "Custom" is selected, shows a text entry field and hides the dropdown.
+        When another model is selected, shows the dropdown and hides the custom entry.
+        
+        Args:
+            event: The dropdown selection change event
+            
+        Notes:
+            - Uses grid_info() to check if widgets are currently displayed
+            - Preserves the row position when swapping widgets
+            - Resets dropdown to placeholder when showing custom entry
+        """
         if self.models_drop_down.get() == "Custom" and self.custom_model_entry.grid_info() == {}:
             # Show the custom model entry below the dropdown
             self.custom_model_entry.grid(row=self.models_drop_down.grid_info()['row'], 
