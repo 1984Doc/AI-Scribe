@@ -25,11 +25,8 @@ def is_private_ip(ip_or_url):
   """
   try:
       ip = extract_ip_from_url(ip_or_url) if '://' in ip_or_url else ip_or_url
-      print(ip)
       ip_obj = ipaddress.ip_address(ip)
-      print(ip_obj.is_private)
       return ip_obj.is_private
   except ValueError:
       # Handle invalid IP address
-      print(ValueError)
       return False
