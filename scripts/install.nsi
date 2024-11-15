@@ -1,10 +1,11 @@
 !include "MUI2.nsh"
+!include "LogicLib.nsh"
 
 ; Define the name of the installer
 OutFile "..\dist\FreeScribeInstaller.exe"
 
 ; Define the default installation directory to AppData
-InstallDir "$APPDATA\FreeScribe"
+InstallDir "$PROGRAMFILES\FreeScribe"
 
 ; Define the name of the installer
 Name "FreeScribe"
@@ -19,6 +20,67 @@ VIAddVersionKey "FileDescription" "FreeScribe Installer"
 ; Define the logo image
 !define MUI_ICON ./assets/logo.ico
 
+; Variables for checkboxes
+Var /GLOBAL CPU_RADIO
+Var /GLOBAL NVIDIA_RADIO
+Var /GLOBAL SELECTED_OPTION
+
+; Function to create a custom page with CPU/NVIDIA options
+Function ARCHITECHTURE_SELECT
+    !insertmacro MUI_HEADER_TEXT "Architecture Selection" "Choose your preferred installation architecture based on your hardware"
+
+    nsDialogs::Create 1018
+    Pop $0
+
+    ${If} $0 == error
+        Abort
+    ${EndIf}
+
+    ; Main instruction text for architecture selection
+    ${NSD_CreateLabel} 0 0 100% 12u "Choose your preferred installation architecture based on your hardware:"
+    Pop $0
+
+    ; Radio button for CPU
+    ${NSD_CreateRadioButton} 10 15u 100% 10u "CPU"
+    Pop $CPU_RADIO
+    ${NSD_Check} $CPU_RADIO
+    StrCpy $SELECTED_OPTION "CPU"
+
+    ; CPU explanation text (grey with padding)
+    ${NSD_CreateLabel} 20 25u 100% 20u "Recommended for most users. Runs on any modern processor and provides good performance for general use."
+    Pop $0
+    SetCtlColors $0 808080 transparent
+
+    ; Radio button for NVIDIA
+    ${NSD_CreateRadioButton} 10 55u 100% 10u "NVIDIA"
+    Pop $NVIDIA_RADIO
+
+    ; NVIDIA explanation text (grey with padding)
+    ${NSD_CreateLabel} 20 65u 100% 30u "Choose this option if you have an NVIDIA GPU. Provides accelerated performance. Only select if you have a Nvidia GPU installed."
+    Pop $0
+    SetCtlColors $0 808080 transparent
+
+    ; Bottom padding (10u of space)
+    ${NSD_CreateLabel} 0 95u 100% 10u ""
+    Pop $0
+
+    ${NSD_OnClick} $CPU_RADIO OnRadioClick
+    ${NSD_OnClick} $NVIDIA_RADIO OnRadioClick
+
+    nsDialogs::Show
+FunctionEnd
+
+; Callback function for radio button clicks
+Function OnRadioClick
+    Pop $0 ; Get the handle of the clicked control
+
+    ${If} $0 == $CPU_RADIO
+        StrCpy $SELECTED_OPTION "CPU"
+    ${ElseIf} $0 == $NVIDIA_RADIO
+        StrCpy $SELECTED_OPTION "NVIDIA"
+    ${EndIf}
+FunctionEnd
+
 ; Function to show message box on finish
 Function .onInstSuccess
     ; Check if silent, if is silent skip message box prompt
@@ -31,10 +93,20 @@ Section "MainSection" SEC01
     ; Set output path to the installation directory
     SetOutPath "$INSTDIR"
 
-    ; Add files to the installer
-    File /r "..\dist\freescribe-client\freescribe-client.exe"
-    File /r "..\dist\freescribe-client\_internal"
-    File /r "..\src\FreeScribe.client\markdown"
+    ${If} $SELECTED_OPTION == "CPU"
+        ; Add files to the installer
+        File /r "..\dist\freescribe-client-cpu\freescribe-client-cpu.exe"
+        Rename "$INSTDIR\freescribe-client-cpu.exe" "$INSTDIR\freescribe-client.exe"
+        File /r "..\dist\freescribe-client-cpu\_internal"
+    ${EndIf}
+
+    ${If} $SELECTED_OPTION == "NVIDIA"
+        ; Add files to the installer
+        File /r "..\dist\freescribe-client-nvidia\freescribe-client-nvidia.exe"
+        Rename "$INSTDIR\freescribe-client-nvidia.exe" "$INSTDIR\freescribe-client.exe"
+        File /r "..\dist\freescribe-client-nvidia\_internal"
+    ${EndIf}
+
 
     ; add presets
     CreateDirectory "$INSTDIR\presets"
@@ -51,13 +123,27 @@ Section "MainSection" SEC01
     WriteUninstaller "$INSTDIR\Uninstall.exe"
 SectionEnd
 
+Section "GGUF Installs" GGUF_INSTALLS
+    AddSize 2800000 ; Add the size in kilobyes for the models
+
+    CreateDirectory "$INSTDIR\models"
+    SetOutPath "$INSTDIR\models"
+
+    ; Copy the license
+    File ".\assets\gemma_license.txt"
+
+    ; install the gemma 2 q8
+    inetc::get /TIMEOUT=30000 "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q8_0.gguf?download=true" "$INSTDIR\models\gemma-2-2b-it-Q8_0.gguf" /END
+
+    SetOutPath "$INSTDIR"
+
+SectionEnd
+
 ; Define the uninstaller section
 Section "Uninstall"
-    ; Remove files
-    Delete "$INSTDIR\*"
 
-    ; Remove the installation directory
-    RMDir "$INSTDIR"
+    ; Remove the installation directory and all its contents
+    RMDir /r "$INSTDIR"
 
     ; Remove the start menu shortcut
     Delete "$SMPROGRAMS\FreeScribe\FreeScribe.lnk"
@@ -72,13 +158,17 @@ SectionEnd
 
 ; Define the installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
+Page Custom ARCHITECHTURE_SELECT
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN "$INSTDIR\freescribe-client.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Run App now"
 !insertmacro MUI_PAGE_FINISH
-!insertmacro MUI_LANGUAGE English
 
 ; Define the uninstaller pages
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
+
+; Define the languages
+!insertmacro MUI_LANGUAGE English

@@ -18,11 +18,15 @@ WhisperAudio, and OpenAI services.
 """
 
 import json
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox
 import requests
 import numpy as np
 import pyaudio
+from utils.file_utils import get_resource_path
+from Model import ModelManager
+import threading
 
 
 p = pyaudio.PyAudio()
@@ -86,22 +90,24 @@ class SettingsWindow():
             "Show Scrub PHI"
         }
 
-        self.whisper_settings = {
-            "Local Whisper",
+        self.whisper_settings = [
+            "Whisper Endpoint",
             "Whisper Server API Key",
             "Whisper Model",
+            "Local Whisper",
             "Real Time",
-            "Whisper Endpoint",
-        }
-        self.llm_settings = {
+        ]
+        self.llm_settings = [
             "Model Endpoint",
-        }
+            "Use Local LLM",
+        ]
 
-        self.advanced_settings = {
+        self.advanced_settings = [
             "use_story",
             "use_memory",
             "use_authors_note",
             "use_world_info",
+            "Enable Scribe Template",
             "max_context_length",
             "max_length",
             "rep_pen",
@@ -117,18 +123,16 @@ class SettingsWindow():
             "singleline",
             "frmttriminc",
             "frmtrmblln",
-            "best_of",
             "Use best_of",
+            "best_of",
             "Real Time Audio Length",
-            "Real Time Silence Length",
-            "Enable Scribe Template",
-            "Use Pre-Processing",
-            "Use Post-Processing",
-        }
+        ]
 
         self.editable_settings = {
             "Model": "gpt-4",
             "Model Endpoint": "https://api.openai.com/v1/",
+            "Use Local LLM": False,
+            "Architecture": "CPU",
             "use_story": False,
             "use_memory": False,
             "use_authors_note": False,
@@ -157,9 +161,10 @@ class SettingsWindow():
             "Real Time": False,
             "Real Time Audio Length": 5,
             "Real Time Silence Length": 1,
-            "Silence cut-off": 0.015,
-            "LLM Container Name": "llm-container-1",
-            "LLM Caddy Container Name": "caddy-llm-container",
+            "Silence cut-off": 0.035,
+            "LLM Container Name": "ollama",
+            "LLM Caddy Container Name": "caddy-ollama",
+            "LLM Authentication Container Name": "authentication-ollama",
             "Whisper Container Name": "speech-container",
             "Whisper Caddy Container Name": "caddy",
             "Auto Shutdown Containers on Exit": True,
@@ -168,20 +173,21 @@ class SettingsWindow():
             "Show Welcome Message": True,
             "Enable Scribe Template": False,
             "Use Pre-Processing": True,
-            "Use Post-Processing": True,
-            "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:",
-            "Post-Processing": "Please check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts.",
+            "Use Post-Processing": False, # Disabled for now causes unexcepted behaviour
+            "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:\n\n",
+            "Post-Processing": "\n\nPlease check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts. Then please provide the revised SOAP Note:",
             "Show Scrub PHI": True,
         }
 
-        self.docker_settings = {
+        self.docker_settings = [
             "LLM Container Name",
             "LLM Caddy Container Name",
+            "LLM Authentication Container Name",
             "Whisper Container Name",
             "Whisper Caddy Container Name",
             "Auto Shutdown Containers on Exit",
             "Use Docker Status Bar",
-        }
+        ]
 
         self.editable_settings_entries = {}
 
@@ -190,6 +196,7 @@ class SettingsWindow():
         self.AISCRIBE2 = self.load_aiscribe2_from_file() or "Remember, the Subjective section should reflect the patient's perspective and complaints as mentioned in the conversation. The Objective section should only include observable or measurable data from the conversation. The Assessment should be a summary of your understanding and potential diagnoses, considering the conversation's content. The Plan should outline the proposed management, strictly based on the dialogue provided. Do not add any information that did not occur and do not make assumptions. Strictly extract facts from the conversation."
 
         self.get_dropdown_values_and_mapping()
+        self._create_settings_and_aiscribe_if_not_exist()
 
     def get_dropdown_values_and_mapping(self):
         """
@@ -232,7 +239,7 @@ class SettingsWindow():
             tuple: A tuple containing the IPs, ports, SSL settings, and API key.
         """
         try:
-            with open(filename, 'r') as file:
+            with open(get_resource_path(filename), 'r') as file:
                 try:
                     settings = json.load(file)
                 except json.JSONDecodeError:
@@ -277,7 +284,7 @@ class SettingsWindow():
             "ssl_selfcert": str(self.SSL_SELFCERT),
             "api_style": self.API_STYLE
         }
-        with open('settings.txt', 'w') as file:
+        with open(get_resource_path('settings.txt'), 'w') as file:
             json.dump(settings, file)
 
     def save_settings(self, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
@@ -314,9 +321,9 @@ class SettingsWindow():
         self.AISCRIBE = aiscribe_text
         self.AISCRIBE2 = aiscribe2_text
 
-        with open('aiscribe.txt', 'w') as f:
+        with open(get_resource_path('aiscribe.txt'), 'w') as f:
             f.write(self.AISCRIBE)
-        with open('aiscribe2.txt', 'w') as f:
+        with open(get_resource_path('aiscribe2.txt'), 'w') as f:
             f.write(self.AISCRIBE2)
       
     def load_aiscribe_from_file(self):
@@ -327,7 +334,7 @@ class SettingsWindow():
         :rtype: str or None
         """
         try:
-            with open('aiscribe.txt', 'r') as f:
+            with open(get_resource_path('aiscribe.txt'), 'r') as f:
                 return f.read()
         except FileNotFoundError:
             return None
@@ -340,7 +347,7 @@ class SettingsWindow():
         :rtype: str or None
         """
         try:
-            with open('aiscribe2.txt', 'r') as f:
+            with open(get_resource_path('aiscribe2.txt'), 'r') as f:
                 return f.read()
         except FileNotFoundError:
             return None
@@ -404,9 +411,9 @@ class SettingsWindow():
         """
         try:
             # Open the files and immediately close them to clear their contents.
-            open('settings.txt', 'w').close()  
-            open('aiscribe.txt', 'w').close()
-            open('aiscribe2.txt', 'w').close()
+            open(get_resource_path('settings.txt'), 'w').close()  
+            open(get_resource_path('aiscribe.txt'), 'w').close()
+            open(get_resource_path('aiscribe2.txt'), 'w').close()
 
             # Display a message box informing the user of successful reset.
             messagebox.showinfo("Settings Reset", "Settings have been reset. Please restart.")
@@ -436,7 +443,7 @@ class SettingsWindow():
         }
 
         try:
-            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0)
+            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0, verify=not (self.SSL_SELFCERT and self.SSL_ENABLE))
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
             available_models = [model["id"] for model in models]
@@ -444,6 +451,7 @@ class SettingsWindow():
             return available_models
         except requests.RequestException as e:
             # messagebox.showerror("Error", f"Failed to fetch models: {e}. Please ensure your OpenAI API key is correct.") 
+            print(e)
             return ["Failed to load models", "Custom"]
 
     def update_models_dropdown(self, dropdown):
@@ -453,14 +461,18 @@ class SettingsWindow():
         This method fetches the available models from the AI Scribe service and updates
         the dropdown widget in the settings window with the new list of models.
         """
-        dropdown["values"] = []
-        dropdown.set("Loading models...")
-        models = self.get_available_models()
-        dropdown["values"] = models
-        if self.editable_settings["Model"] in models:
-            dropdown.set(self.editable_settings["Model"])
+        if self.editable_settings["Use Local LLM"]:
+            dropdown["values"] = ["gemma-2-2b-it-Q8_0.gguf"]
+            dropdown.set("gemma-2-2b-it-Q8_0.gguf")
         else:
-            dropdown.set(models[0])
+            dropdown["values"] = []
+            dropdown.set("Loading models...")
+            models = self.get_available_models()
+            dropdown["values"] = models
+            if self.editable_settings["Model"] in models:
+                dropdown.set(self.editable_settings["Model"])
+            else:
+                dropdown.set(models[0])
         
 
     def load_settings_preset(self, preset_name, settings_class):
@@ -501,3 +513,33 @@ class SettingsWindow():
         """
         self.main_window = window
 
+    def load_or_unload_model(self, old_model, new_model, old_use_local_llm, new_use_local_llm, old_architecture, new_architecture):
+        # Check if old model and new model are different if they are reload and make sure new model is checked.
+        if old_model != new_model and new_use_local_llm == 1:
+            ModelManager.unload_model()
+            ModelManager.start_model_threaded(self, self.main_window.root)
+
+        # Load the model if check box is now selected
+        if old_use_local_llm == 0 and new_use_local_llm == 1:
+            ModelManager.start_model_threaded(self, self.main_window.root)
+
+        # Check if Local LLM was on and if turned off unload model.abs
+        if old_use_local_llm == 1 and new_use_local_llm == 0:
+            ModelManager.unload_model()
+
+        if old_architecture != new_architecture and new_use_local_llm == 1:
+            ModelManager.unload_model()
+            ModelManager.start_model_threaded(self, self.main_window.root)
+
+    def _create_settings_and_aiscribe_if_not_exist(self):
+        if not os.path.exists(get_resource_path('settings.txt')):
+            print("Settings file not found. Creating default settings file.")
+            self.save_settings_to_file()
+        if not os.path.exists(get_resource_path('aiscribe.txt')):
+            print("AIScribe file not found. Creating default AIScribe file.")
+            with open(get_resource_path('aiscribe.txt'), 'w') as f:
+                f.write(self.AISCRIBE)
+        if not os.path.exists(get_resource_path('aiscribe2.txt')):
+            print("AIScribe2 file not found. Creating default AIScribe2 file.")
+            with open(get_resource_path('aiscribe2.txt'), 'w') as f:
+                f.write(self.AISCRIBE2)

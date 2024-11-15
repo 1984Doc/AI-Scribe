@@ -1,7 +1,8 @@
-from tkinter import Toplevel
+from tkinter import Toplevel, messagebox
 import markdown as md
 import tkinter as tk
 from tkhtmlview import HTMLLabel
+from utils.file_utils import get_file_path
 
 """
 A class to create a window displaying rendered Markdown content.
@@ -35,12 +36,32 @@ class MarkdownWindow:
         self.window.title(title)
         self.window.transient(parent)
         self.window.grab_set()
+        self.window.iconbitmap(get_file_path('assets','logo.ico'))
 
-        with open(file_path, "r") as file:
-            content = md.markdown(file.read(), extensions=["extra", "smarty"])
+        try:
+          with open(file_path, "r") as file:
+              content = md.markdown(file.read(), extensions=["extra", "smarty"])
+              
+        except FileNotFoundError:
+          print(f"File not found: {file_path}")
+          self.window.destroy()
+          messagebox.showerror("Error", "File not found")
+          return
 
-        html_label = HTMLLabel(self.window, html=content)
-        html_label.pack(fill="both", expand=True, padx=10, pady=10)
+        # Create a frame to hold the HTMLLabel and scrollbar
+        frame = tk.Frame(self.window)
+        frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Create the HTMLLabel widget
+        html_label = HTMLLabel(frame, html=content)
+        html_label.pack(side="left", fill="both", expand=True)
+
+        # Create the scrollbar
+        scrollbar = tk.Scrollbar(frame, orient="vertical", command=html_label.yview)
+        scrollbar.pack(side="right", fill="y")
+
+        # Configure the HTMLLabel to use the scrollbar
+        html_label.config(yscrollcommand=scrollbar.set)
 
         if callback:
             var = tk.BooleanVar()
@@ -52,10 +73,10 @@ class MarkdownWindow:
             # Add a close button at the bottom center
             close_button = tk.Button(self.window, text="Close", command=lambda: self._on_close(var, callback))
             close_button.pack(side=tk.BOTTOM)  # Extra padding for separation from the checkbox
-
-        # Add a close button at the bottom center
-        close_button = tk.Button(self.window, text="Close", command= self.window.destroy)
-        close_button.pack(side=tk.BOTTOM , pady=5)  # Extra padding for separation from the checkbox
+        else:
+          # Add a close button at the bottom center
+          close_button = tk.Button(self.window, text="Close", command= self.window.destroy)
+          close_button.pack(side=tk.BOTTOM , pady=5)  # Extra padding for separation from the checkbox
 
         self.window.geometry("900x900")
         self.window.lift()

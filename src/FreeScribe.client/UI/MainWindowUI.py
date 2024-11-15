@@ -1,10 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 import UI.MainWindow as mw
-import Tooltip as tt
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.MarkdownWindow import MarkdownWindow
-import os
+from utils.file_utils import get_file_path
 
 class MainWindowUI:
     """
@@ -28,15 +27,26 @@ class MainWindowUI:
         self.logic = mw.MainWindow(self.app_settings)  # Logic to control the container behavior
         self.scribe_template = None
         self.setting_window = SettingsWindowUI(self.app_settings, self)  # Settings window
+        self.root.iconbitmap(get_file_path('assets','logo.ico'))
 
     def load_main_window(self):
         """
         Load the main window of the application.
         This method initializes the main window components, including the menu bar.
         """
+        self._bring_to_focus()
         self._create_menu_bar()
         if (self.setting_window.settings.editable_settings['Show Welcome Message']):
             self._show_welcome_message()
+
+    def _bring_to_focus(self):
+        """
+        Bring the main window to focus.
+        """
+        self.root.lift()  # Lift the window to the top
+        self.root.attributes('-topmost', True)  # Set the window to be always on top
+        self.root.focus_force()  # Force focus on the window
+        self.root.after_idle(self.root.attributes, '-topmost', False)  # Reset the always on top attribute after idle
         
 
     def update_aiscribe_texts(self, event):
@@ -48,7 +58,7 @@ class MainWindowUI:
     def create_docker_status_bar(self):
         """
         Create a Docker status bar to display the status of the LLM and Whisper containers.
-        Adds start and stop buttons for each container and tooltips for their status.
+        Adds start and stop buttons for each container.
         """
         
         if self.docker_status_bar is not None:
@@ -65,31 +75,20 @@ class MainWindowUI:
         # Add LLM container status label
         llm_status = tk.Label(self.docker_status_bar, text="LLM Container Status:", padx=10)
         llm_status.pack(side=tk.LEFT)
-        # Tooltip explaining the LLM container's purpose
-        tt.Tooltip(llm_status, text="The LLM container is essential for generating responses and creating the SOAP notes. This service must be running.")
 
         # Add status dot for LLM (default: red)
         llm_dot = tk.Label(self.docker_status_bar, text='●', fg='red')
         self.logic.container_manager.update_container_status_icon(llm_dot, self.app_settings.editable_settings["LLM Container Name"])
-
-
         llm_dot.pack(side=tk.LEFT)
-        # Tooltip explaining the color of the status dot (green = running, red = stopped)
-        tt.Tooltip(llm_dot, text="LLM Container Status: Green = Running, Red = Stopped")
 
         # Add Whisper server status label
         whisper_status = tk.Label(self.docker_status_bar, text="Whisper Server Status:", padx=10)
         whisper_status.pack(side=tk.LEFT)
-        # Tooltip explaining the Whisper server's purpose
-        tt.Tooltip(whisper_status, text="The whisper server is responsible for transcribing microphone input to text. This service must be running.")
 
         # Add status dot for Whisper (default: red)
         whisper_dot = tk.Label(self.docker_status_bar, text='●', fg='red')
         self.logic.container_manager.update_container_status_icon(whisper_dot, self.app_settings.editable_settings["Whisper Container Name"])
-        
         whisper_dot.pack(side=tk.LEFT)
-        # Tooltip explaining the color of the status dot (green = running, red = stopped)
-        tt.Tooltip(whisper_dot, text="Whisper Status: Green = Running, Red = Stopped")
 
         # Start button for Whisper container with a command to invoke the start method from logic
         start_whisper_button = tk.Button(self.docker_status_bar, text="Start Whisper", command=lambda: self.logic.start_whisper_container(whisper_dot, self.app_settings))
@@ -111,7 +110,6 @@ class MainWindowUI:
             self.enable_docker_ui()
         else:
             docker_status.config(text="(Docker not found)")
-            tt.Tooltip(docker_status, text="Docker is not installed or running on this system. Please ensure it is running before using its functionality")
             self.disable_docker_ui()
 
     def disable_docker_ui(self):
@@ -157,7 +155,7 @@ class MainWindowUI:
         # Add Help menu
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="About", command=lambda: self._show_md_content(self._get_file_path('help','about.md'), 'About'))
+        help_menu.add_command(label="About", command=lambda: self._show_md_content(get_file_path('markdown','help','about.md'), 'About'))
 
     
     def _show_md_content(self, file_path: str, title: str, show_checkbox: bool = False):
@@ -192,11 +190,7 @@ class MainWindowUI:
         Display a welcome message when the application is launched.
         This method shows a welcome message in a message box when the application is launched.
         """
-        self._show_md_content(self._get_file_path('welcome.md'), 'Welcome', True)
-
-    def _get_file_path(self, *file_names):
-        return os.path.join('markdown', *file_names)
-
+        self._show_md_content(get_file_path('markdown','welcome.md'), 'Welcome', True)
     
     def create_scribe_template(self, row=3, column=4, columnspan=3, pady=10, padx=10, sticky='nsew'):
         """

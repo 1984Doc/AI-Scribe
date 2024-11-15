@@ -22,9 +22,11 @@ Classes:
 import json
 import tkinter as tk
 from tkinter import ttk, messagebox
-import Tooltip as tt
 from UI.Widgets.AudioMeter import AudioMeter
 import threading
+from Model import Model, ModelManager
+from utils.file_utils import get_file_path
+from UI.MarkdownWindow import MarkdownWindow
 
 
 
@@ -80,6 +82,7 @@ class SettingsWindowUI:
         self.settings_window.minsize(600, 500)    # Set minimum window size
         self.settings_window.resizable(True, True)
         self.settings_window.grab_set()
+        self.settings_window.iconbitmap(get_file_path('assets','logo.ico'))
 
         self.main_frame = tk.Frame(self.settings_window)
         self.main_frame.pack(expand=True, fill='both')
@@ -99,6 +102,9 @@ class SettingsWindowUI:
         self.notebook.add(self.advanced_frame, text="Advanced Settings")
         self.notebook.add(self.docker_settings_frame, text="Docker Settings")
 
+        self.settings_window.protocol("WM_DELETE_WINDOW", self.close_window)
+
+
         self.llm_settings_frame = self.add_scrollbar_to_frame(self.llm_settings_frame)
         self.whisper_settings_frame = self.add_scrollbar_to_frame(self.whisper_settings_frame)
         self.advanced_settings_frame = self.add_scrollbar_to_frame(self.advanced_frame)
@@ -110,6 +116,7 @@ class SettingsWindowUI:
         self.create_advanced_settings()
         self.create_docker_settings()
         self.create_buttons()
+
 
     def add_scrollbar_to_frame(self, frame):
         """
@@ -224,8 +231,22 @@ class SettingsWindowUI:
                                 command=lambda: (self.save_settings(False), threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,)).start(), self.on_model_selection_change(None)), 
                                 width=4)
         refresh_button.grid(row=left_row, column=2, padx=0, pady=5, sticky="w")
-        tt.Tooltip(refresh_button, text="Refresh the list of available models")
+
         left_row += 1
+
+        #6. GPU OR CPU SELECTION (Right Column)
+        tk.Label(right_frame, text="Local Architecture").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
+        architecture_options = ["CPU", "CUDA (Nvidia GPU)"]
+        self.architecture_dropdown = ttk.Combobox(right_frame, values=architecture_options, width=15, state="readonly")
+        self.architecture_dropdown.current(architecture_options.index(self.settings.editable_settings["Architecture"]))
+
+        self.architecture_dropdown.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
+
+        
+        right_row += 1
+
+        # # Restart Local Llm Button
+        # restart_llm_button = ttk.Button(right_frame, text="Restart LLM", width=15, command=lambda: self.restart_local_llm())
 
         # 6. Self-Signed Cert (Right Column)
         self.ssl_selfcert_var = tk.IntVar(value=int(self.settings.SSL_SELFCERT))
@@ -256,47 +277,49 @@ class SettingsWindowUI:
         return self.models_drop_down.get()
 
     def create_editable_settings_col(self, left_frame, right_frame, left_row, right_row, settings_set):
-        # First calculate how to split the settings evenly between columns
-        settings_list = list(settings_set)  # Convert set to list to preserve order
-        mid_point = (len(settings_list) + 1) // 2  # Round up for odd numbers
+        """
+        Creates editable settings in two columns.
 
-        # Process left column first, then right
-        for idx, setting_name in enumerate(settings_list[:mid_point]):
-            tk.Label(left_frame, text=f"{setting_name}:").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-            
-            value = self.settings.editable_settings[setting_name]
-            if value in [True, False]:
-                var = tk.IntVar(value=int(value))
-                checkbox = tk.Checkbutton(left_frame, variable=var)
-                checkbox.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting_name] = var
-            else:
-                entry = tk.Entry(left_frame)
-                entry.insert(0, str(value))
-                entry.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting_name] = entry
-            
-            left_row += 1
+        This method splits the settings evenly between two columns and creates the
+        corresponding UI elements in the left and right frames.
+
+        :param left_frame: The frame for the left column.
+        :param right_frame: The frame for the right column.
+        :param left_row: The starting row for the left column.
+        :param right_row: The starting row for the right column.
+        :param settings_set: The set of settings to be displayed.
+        :return: The updated row indices for the left and right columns.
+        """
+        mid_point = (len(settings_set) + 1) // 2  # Round up for odd numbers
+
+        # Process left column
+        left_row = self._process_column(left_frame, settings_set[:mid_point], left_row)
 
         # Process right column
-        for idx, setting_name in enumerate(settings_list[mid_point:]):
-            tk.Label(right_frame, text=f"{setting_name}:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
-            
-            value = self.settings.editable_settings[setting_name]
-            if value in [True, False]:
-                var = tk.IntVar(value=int(value))
-                checkbox = tk.Checkbutton(right_frame, variable=var)
-                checkbox.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting_name] = var
-            else:
-                entry = tk.Entry(right_frame)
-                entry.insert(0, str(value))
-                entry.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting_name] = entry
-            
-            right_row += 1
+        right_row = self._process_column(right_frame, settings_set[mid_point:], right_row)
 
         return left_row, right_row
+    
+    def _process_column(self, frame, settings, start_row):
+        """
+        Processes a column of settings.
+
+        This helper method creates the UI elements for a column of settings.
+
+        :param frame: The frame for the column.
+        :param settings: The settings to be displayed in the column.
+        :param start_row: The starting row for the column.
+        :return: The updated row index for the column.
+        """
+        row = start_row
+        for setting_name in settings:
+            value = self.settings.editable_settings[setting_name]
+            if value in [True, False]:
+                self._create_checkbox(frame, setting_name, setting_name, row)
+            else:
+                self._create_entry(frame, setting_name, setting_name, row)
+            row += 1
+        return row
 
     def create_advanced_settings(self):
         """
@@ -335,44 +358,55 @@ class SettingsWindowUI:
 
         row_idx += 1
 
-        tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
         row_idx += 1
 
         self.aiscribe_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.aiscribe_text.insert(tk.END, self.settings.AISCRIBE)
-        self.aiscribe_text.grid(row=row_idx, column=0, columnspan=2, padx=0, pady=5, sticky="w")
+        self.aiscribe_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
         row_idx += 1
 
-        tk.Label(self.advanced_settings_frame, text="Post Prompting").grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(self.advanced_settings_frame, text="Post Prompting").grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
 
         row_idx += 1
         self.aiscribe2_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.aiscribe2_text.insert(tk.END, self.settings.AISCRIBE2)
-        self.aiscribe2_text.grid(row=row_idx, column=0, columnspan=2, padx=0, pady=5, sticky="w")
+        self.aiscribe2_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
+        # Pre-Processing Checkbox
+        row_idx += 1
+
+        preprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
+        preprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
+        self._create_checkbox(preprocess_frame, "Use Pre-Processing", "Use Pre-Processing", 0)
+
+        # Pre-Processing Label and Text Area
         row_idx += 1
         self.preprocess_label = tk.Label(self.advanced_settings_frame, text="Pre-Processing")
-        self.preprocess_label.grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        self.preprocess_label.grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
         
         row_idx += 1
         self.preprocess_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.preprocess_text.insert(tk.END, self.settings.editable_settings["Pre-Processing"])
-        self.preprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=0, pady=5, sticky="w")
+        self.preprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
-        self.use_preprocess_var = tk.IntVar(value=int(self.settings.editable_settings["Use Pre-Processing"]))
-        self.use_preprocess_check = tk.Checkbutton(self.advanced_settings_frame, text="Use Preprocessing", variable=self.use_preprocess_var)
-        self.use_preprocess_check.grid(row=row_idx, column=3, padx=0, pady=5, sticky="w")
-
+        # Post-Processing Checkbox
         row_idx += 1
-        
+
+        preprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
+        preprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
+        self._create_checkbox(preprocess_frame, "Use Post-Processing", "Use Post-Processing", 0)
+
+        # Post-Processing Label and Text Area
+        row_idx += 1
         self.postprocess_label = tk.Label(self.advanced_settings_frame, text="Post-Processing")
-        self.postprocess_label.grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        self.postprocess_label.grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
         
         row_idx += 1
         self.postprocess_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
         self.postprocess_text.insert(tk.END, self.settings.editable_settings["Post-Processing"])
-        self.postprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=0, pady=5, sticky="w")
+        self.postprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
 
 
     def create_docker_settings(self):
@@ -392,20 +426,10 @@ class SettingsWindowUI:
             settings_set (list): The list of settings to create UI elements for.
             start_row (int): The starting row for placing the settings.
         """
-        for i, setting in enumerate(settings_set):
-            tk.Label(frame, text=f"{setting}:").grid(row=start_row+i, column=0, padx=10, pady=5, sticky="w")
-            
-            value = self.settings.editable_settings[setting]
-            if value in [True, False]:
-                var = tk.IntVar(value=int(value))
-                checkbox = tk.Checkbutton(frame, variable=var)
-                checkbox.grid(row=start_row+i, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting] = var
-            else:
-                entry = tk.Entry(frame)
-                entry.insert(0, str(value))
-                entry.grid(row=start_row+i, column=1, padx=0, pady=5, sticky="w")
-                self.settings.editable_settings_entries[setting] = entry
+        
+        i_frame = ttk.Frame(frame)
+        i_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+        self._process_column(i_frame, settings_set, start_row)
 
     def create_buttons(self):
         """
@@ -416,7 +440,16 @@ class SettingsWindowUI:
         """
         tk.Button(self.main_frame, text="Save", command=self.save_settings, width=10).pack(side="right", padx=2, pady=5)
         tk.Button(self.main_frame, text="Default", width=10, command=self.reset_to_default).pack(side="right", padx=2, pady=5)
-        tk.Button(self.main_frame, text="Close", width=10, command=self.settings_window.destroy).pack(side="right", padx=2, pady=5)
+        tk.Button(self.main_frame, text="Close", width=10, command=self.close_window).pack(side="right", padx=2, pady=5)
+        tk.Button(self.main_frame, text="Help", width=10, command=self.create_help_window).pack(side="left", padx=2, pady=5)
+
+    def create_help_window(self):
+        """
+        Creates a help window for the settings.
+
+        Uses our markdown window class to display a markdown with help
+        """
+        MarkdownWindow(self.settings_window, "Help", get_file_path('markdown','help','settings.md'))
 
     def save_settings(self, close_window=True):
         """
@@ -426,16 +459,27 @@ class SettingsWindowUI:
         `save_settings` method of the `settings` object to save the settings.
         """
 
+        self.settings.load_or_unload_model(self.settings.editable_settings["Model"],
+            self.get_selected_model(),
+            self.settings.editable_settings["Use Local LLM"],
+            self.settings.editable_settings_entries["Use Local LLM"].get(),
+            self.settings.editable_settings["Architecture"],
+            self.architecture_dropdown.get())
+
         if self.get_selected_model() not in ["Loading models...", "Failed to load models"]:
             self.settings.editable_settings["Model"] = self.get_selected_model()
 
-        self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", tk.END)
-        self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", tk.END)
+
+        self.settings.editable_settings["Pre-Processing"] = self.preprocess_text.get("1.0", "end-1c") # end-1c removes the trailing newline
+        self.settings.editable_settings["Post-Processing"] = self.postprocess_text.get("1.0", "end-1c") # end-1c removes the trailing newline
+
+        # save architecture
+        self.settings.editable_settings["Architecture"] = self.architecture_dropdown.get()
 
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
-            self.aiscribe_text.get("1.0", tk.END),
-            self.aiscribe2_text.get("1.0", tk.END),
+            self.aiscribe_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
+            self.aiscribe2_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
             self.settings_window,
             self.ssl_enable_var.get(),
             self.ssl_selfcert_var.get(),
@@ -454,7 +498,7 @@ class SettingsWindowUI:
             self.main_window.destroy_scribe_template()
 
         if close_window:
-            self.settings_window.destroy()
+            self.close_window()
 
     def reset_to_default(self):
         """
@@ -474,3 +518,50 @@ class SettingsWindowUI:
         self.create_editable_settings(self.general_settings_frame, self.settings.general_settings)
 
 
+    def _create_checkbox(self, frame, label, setting_name, row_idx):
+        """
+        Creates a checkbox in the given frame.
+
+        This method creates a label and a checkbox in the given frame for editing.
+
+        Args:
+            frame (tk.Frame): The frame in which to create the checkbox.
+            label (str): The label to display next to the checkbox.
+            setting_name (str): The name of the setting to edit.
+            row_idx (int): The row index at which to place the checkbox.
+        """
+        tk.Label(frame, text=label).grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        value = tk.IntVar(value=int(self.settings.editable_settings[setting_name]))
+        checkbox = tk.Checkbutton(frame, variable=value)
+        checkbox.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
+        self.settings.editable_settings_entries[setting_name] = value
+
+    def _create_entry(self, frame, label, setting_name, row_idx):
+        """
+        Creates an entry field in the given frame.
+
+        This method creates a label and an entry field in the given frame for editing.
+        
+        Args:
+            frame (tk.Frame): The frame in which to create the entry field.
+            label (str): The label to display next to the entry field.
+            setting_name (str): The name of the setting to edit.
+            row_idx (int): The row index at which to place the entry field.
+        """
+        tk.Label(frame, text=label).grid(row=row_idx, column=0, padx=0, pady=5, sticky="w")
+        value = self.settings.editable_settings[setting_name]
+        entry = tk.Entry(frame)
+        entry.insert(0, str(value))
+        entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
+        self.settings.editable_settings_entries[setting_name] = entry
+
+    def close_window(self):
+        """
+        Cleans up the settings window.
+
+        This method destroys the settings window and clears the settings entries.
+        """
+        self.settings_window.unbind_all("<MouseWheel>") # Unbind mouse wheel event causing errors
+        self.settings_window.unbind_all("<Configure>") # Unbind the configure event causing errors
+
+        self.settings_window.destroy()
