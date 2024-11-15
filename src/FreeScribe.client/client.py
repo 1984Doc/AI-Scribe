@@ -23,26 +23,20 @@ import json
 import pyaudio
 import tkinter.messagebox as messagebox
 import datetime
-import functools
-import os
 import whisper # python package is named openai-whisper
-from openai import OpenAI
 import scrubadub
 import re
 import speech_recognition as sr # python package is named speechrecognition
 import time
 import queue
-from ContainerManager import ContainerManager
 import atexit
-import asyncio
-from UI.MainWindow import MainWindow
 from UI.MainWindowUI import MainWindowUI
-from UI.SettingsWindowUI import SettingsWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
 from UI.LoadingWindow import LoadingWindow
-from Model import Model, ModelManager
+from Model import  ModelManager
 from utils.file_utils import get_file_path
+from utils.ip_utils import is_private_ip
 
 # GUI Setup
 root = tk.Tk()
@@ -651,7 +645,6 @@ def generate_note(formatted_message):
                 display_text(f"An error occurred: {e}")
                 return False
 
-
 def show_edit_transcription_popup(formatted_message):
     scrubber = scrubadub.Scrubber()
 
@@ -660,7 +653,7 @@ def show_edit_transcription_popup(formatted_message):
     pattern = r'\b\d{10}\b'     # Any 10 digit number, looks like OHIP
     cleaned_message = re.sub(pattern,'{{OHIP}}',scrubbed_message)
 
-    if not app_settings.editable_settings["Show Scrub PHI"]:
+    if (app_settings.editable_settings["Use Local LLM"] or is_private_ip(app_settings.editable_settings["Model Endpoint"])) and not app_settings.editable_settings["Show Scrub PHI"]:
         generate_note_thread(cleaned_message)
         return
     
