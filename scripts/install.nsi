@@ -1,6 +1,5 @@
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
-!include "nsProcess.nsh"
 
 ; Define the name of the installer
 OutFile "..\dist\FreeScribeInstaller.exe"
