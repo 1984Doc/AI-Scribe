@@ -322,91 +322,87 @@ class SettingsWindowUI:
         return row
 
     def create_advanced_settings(self):
-        """
-        Creates the advanced settings UI elements.
+        """Creates the advanced settings UI elements with a structured layout."""
+        def create_section_header(text, row, text_colour="black"):
+            ttk.Label(
+                self.advanced_settings_frame,
+                text=text,
+                font=("TkDefaultFont", 10, "bold"),
+                foreground=text_colour
+            ).grid(row=row, column=0, columnspan=2, padx=10, pady=(5 if text.startswith("⚠️") else 0, 10 if text.startswith("⚠️") else 0), sticky="w")
+            return row + 1
 
-        This method creates and places UI elements for advanced settings such as
-        editable settings, pre-prompting, and post-prompting text areas.
-        """
-        # Create left and right frames for the two columns
+        def create_settings_columns(settings, row):
+            left_frame = ttk.Frame(self.advanced_settings_frame)
+            right_frame = ttk.Frame(self.advanced_settings_frame)
+            left_frame.grid(row=row, column=0, padx=10, pady=5, sticky="nw")
+            right_frame.grid(row=row, column=1, padx=10, pady=5, sticky="nw")
+            self.create_editable_settings_col(left_frame, right_frame, 0, 0, settings)
+            return row + 1
+
+        def create_text_area(label_text, text_content, row):
+            tk.Label(self.advanced_settings_frame, text=label_text).grid(
+                row=row, column=0, padx=10, pady=5, sticky="w")
+            row += 1
+            text_area = tk.Text(self.advanced_settings_frame, height=10, width=50)
+            text_area.insert(tk.END, text_content)
+            text_area.grid(row=row, column=0, columnspan=2, padx=10, pady=5, sticky="w")
+            return text_area, row + 1
+
+        def create_processing_section(label_text, setting_key, text_content, row):
+            frame = tk.Frame(self.advanced_settings_frame, width=800)
+            frame.grid(row=row, column=0, padx=10, pady=0, sticky="nw")
+            self._create_checkbox(frame, f"Use {label_text}", f"Use {label_text}", 0)
+            row += 1
+            
+            text_area, row = create_text_area(label_text, text_content, row)
+            return text_area, row
+
+        row = create_section_header("⚠️ Advanced Settings (For Advanced Users Only)", 0, text_colour="red")
+        
+        # General Settings
+        row = create_section_header("General Settings", row, text_colour="black")
+        row = create_settings_columns(self.settings.adv_general_settings, row)
+
+        # Whisper Settings
+        row = create_section_header("Whisper Settings", row, text_colour="black")
         left_frame = ttk.Frame(self.advanced_settings_frame)
-        left_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
-        
+        left_frame.grid(row=row, column=0, padx=10, pady=5, sticky="nw")
         right_frame = ttk.Frame(self.advanced_settings_frame)
-        right_frame.grid(row=0, column=1, padx=10, pady=5, sticky="nw")
-
-        left_row = 0
-        right_row = 0
-
-        left_row, right_row = self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.advanced_settings)
-
-        target_frame = None
-        row_idx = None
-
-        if left_row > right_row:
-            target_frame = right_frame
-            row_idx = right_row
-        else:
-            target_frame = left_frame
-            row_idx = left_row
-
-        tk.Label(target_frame, text="Whisper Audio Cutoff").grid(row=row_idx, column=0, padx=0, pady=0, sticky="w")
-
-        # Create audio meter for silence cut-off, used for setting microphone cutoff in Whisper
-        self.cutoff_slider = AudioMeter(target_frame, width=150, height=50, threshold=self.settings.editable_settings["Silence cut-off"] * 32768)
-        self.cutoff_slider.grid(row=row_idx, column=1, padx=0, pady=0, sticky="w")
-
-        row_idx += 1
-
-        tk.Label(self.advanced_settings_frame, text="Pre Prompting").grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
-        row_idx += 1
-
-        self.aiscribe_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
-        self.aiscribe_text.insert(tk.END, self.settings.AISCRIBE)
-        self.aiscribe_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
-
-        row_idx += 1
-
-        tk.Label(self.advanced_settings_frame, text="Post Prompting").grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
-
-        row_idx += 1
-        self.aiscribe2_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
-        self.aiscribe2_text.insert(tk.END, self.settings.AISCRIBE2)
-        self.aiscribe2_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
-
-        # Pre-Processing Checkbox
-        row_idx += 1
-
-        preprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
-        preprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
-        self._create_checkbox(preprocess_frame, "Use Pre-Processing", "Use Pre-Processing", 0)
-
-        # Pre-Processing Label and Text Area
-        row_idx += 1
-        self.preprocess_label = tk.Label(self.advanced_settings_frame, text="Pre-Processing")
-        self.preprocess_label.grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
+        right_frame.grid(row=row, column=1, padx=10, pady=5, sticky="nw")
         
-        row_idx += 1
-        self.preprocess_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
-        self.preprocess_text.insert(tk.END, self.settings.editable_settings["Pre-Processing"])
-        self.preprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
-
-        # Post-Processing Checkbox
-        row_idx += 1
-
-        preprocess_frame = tk.Frame(self.advanced_settings_frame, width=800)
-        preprocess_frame.grid(row=row_idx, column=0, padx=10, pady=0, sticky="nw")
-        self._create_checkbox(preprocess_frame, "Use Post-Processing", "Use Post-Processing", 0)
-
-        # Post-Processing Label and Text Area
-        row_idx += 1
-        self.postprocess_label = tk.Label(self.advanced_settings_frame, text="Post-Processing")
-        self.postprocess_label.grid(row=row_idx, column=0, padx=10, pady=5, sticky="w")
+        self.create_editable_settings_col(left_frame, right_frame, 0, 0, self.settings.adv_whisper_settings)
         
-        row_idx += 1
-        self.postprocess_text = tk.Text(self.advanced_settings_frame, height=10, width=50)
-        self.postprocess_text.insert(tk.END, self.settings.editable_settings["Post-Processing"])
-        self.postprocess_text.grid(row=row_idx, column=0, columnspan=2, padx=10, pady=5, sticky="w")
+        # Audio meter
+        tk.Label(left_frame, text="Whisper Audio Cutoff").grid(row=1, column=0, padx=0, pady=0, sticky="w")
+        self.cutoff_slider = AudioMeter(left_frame, width=150, height=50, 
+                                    threshold=self.settings.editable_settings["Silence cut-off"] * 32768)
+        self.cutoff_slider.grid(row=1, column=1, padx=0, pady=0, sticky="w")
+        row += 1
+
+        # AI Settings
+        row = create_section_header("AI Settings", row, text_colour="black")
+        row = create_settings_columns(self.settings.adv_ai_settings, row)
+        
+        # Prompting Settings
+        row = create_section_header("Prompting Settings", row, text_colour="black")
+        self.aiscribe_text, row = create_text_area("Pre Prompting", self.settings.AISCRIBE, row)
+        self.aiscribe2_text, row = create_text_area("Post Prompting", self.settings.AISCRIBE2, row)
+        
+        # Processing Sections
+        self.preprocess_text, row = create_processing_section(
+            "Pre-Processing", 
+            "Use Pre-Processing",
+            self.settings.editable_settings["Pre-Processing"],
+            row
+        )
+        
+        self.postprocess_text, _ = create_processing_section(
+            "Post-Processing",
+            "Use Post-Processing", 
+            self.settings.editable_settings["Post-Processing"],
+            row
+        )
 
 
     def create_docker_settings(self):
