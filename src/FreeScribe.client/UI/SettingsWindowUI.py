@@ -98,7 +98,7 @@ class SettingsWindowUI:
 
         self.notebook.add(self.general_settings_frame, text="General Settings")
         self.notebook.add(self.llm_settings_frame, text="AI Settings")
-        self.notebook.add(self.whisper_settings_frame, text="Whisper Settings")
+        self.notebook.add(self.whisper_settings_frame, text="Speech-to-Text Settings")
         self.notebook.add(self.advanced_frame, text="Advanced Settings")
         self.notebook.add(self.docker_settings_frame, text="Docker Settings")
 
@@ -359,7 +359,7 @@ class SettingsWindowUI:
         row = create_settings_columns(self.settings.adv_general_settings, row)
 
         # Whisper Settings
-        row = self._create_section_header("Speech2Text Settings", row, text_colour="black")
+        row = self._create_section_header("Whisper Settings", row, text_colour="black")
         left_frame = ttk.Frame(self.advanced_settings_frame)
         left_frame.grid(row=row, column=0, padx=10, pady=5, sticky="nw")
         right_frame = ttk.Frame(self.advanced_settings_frame)
