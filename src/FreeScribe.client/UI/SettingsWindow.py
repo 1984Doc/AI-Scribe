@@ -101,12 +101,13 @@ class SettingsWindow():
             "Use Local LLM",
         ]
 
-        self.advanced_settings = [
+        self.adv_ai_settings = [
             "use_story",
             "use_memory",
             "use_authors_note",
             "use_world_info",
-            "Enable Scribe Template",
+            "Use best_of",
+            "best_of",
             "max_context_length",
             "max_length",
             "rep_pen",
@@ -122,9 +123,16 @@ class SettingsWindow():
             "singleline",
             "frmttriminc",
             "frmtrmblln",
-            "Use best_of",
-            "best_of",
+        ]
+
+        self.adv_whisper_settings = [
             "Real Time Audio Length",
+        ]
+
+
+        self.adv_general_settings = [
+            "Enable Scribe Template",
+            
         ]
 
         self.editable_settings = {
