@@ -107,19 +107,19 @@ Section "MainSection" SEC01
     ; Set output path to the installation directory
     SetOutPath "$INSTDIR"
 
-    ; ${If} $SELECTED_OPTION == "CPU"
-    ;     ; Add files to the installer
-    ;     File /r "..\dist\freescribe-client-cpu\freescribe-client-cpu.exe"
-    ;     Rename "$INSTDIR\freescribe-client-cpu.exe" "$INSTDIR\freescribe-client.exe"
-    ;     File /r "..\dist\freescribe-client-cpu\_internal"
-    ; ${EndIf}
+    ${If} $SELECTED_OPTION == "CPU"
+        ; Add files to the installer
+        File /r "..\dist\freescribe-client-cpu\freescribe-client-cpu.exe"
+        Rename "$INSTDIR\freescribe-client-cpu.exe" "$INSTDIR\freescribe-client.exe"
+        File /r "..\dist\freescribe-client-cpu\_internal"
+    ${EndIf}
 
-    ; ${If} $SELECTED_OPTION == "NVIDIA"
-    ;     ; Add files to the installer
-    ;     File /r "..\dist\freescribe-client-nvidia\freescribe-client-nvidia.exe"
-    ;     Rename "$INSTDIR\freescribe-client-nvidia.exe" "$INSTDIR\freescribe-client.exe"
-    ;     File /r "..\dist\freescribe-client-nvidia\_internal"
-    ; ${EndIf}
+    ${If} $SELECTED_OPTION == "NVIDIA"
+        ; Add files to the installer
+        File /r "..\dist\freescribe-client-nvidia\freescribe-client-nvidia.exe"
+        Rename "$INSTDIR\freescribe-client-nvidia.exe" "$INSTDIR\freescribe-client.exe"
+        File /r "..\dist\freescribe-client-nvidia\_internal"
+    ${EndIf}
 
 
     ; add presets
