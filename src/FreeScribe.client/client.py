@@ -653,9 +653,15 @@ def generate_note(formatted_message):
 
 
 def show_edit_transcription_popup(formatted_message):
+    scrubber = scrubadub.Scrubber()
+
+    scrubbed_message = scrubadub.clean(formatted_message)
+
+    pattern = r'\b\d{10}\b'     # Any 10 digit number, looks like OHIP
+    cleaned_message = re.sub(pattern,'{{OHIP}}',scrubbed_message)
 
     if not app_settings.editable_settings["Show Scrub PHI"]:
-        process_text(formatted_message)
+        generate_note_thread(cleaned_message)
         return
     
     popup = tk.Toplevel(root)
@@ -663,35 +669,12 @@ def show_edit_transcription_popup(formatted_message):
     popup.iconbitmap(get_file_path('assets','logo.ico'))
     text_area = scrolledtext.ScrolledText(popup, height=20, width=80)
     text_area.pack(padx=10, pady=10)
-
-    scrubber = scrubadub.Scrubber()
-
-    scrubbed_message = scrubadub.clean(formatted_message)
-
-    pattern = r'\b\d{10}\b'     # Any 10 digit number, looks like OHIP
-    cleaned_message = re.sub(pattern,'{{OHIP}}',scrubbed_message)
     text_area.insert(tk.END, cleaned_message)
 
     def on_proceed():
         edited_text = text_area.get("1.0", tk.END).strip()
         popup.destroy()
-        process_text(edited_text)
-
-        loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait.")
-        global use_aiscribe
-        edited_text = text_area.get("1.0", tk.END).strip()
-        popup.destroy()
-        
-        thread = threading.Thread(target=generate_note, args=(edited_text,))
-        thread.start()
-
-        def check_thread_status(thread, loading_window):
-            if thread.is_alive():
-                root.after(500, lambda: check_thread_status(thread, loading_window))
-            else:
-                loading_window.destroy()
-
-        root.after(500, lambda: check_thread_status(thread, loading_window))
+        generate_note_thread(edited_text)        
 
     proceed_button = tk.Button(popup, text="Proceed", command=on_proceed)
     proceed_button.pack(side=tk.RIGHT, padx=10, pady=10)
@@ -700,58 +683,24 @@ def show_edit_transcription_popup(formatted_message):
     cancel_button = tk.Button(popup, text="Cancel", command=popup.destroy)
     cancel_button.pack(side=tk.LEFT, padx=10, pady=10)
 
-def process_text(edited_text):
+def generate_note_thread(text: str):
     """
-    Process the edited text by either generating a medical note with AISCRIBE or sending the text directly to the AI.
+    Generate a note from the given text and update the GUI with the response.
 
-    :param edited_text: The text to be processed.
-    :type edited_text: str
+    :param text: The text to generate a note from.
+    :type text: str
     """
-    global use_aiscribe
-    
-    # If note generation is on
-    if use_aiscribe:
-        medical_note = generate_note_with_aiscribe(edited_text)
-    else:
-        medical_note = send_text_to_chatgpt(edited_text)
-    
-    update_gui_with_response(medical_note)
+    loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait.")
+    thread = threading.Thread(target=generate_note, args=(text,))
+    thread.start()
 
-def generate_note_with_aiscribe(edited_text):
-    """
-    Generate a medical note using AISCRIBE with optional pre-processing and post-processing.
-
-    :param edited_text: The text to be processed.
-    :type edited_text: str
-    :return: The generated medical note.
-    :rtype: str
-    """
-    if app_settings.editable_settings["Pre-Processing"] is True:
-        list_of_facts = send_text_to_chatgpt(f"{app_settings.editable_settings['Pre-Processing']} {edited_text}")
-        medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {list_of_facts} {app_settings.AISCRIBE2}")
-        return post_process_if_enabled(list_of_facts, medical_note)
-    else:
-        medical_note = send_text_to_chatgpt(f"{app_settings.AISCRIBE} {edited_text} {app_settings.AISCRIBE2}")
-        return post_process_if_enabled(None, medical_note)
-
-def post_process_if_enabled(list_of_facts, medical_note):
-    """
-    Perform post-processing on the medical note if enabled in the settings.
-
-    :param list_of_facts: The list of facts generated during pre-processing.
-    :type list_of_facts: str or None
-    :param medical_note: The generated medical note.
-    :type medical_note: str
-    :return: The post-processed medical note.
-    :rtype: str
-    """
-    if app_settings.editable_settings["Post-Processing"] is True:
-        if list_of_facts:
-            post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nFacts:{list_of_facts}\nNotes:{medical_note}")
+    def check_thread_status(thread, loading_window):
+        if thread.is_alive():
+            root.after(500, lambda: check_thread_status(thread, loading_window))
         else:
-            post_processed_note = send_text_to_chatgpt(f"{app_settings.editable_settings['Post-Processing']}\nNotes:{medical_note}")
-        return post_processed_note
-    return medical_note
+            loading_window.destroy()
+
+    root.after(500, lambda: check_thread_status(thread, loading_window))
 
 def upload_file():
     global uploaded_file_path
