@@ -42,7 +42,7 @@ from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
 from UI.LoadingWindow import LoadingWindow
 from Model import Model, ModelManager
-from utils.file_utils import get_file_path
+from utils.file_utils import get_file_path, get_resource_path
 
 # GUI Setup
 root = tk.Tk()
@@ -216,13 +216,13 @@ def realtime_text():
                     else:
                         print("Remote Real Time Whisper")
                         if frames:
-                            with wave.open('realtime.wav', 'wb') as wf:
+                            with wave.open(get_resource_path("realtime.wav"), 'wb') as wf:
                                 wf.setnchannels(CHANNELS)
                                 wf.setsampwidth(p.get_sample_size(FORMAT))
                                 wf.setframerate(RATE)
                                 wf.writeframes(b''.join(frames))
                             frames = []
-                        file_to_send = 'realtime.wav'
+                        file_to_send = get_resource_path("realtime.wav")
                         with open(file_to_send, 'rb') as f:
                             files = {'audio': f}
 
@@ -230,12 +230,19 @@ def realtime_text():
                                 "Authorization": "Bearer "+app_settings.editable_settings["Whisper Server API Key"]
                             }
 
-                            verify = not app_settings.editable_settings["S2T Server Self-Signed Certificates"]
-                            response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
-                            
-                            if response.status_code == 200:
-                                text = response.json()['text']
-                                update_gui(text)
+                            try:
+                                verify = not app_settings.editable_settings["S2T Server Self-Signed Certificates"]
+                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
+                                if response.status_code == 200:
+                                    text = response.json()['text']
+                                    update_gui(text)
+                            except Exception as e:
+                                update_gui(f"Error: {e}")
+                            finally:
+                                #Task done clean up file
+                                if os.path.exists(file_to_send):
+                                    f.close()
+                                    os.remove(file_to_send)
                 audio_queue.task_done()
     else:
         is_realtimeactive = False
@@ -247,7 +254,7 @@ def update_gui(text):
 def save_audio():
     global frames
     if frames:
-        with wave.open('recording.wav', 'wb') as wf:
+        with wave.open(get_resource_path("recording.wav"), 'wb') as wf:
             wf.setnchannels(CHANNELS)
             wf.setsampwidth(p.get_sample_size(FORMAT))
             wf.setframerate(RATE)
@@ -275,8 +282,6 @@ def toggle_recording():
         response_display.scrolled_text.configure(fg='black')
         response_display.scrolled_text.configure(state='disabled')
         is_recording = True
-        
-        realtime_thread = threaded_realtime_text()
 
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
@@ -292,7 +297,9 @@ def toggle_recording():
         if app_settings.editable_settings["Real Time"]:
             loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.")
 
-            while audio_queue.empty() is False:
+            timeout_timer = 0
+            while audio_queue.empty() is False and timeout_timer < 180:
+                timeout_timer += 0.1
                 time.sleep(0.1)
             
             loading_window.destroy()
@@ -365,12 +372,16 @@ def send_audio_to_server():
             model = whisper.load_model(model_name)
 
             # Determine the file to send for transcription
-            file_to_send = uploaded_file_path or 'recording.wav'
+            file_to_send = uploaded_file_path or get_resource_path('recording.wav')
             uploaded_file_path = None
 
             # Transcribe the audio file using the loaded model
             result = model.transcribe(file_to_send)
             transcribed_text = result["text"]
+
+            # done with file clean up
+            if os.path.exists(file_to_send):
+                os.remove(file_to_send)
 
             # Update the user input widget with the transcribed text
             user_input.scrolled_text.configure(state='normal')
@@ -408,7 +419,7 @@ def send_audio_to_server():
             file_to_send = uploaded_file_path
             uploaded_file_path = None
         else:
-            file_to_send = 'recording.wav'
+            file_to_send = get_resource_path('recording.wav')
 
         # Open the audio file in binary mode
         with open(file_to_send, 'rb') as f:
@@ -446,6 +457,10 @@ def send_audio_to_server():
                 user_input.scrolled_text.insert(tk.END, f"An error occurred: {e}")
                 user_input.scrolled_text.configure(state='disabled')
             finally:
+                # done with file clean up
+                f.close()
+                if os.path.exists(file_to_send):
+                    os.remove(file_to_send)
                 loading_window.destroy()
 
 def send_and_receive():
