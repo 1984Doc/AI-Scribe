@@ -285,8 +285,6 @@ def toggle_recording():
         response_display.scrolled_text.configure(fg='black')
         response_display.scrolled_text.configure(state='disabled')
         is_recording = True
-        
-        realtime_thread = threaded_realtime_text()
 
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
@@ -377,7 +375,7 @@ def send_audio_to_server():
             model = whisper.load_model(model_name)
 
             # Determine the file to send for transcription
-            file_to_send = uploaded_file_path or 'recording.wav'
+            file_to_send = uploaded_file_path or get_resource_path('recording.wav')
             uploaded_file_path = None
 
             # Transcribe the audio file using the loaded model
@@ -420,7 +418,7 @@ def send_audio_to_server():
             file_to_send = uploaded_file_path
             uploaded_file_path = None
         else:
-            file_to_send = 'recording.wav'
+            file_to_send = get_resource_path('recording.wav')
 
         # Open the audio file in binary mode
         with open(file_to_send, 'rb') as f:
