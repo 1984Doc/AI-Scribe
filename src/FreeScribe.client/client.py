@@ -230,10 +230,9 @@ def realtime_text():
                                 "Authorization": "Bearer "+app_settings.editable_settings["Whisper Server API Key"]
                             }
 
-                            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=False)
-                            else:
-                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files)
+                            verify = True if app_settings.editable_settings["S2T Server Self-Signed Certificates"] is True else False
+                            response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
+                            
                             if response.status_code == 200:
                                 text = response.json()['text']
                                 update_gui(text)
@@ -421,14 +420,10 @@ def send_audio_to_server():
             }
 
             try:
-                response = None
-                # Check for SSL and self-signed certificate settings
-                if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                    # Send the request without verifying the SSL certificate
-                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=False)
-                else:
-                    # Send the request with the audio file and headers/authorization
-                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files)
+                verify = True if app_settings.editable_settings["S2T Server Self-Signed Certificates"] is True else False
+
+                # Send the request without verifying the SSL certificate
+                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=verify)
 
                 # On successful response (status code 200)
                 if response.status_code == 200:
@@ -559,11 +554,8 @@ def send_text_to_api(edited_text):
             app_settings.editable_settings["Model Endpoint"] = app_settings.editable_settings["Model Endpoint"][:-1]
 
         if app_settings.API_STYLE == "OpenAI":
-            response = requests.Response
-            if str(app_settings.SSL_SELFCERT) == "1" and str(app_settings.SSL_ENABLE) == "1":
-                response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=False)
-            else:
-                response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload)
+            verify = True if app_settings.editable_settings["AI Server Self-Signed Certificates"] is True else False
+            response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=verify)
 
             response.raise_for_status()
             response_data = response.json()
@@ -571,10 +563,10 @@ def send_text_to_api(edited_text):
             return response_text
         elif app_settings.API_STYLE == "KoboldCpp":
             prompt = get_prompt(edited_text)
-            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=False)
-            else:
-                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt)
+
+            verify = True if app_settings.editable_settings["AI Server Self-Signed Certificates"] is True else False
+            response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=verify)
+
             if response.status_code == 200:
                 results = response.json()['results']
                 response_text = results[0]['text']
