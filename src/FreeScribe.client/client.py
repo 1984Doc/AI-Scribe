@@ -231,13 +231,21 @@ def realtime_text():
                             }
 
                             try:
-                            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=False)
-                            else:
-                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files)
-                            if response.status_code == 200:
-                                text = response.json()['text']
-                                update_gui(text)
+                                if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
+                                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=False)
+                                else:
+                                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files)
+                                if response.status_code == 200:
+                                    text = response.json()['text']
+                                    update_gui(text)
+                            except Exception as e:
+                                update_gui(f"Error: {e}")
+                            finally:
+                                #Task done clean up file
+                                if os.path.exists(file_to_send):
+                                    f.close()
+                                    os.remove(file_to_send)
+
                 audio_queue.task_done()
     else:
         is_realtimeactive = False
