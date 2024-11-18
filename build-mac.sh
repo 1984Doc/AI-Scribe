@@ -13,4 +13,4 @@ DIST_PATH="dist/freescribe-client"
 pyinstaller --additional-hooks-dir=./scripts/hooks --add-data "./src/FreeScribe.client/whisper-assets:whisper/assets" --add-data "./src/FreeScribe.client/markdown:markdown" --add-data "./src/FreeScribe.client/assets:assets" --name "$EXECUTABLE_NAME" --icon="$ICON_PATH" --distpath "$DIST_PATH" "$MAIN_SCRIPT" --onefile --windowed
 
 # Print a message indicating that the build is complete
-echo "Build complete. Executable created: dist/$EXECUTABLE_NAME"
+echo "Build complete. Executable created: $DIST_PATH/$EXECUTABLE_NAME.app"
