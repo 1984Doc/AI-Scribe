@@ -236,6 +236,8 @@ def realtime_text():
                                 if response.status_code == 200:
                                     text = response.json()['text']
                                     update_gui(text)
+                                else:
+                                    update_gui(f"Error (HTTP Status {response.status_code}): {response.text}")
                             except Exception as e:
                                 update_gui(f"Error: {e}")
                             finally:
@@ -446,6 +448,13 @@ def send_audio_to_server():
 
                     # Send the transcribed text and receive a response
                     send_and_receive()
+                else:
+                    # Display an error message to the user
+                    user_input.scrolled_text.configure(state='normal')
+                    user_input.scrolled_text.delete("1.0", tk.END)
+                    user_input.scrolled_text.insert(tk.END, f"An error occurred (HTTP Status {response.status_code}): {response.text}")
+                    user_input.scrolled_text.configure(state='disabled')
+
 
             except Exception as e:
                 # log error message
