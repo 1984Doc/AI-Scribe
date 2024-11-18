@@ -37,10 +37,6 @@ class SettingsWindow():
 
     Attributes
     ----------
-    SSL_ENABLE : str
-        Whether SSL is enabled ('1' for enabled, '0' for disabled).
-    SSL_SELFCERT : str
-        Whether self-signed certificates are used ('1' for enabled, '0' for disabled).
     OPENAI_API_KEY : str
         The API key for OpenAI integration.
     AISCRIBE : str
@@ -61,14 +57,12 @@ class SettingsWindow():
     save_settings_to_file():
         Saves the current settings to a JSON file.
     save_settings(openai_api_key, aiscribe_text, aiscribe2_text, 
-                  settings_window, ssl_enable, ssl_selfcert, api_style, preset):
+                  settings_window, api_style, preset):
         Saves the current settings, including API keys, IP addresses, and user-defined parameters.
     load_aiscribe_from_file():
         Loads the first AI Scribe text from a file.
     load_aiscribe2_from_file():
         Loads the second AI Scribe text from a file.
-    build_url(ip, port):
-        Constructs a URL based on IP, port, and SSL settings.
     clear_settings_file(settings_window):
         Clears the content of settings files and closes the settings window.
     """
@@ -76,8 +70,7 @@ class SettingsWindow():
     def __init__(self):
         """Initializes the ApplicationSettings with default values."""
 
-        self.SSL_ENABLE = "0"
-        self.SSL_SELFCERT = "1"
+
         self.OPENAI_API_KEY = "None"
         self.API_STYLE = "OpenAI"
         self.main_window = None
@@ -95,10 +88,12 @@ class SettingsWindow():
             "Whisper Model",
             "Local Whisper",
             "Real Time",
+            "S2T Server Self-Signed Certificates",
         ]
         self.llm_settings = [
             "Model Endpoint",
             "Use Local LLM",
+            "AI Server Self-Signed Certificates",
         ]
 
         self.advanced_settings = [
@@ -173,6 +168,8 @@ class SettingsWindow():
             "Enable Scribe Template": False,
             "Use Pre-Processing": True,
             "Use Post-Processing": False, # Disabled for now causes unexcepted behaviour
+            "AI Server Self-Signed Certificates": False,
+            "S2T Server Self-Signed Certificates": False,
             "Pre-Processing": "Please break down the conversation into a list of facts. Take the conversation and transform it to a easy to read list:\n\n",
             "Post-Processing": "\n\nPlease check your work from the list of facts and ensure the SOAP note is accurate based on the information. Please ensure the data is accurate in regards to the list of facts. Then please provide the revised SOAP Note:",
         }
@@ -242,10 +239,8 @@ class SettingsWindow():
                     settings = json.load(file)
                 except json.JSONDecodeError:
                     print("Error loading settings file. Using default settings.")
-                    return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
+                    return self.OPENAI_API_KEY, self.API_STYLE
 
-                self.SSL_ENABLE = settings.get("ssl_enable", self.SSL_ENABLE)
-                self.SSL_SELFCERT = settings.get("ssl_selfcert", self.SSL_SELFCERT)
                 self.OPENAI_API_KEY = settings.get("openai_api_key", self.OPENAI_API_KEY)
                 self.API_STYLE = settings.get("api_style", self.API_STYLE)
                 loaded_editable_settings = settings.get("editable_settings", {})
@@ -260,10 +255,10 @@ class SettingsWindow():
                     self.main_window.create_scribe_template()
 
 
-                return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
+                return self.OPENAI_API_KEY, self.API_STYLE
         except FileNotFoundError:
             print("Settings file not found. Using default settings.")
-            return self.OPENAI_API_KEY, self.SSL_ENABLE, self.SSL_SELFCERT, self.API_STYLE
+            return self.OPENAI_API_KEY, self.API_STYLE
 
     def save_settings_to_file(self):
         """
@@ -278,15 +273,13 @@ class SettingsWindow():
         settings = {
             "openai_api_key": self.OPENAI_API_KEY,
             "editable_settings": self.editable_settings,
-            "ssl_enable": str(self.SSL_ENABLE),
-            "ssl_selfcert": str(self.SSL_SELFCERT),
             "api_style": self.API_STYLE
         }
         with open(get_resource_path('settings.txt'), 'w') as file:
             json.dump(settings, file)
 
     def save_settings(self, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
-                      ssl_enable, ssl_selfcert, api_style, silence_cutoff):
+                      api_style, silence_cutoff):
         """
         Save the current settings, including IP addresses, API keys, and user-defined parameters.
 
@@ -297,12 +290,8 @@ class SettingsWindow():
         :param str aiscribe_text: The text for the first AI Scribe.
         :param str aiscribe2_text: The text for the second AI Scribe.
         :param tk.Toplevel settings_window: The settings window instance to be destroyed after saving.
-        :param int ssl_enable: Flag indicating whether SSL is enabled.
-        :param int ssl_selfcert: Flag indicating whether to use a self-signed certificate.
         :param str api_style: The style of API being used.
         """
-        self.SSL_ENABLE = ssl_enable
-        self.SSL_SELFCERT = ssl_selfcert
         self.OPENAI_API_KEY = openai_api_key
         self.API_STYLE = api_style
 
@@ -350,45 +339,6 @@ class SettingsWindow():
         except FileNotFoundError:
             return None
 
-    def build_url(self, ip, port):
-        """
-        Build a URL string based on the IP address, port, and SSL settings.
-
-        If SSL is enabled (`SSL_ENABLE` is set to "1"), the method returns a URL
-        with the `https` scheme, otherwise, it returns a URL with the `http` scheme.
-        
-        The method also handles the case of self-signed SSL certificates based on
-        the `SSL_SELFCERT` setting.
-
-        Parameters
-        ----------
-        ip : str
-            The IP address of the server.
-        port : str
-            The port number of the server.
-
-        Returns
-        -------
-        str
-            A fully formed URL for either `https` or `http` depending on the SSL settings.
-
-        Prints
-        ------
-        If SSL is enabled, prints a message indicating that SSL/TLS connections are enabled.
-        If self-signed certificates are allowed, it prints a warning about trusting self-signed certificates.
-        If SSL is disabled, prints a message indicating that unencrypted connections will be used.
-        """
-
-        if str(self.SSL_ENABLE) == "1":
-            print("Encrypted SSL/TLS connections are ENABLED between client and server.")
-            if str(self.SSL_SELFCERT) == "1":
-                print("...Self-signed SSL certificates are ALLOWED in Settings...\n...You may disregard subsequent log Warning if you are trusting self-signed certificates from server...")
-            else:
-                print("...Self-signed SSL certificates are DISABLED in Settings...\n...Trusted/Verified SSL certificates must be used on server, otherwise SSL connection will fail...")
-            return f"https://{ip}:{port}"
-        else:
-            print("UNENCRYPTED http connections are being used between Client and Whisper/Kobbold server...")
-            return f"http://{ip}:{port}"
   
     def clear_settings_file(self, settings_window):
         """
@@ -441,7 +391,8 @@ class SettingsWindow():
         }
 
         try:
-            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0, verify=not (self.SSL_SELFCERT and self.SSL_ENABLE))
+            verify = True if self.editable_settings["AI Server Self-Signed Certificates"] is True else False
+            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0, verify=verify)
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
             available_models = [model["id"] for model in models]
