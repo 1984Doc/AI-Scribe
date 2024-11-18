@@ -101,12 +101,13 @@ class SettingsWindow():
             "Use Local LLM",
         ]
 
-        self.advanced_settings = [
+        self.adv_ai_settings = [
             "use_story",
             "use_memory",
             "use_authors_note",
             "use_world_info",
-            "Enable Scribe Template",
+            "Use best_of",
+            "best_of",
             "max_context_length",
             "max_length",
             "rep_pen",
@@ -122,15 +123,21 @@ class SettingsWindow():
             "singleline",
             "frmttriminc",
             "frmtrmblln",
-            "Use best_of",
-            "best_of",
+        ]
+
+        self.adv_whisper_settings = [
             "Real Time Audio Length",
+        ]
+
+
+        self.adv_general_settings = [
+            "Enable Scribe Template",
         ]
 
         self.editable_settings = {
             "Model": "gpt-4",
             "Model Endpoint": "https://api.openai.com/v1/",
-            "Use Local LLM": False,
+            "Use Local LLM": True,
             "Architecture": "CPU",
             "use_story": False,
             "use_memory": False,
@@ -153,11 +160,11 @@ class SettingsWindow():
             "frmtrmblln": False,
             "best_of": 2,
             "Use best_of": False,
-            "Local Whisper": False,
+            "Local Whisper": True,
             "Whisper Endpoint": "https://localhost:2224/whisperaudio",
             "Whisper Server API Key": "None",
             "Whisper Model": "small.en",
-            "Real Time": False,
+            "Real Time": True,
             "Real Time Audio Length": 5,
             "Real Time Silence Length": 1,
             "Silence cut-off": 0.035,
