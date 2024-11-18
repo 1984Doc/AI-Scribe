@@ -207,13 +207,6 @@ class SettingsWindowUI:
         self.api_dropdown.grid(row=left_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
         left_row += 1
 
-        # 4. Enable SSL (Right Column)
-        self.ssl_enable_var = tk.IntVar(value=int(self.settings.SSL_ENABLE))
-        tk.Label(right_frame, text="Enable SSL:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
-        self.ssl_enable_checkbox = tk.Checkbutton(right_frame, variable=self.ssl_enable_var)
-        self.ssl_enable_checkbox.grid(row=right_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
-        right_row += 1
-
         # 5. Models (Left Column)
         tk.Label(left_frame, text="Models").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
         models_drop_down_options = []
@@ -242,19 +235,8 @@ class SettingsWindowUI:
 
         self.architecture_dropdown.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
 
-        
         right_row += 1
 
-        # # Restart Local Llm Button
-        # restart_llm_button = ttk.Button(right_frame, text="Restart LLM", width=15, command=lambda: self.restart_local_llm())
-
-        # 6. Self-Signed Cert (Right Column)
-        self.ssl_selfcert_var = tk.IntVar(value=int(self.settings.SSL_SELFCERT))
-        tk.Label(right_frame, text="Self-Signed Cert:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
-        self.ssl_selfcert_checkbox = tk.Checkbutton(right_frame, variable=self.ssl_selfcert_var)
-        self.ssl_selfcert_checkbox.grid(row=right_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
-        right_row += 1
-        
         self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.llm_settings)
  
     def on_model_selection_change(self, event):
@@ -481,8 +463,6 @@ class SettingsWindowUI:
             self.aiscribe_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
             self.aiscribe2_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
             self.settings_window,
-            self.ssl_enable_var.get(),
-            self.ssl_selfcert_var.get(),
             self.api_dropdown.get(),
             self.cutoff_slider.threshold / 32768,
         )
