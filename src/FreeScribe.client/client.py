@@ -293,7 +293,9 @@ def toggle_recording():
         if app_settings.editable_settings["Real Time"]:
             loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.")
 
-            while audio_queue.empty() is False:
+            timeout_timer = 0
+            while audio_queue.empty() is False and timeout_timer < 180:
+                timeout_timer += 0.1
                 time.sleep(0.1)
             
             loading_window.destroy()
