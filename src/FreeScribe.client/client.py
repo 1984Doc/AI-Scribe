@@ -230,7 +230,7 @@ def realtime_text():
                                 "Authorization": "Bearer "+app_settings.editable_settings["Whisper Server API Key"]
                             }
 
-                            verify = True if app_settings.editable_settings["S2T Server Self-Signed Certificates"] is True else False
+                            verify = False if app_settings.editable_settings["S2T Server Self-Signed Certificates"] is True else True
                             response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
                             
                             if response.status_code == 200:
@@ -420,7 +420,7 @@ def send_audio_to_server():
             }
 
             try:
-                verify = True if app_settings.editable_settings["S2T Server Self-Signed Certificates"] is True else False
+                verify = False if app_settings.editable_settings["S2T Server Self-Signed Certificates"] is True else True
 
                 # Send the request without verifying the SSL certificate
                 response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=verify)
@@ -554,7 +554,7 @@ def send_text_to_api(edited_text):
             app_settings.editable_settings["Model Endpoint"] = app_settings.editable_settings["Model Endpoint"][:-1]
 
         if app_settings.API_STYLE == "OpenAI":
-            verify = True if app_settings.editable_settings["AI Server Self-Signed Certificates"] is True else False
+            verify = False if app_settings.editable_settings["AI Server Self-Signed Certificates"] is True else True
             response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=verify)
 
             response.raise_for_status()
@@ -564,7 +564,7 @@ def send_text_to_api(edited_text):
         elif app_settings.API_STYLE == "KoboldCpp":
             prompt = get_prompt(edited_text)
 
-            verify = True if app_settings.editable_settings["AI Server Self-Signed Certificates"] is True else False
+            verify = False if app_settings.editable_settings["AI Server Self-Signed Certificates"] is True else True
             response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=verify)
 
             if response.status_code == 200:
