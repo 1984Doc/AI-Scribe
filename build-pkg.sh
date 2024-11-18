@@ -4,7 +4,7 @@
 set -e
 
 # Build pkg installer for macOS using the pkgbuild command
-pkgbuild --root ./dist/freescribe-client --identifier com.clinicianfocus.freescribe --version 1.0 --install-location /Applications ./dist/installer.pkg
+pkgbuild --root ./dist/freescribe-client --identifier com.clinicianfocus.freescribe --scripts ./mac/scripts/ --version 1.0 --install-location /Applications ./dist/installer.pkg
 
 echo "Build complete. Installer created: dist/installer.pkg"
 
