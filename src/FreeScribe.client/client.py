@@ -42,7 +42,7 @@ from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
 from UI.LoadingWindow import LoadingWindow
 from Model import Model, ModelManager
-from utils.file_utils import get_file_path
+from utils.file_utils import get_file_path, get_resource_path
 
 # GUI Setup
 root = tk.Tk()
@@ -216,13 +216,13 @@ def realtime_text():
                     else:
                         print("Remote Real Time Whisper")
                         if frames:
-                            with wave.open('realtime.wav', 'wb') as wf:
+                            with wave.open(get_resource_path("realtime.wav"), 'wb') as wf:
                                 wf.setnchannels(CHANNELS)
                                 wf.setsampwidth(p.get_sample_size(FORMAT))
                                 wf.setframerate(RATE)
                                 wf.writeframes(b''.join(frames))
                             frames = []
-                        file_to_send = 'realtime.wav'
+                        file_to_send = get_resource_path("realtime.wav")
                         with open(file_to_send, 'rb') as f:
                             files = {'audio': f}
 
@@ -248,7 +248,7 @@ def update_gui(text):
 def save_audio():
     global frames
     if frames:
-        with wave.open('recording.wav', 'wb') as wf:
+        with wave.open(get_resource_path("recording.wav"), 'wb') as wf:
             wf.setnchannels(CHANNELS)
             wf.setsampwidth(p.get_sample_size(FORMAT))
             wf.setframerate(RATE)
