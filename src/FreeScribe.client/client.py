@@ -382,6 +382,10 @@ def send_audio_to_server():
             result = model.transcribe(file_to_send)
             transcribed_text = result["text"]
 
+            # done with file clean up
+            if os.path.exists(file_to_send):
+                os.remove(file_to_send)
+
             # Update the user input widget with the transcribed text
             user_input.scrolled_text.configure(state='normal')
             user_input.scrolled_text.delete("1.0", tk.END)
@@ -460,6 +464,10 @@ def send_audio_to_server():
                 user_input.scrolled_text.insert(tk.END, f"An error occurred: {e}")
                 user_input.scrolled_text.configure(state='disabled')
             finally:
+                # done with file clean up
+                f.close()
+                if os.path.exists(file_to_send):
+                    os.remove(file_to_send)
                 loading_window.destroy()
 
 def send_and_receive():
