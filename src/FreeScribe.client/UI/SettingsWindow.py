@@ -391,7 +391,7 @@ class SettingsWindow():
         }
 
         try:
-            verify = True if self.editable_settings["AI Server Self-Signed Certificates"] is True else False
+            verify = not self.editable_settings["AI Server Self-Signed Certificates"]
             response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0, verify=verify)
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
