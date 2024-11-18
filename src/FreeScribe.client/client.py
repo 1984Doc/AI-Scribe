@@ -230,6 +230,7 @@ def realtime_text():
                                 "Authorization": "Bearer "+app_settings.editable_settings["Whisper Server API Key"]
                             }
 
+                            try:
                             if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
                                 response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=False)
                             else:
