@@ -757,8 +757,11 @@ def send_and_flash():
     start_flashing()
     send_and_receive()
 
+last_full_position = None
+last_minimal_position = None
+
 def toggle_view():
-    global current_view, is_recording, is_paused
+    global current_view, is_recording, is_paused, last_full_position, last_minimal_position
     if current_view == "full":
         user_input.grid_remove()
         send_button.grid_remove()
@@ -816,6 +819,10 @@ def toggle_view():
         if app_settings.editable_settings["Enable Scribe Template"]:
             window.destroy_scribe_template()
             window.create_scribe_template(row=1, column=0, columnspan=3, pady=5)
+
+        last_full_position = root.geometry()
+        if last_minimal_position:
+            root.geometry(last_minimal_position)
         
     else:
         mic_button.config(width=11, height=2)
@@ -856,6 +863,10 @@ def toggle_view():
         root.minsize(900, 400)
         current_view = "full"
         window.create_docker_status_bar()
+
+        last_minimal_position = root.geometry()
+        if last_full_position is not None:
+            root.geometry(last_full_position)
 
 def copy_text(widget):
     text = widget.get("1.0", tk.END)
