@@ -78,10 +78,10 @@ class SettingsWindow():
         self.scribe_template_mapping = {}
 
         
-        self.general_settings = {
+        self.general_settings = [
             "Show Welcome Message",
             "Show Scrub PHI"
-        }
+        ]
 
         self.whisper_settings = [
             "Whisper Endpoint",

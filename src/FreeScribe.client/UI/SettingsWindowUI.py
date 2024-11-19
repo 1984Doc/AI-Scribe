@@ -489,6 +489,13 @@ class SettingsWindowUI:
         This method creates and places UI elements for general settings.
         """
         self.create_editable_settings(self.general_settings_frame, self.settings.general_settings)
+        # Add a note at the bottom of the general settings frame
+        note_text = (
+            "Note: 'Show Scrub PHI' will only work for local LLM and private network.\n"
+            "For internet-facing endpoint, it will be enabled regardless of the 'Show Scrub PHI' value."
+        )
+        note_label = tk.Label(self.general_settings_frame, text=note_text, fg="red", wraplength=400, justify="left")
+        note_label.grid(padx=10, pady=5, sticky="w")
 
 
     def _create_checkbox(self, frame, label, setting_name, row_idx):
