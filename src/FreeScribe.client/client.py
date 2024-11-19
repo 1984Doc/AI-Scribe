@@ -777,9 +777,17 @@ def toggle_view():
         mic_button.grid(row=0, column=0, pady=2, padx=2)
         pause_button.grid(row=0, column=1, pady=2, padx=2)
         switch_view_button.grid(row=0, column=2, pady=2, padx=2)
-
-        mic_button.config(text="🎤")
-        pause_button.config(text="⏸️")
+        
+        if is_recording:
+            mic_button.config(text="⏹️")
+        else:
+            mic_button.config(text="🎤")
+        
+        if is_paused:
+            pause_button.config(text="▶️")
+        else:
+            pause_button.config(text="⏸️")
+        
         switch_view_button.config(text="⬆️")
 
         blinking_circle_canvas.grid(row=0, column=3, pady=2, padx=2)
