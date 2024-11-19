@@ -758,7 +758,7 @@ def send_and_flash():
     send_and_receive()
 
 def toggle_view():
-    global current_view
+    global current_view, is_recording, is_paused
     if current_view == "full":
         user_input.grid_remove()
         send_button.grid_remove()
@@ -827,6 +827,20 @@ def toggle_view():
             window.destroy_scribe_template()
             window.create_scribe_template()
 
+        if is_recording:
+            mic_button.config(bg="red", text="Stop\nRecording")
+        else:
+            mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
+        
+        if is_paused:
+            pause_button.config(bg="red", text="Resume")
+        else:
+            pause_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Pause")
+
+        # Reset the window properties and events
+        root.unbind('<Enter>')
+        root.unbind('<Leave>')
+        root.attributes('-alpha', 1.0)
 
         root.attributes('-topmost', False)
         root.minsize(900, 400)
