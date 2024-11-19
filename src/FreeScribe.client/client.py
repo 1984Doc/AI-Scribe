@@ -375,6 +375,7 @@ def send_audio_to_server():
 
             # Determine the file to send for transcription
             file_to_send = uploaded_file_path or get_resource_path('recording.wav')
+            delete_file = False if uploaded_file_path else True
             uploaded_file_path = None
 
             # Transcribe the audio file using the loaded model
@@ -382,7 +383,7 @@ def send_audio_to_server():
             transcribed_text = result["text"]
 
             # done with file clean up
-            if os.path.exists(file_to_send):
+            if os.path.exists(file_to_send) and delete_file is True:
                 os.remove(file_to_send)
 
             # Update the user input widget with the transcribed text
