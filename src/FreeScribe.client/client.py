@@ -11,6 +11,7 @@ and Research Students - Software Developer Alex Simko, Pemba Sherpa (F24), and N
 
 """
 
+import os
 import tkinter as tk
 from tkinter import scrolledtext, ttk, filedialog
 import requests
@@ -35,8 +36,8 @@ from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
 from UI.LoadingWindow import LoadingWindow
 from Model import  ModelManager
-from utils.file_utils import get_file_path
 from utils.ip_utils import is_private_ip
+from utils.file_utils import get_file_path, get_resource_path
 
 # GUI Setup
 root = tk.Tk()
@@ -210,13 +211,13 @@ def realtime_text():
                     else:
                         print("Remote Real Time Whisper")
                         if frames:
-                            with wave.open('realtime.wav', 'wb') as wf:
+                            with wave.open(get_resource_path("realtime.wav"), 'wb') as wf:
                                 wf.setnchannels(CHANNELS)
                                 wf.setsampwidth(p.get_sample_size(FORMAT))
                                 wf.setframerate(RATE)
                                 wf.writeframes(b''.join(frames))
                             frames = []
-                        file_to_send = 'realtime.wav'
+                        file_to_send = get_resource_path("realtime.wav")
                         with open(file_to_send, 'rb') as f:
                             files = {'audio': f}
 
@@ -224,13 +225,21 @@ def realtime_text():
                                 "Authorization": "Bearer "+app_settings.editable_settings["Whisper Server API Key"]
                             }
 
-                            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=False)
-                            else:
-                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files)
-                            if response.status_code == 200:
-                                text = response.json()['text']
-                                update_gui(text)
+                            try:
+                                verify = not app_settings.editable_settings["S2T Server Self-Signed Certificates"]
+                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
+                                if response.status_code == 200:
+                                    text = response.json()['text']
+                                    update_gui(text)
+                                else:
+                                    update_gui(f"Error (HTTP Status {response.status_code}): {response.text}")
+                            except Exception as e:
+                                update_gui(f"Error: {e}")
+                            finally:
+                                #Task done clean up file
+                                if os.path.exists(file_to_send):
+                                    f.close()
+                                    os.remove(file_to_send)
                 audio_queue.task_done()
     else:
         is_realtimeactive = False
@@ -242,7 +251,7 @@ def update_gui(text):
 def save_audio():
     global frames
     if frames:
-        with wave.open('recording.wav', 'wb') as wf:
+        with wave.open(get_resource_path("recording.wav"), 'wb') as wf:
             wf.setnchannels(CHANNELS)
             wf.setsampwidth(p.get_sample_size(FORMAT))
             wf.setframerate(RATE)
@@ -270,8 +279,6 @@ def toggle_recording():
         response_display.scrolled_text.configure(fg='black')
         response_display.scrolled_text.configure(state='disabled')
         is_recording = True
-        
-        realtime_thread = threaded_realtime_text()
 
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
@@ -287,7 +294,9 @@ def toggle_recording():
         if app_settings.editable_settings["Real Time"]:
             loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.")
 
-            while audio_queue.empty() is False:
+            timeout_timer = 0
+            while audio_queue.empty() is False and timeout_timer < 180:
+                timeout_timer += 0.1
                 time.sleep(0.1)
             
             loading_window.destroy()
@@ -360,12 +369,16 @@ def send_audio_to_server():
             model = whisper.load_model(model_name)
 
             # Determine the file to send for transcription
-            file_to_send = uploaded_file_path or 'recording.wav'
+            file_to_send = uploaded_file_path or get_resource_path('recording.wav')
             uploaded_file_path = None
 
             # Transcribe the audio file using the loaded model
             result = model.transcribe(file_to_send)
             transcribed_text = result["text"]
+
+            # done with file clean up
+            if os.path.exists(file_to_send):
+                os.remove(file_to_send)
 
             # Update the user input widget with the transcribed text
             user_input.scrolled_text.configure(state='normal')
@@ -403,7 +416,7 @@ def send_audio_to_server():
             file_to_send = uploaded_file_path
             uploaded_file_path = None
         else:
-            file_to_send = 'recording.wav'
+            file_to_send = get_resource_path('recording.wav')
 
         # Open the audio file in binary mode
         with open(file_to_send, 'rb') as f:
@@ -415,14 +428,10 @@ def send_audio_to_server():
             }
 
             try:
-                response = None
-                # Check for SSL and self-signed certificate settings
-                if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                    # Send the request without verifying the SSL certificate
-                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=False)
-                else:
-                    # Send the request with the audio file and headers/authorization
-                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files)
+                verify = not app_settings.editable_settings["S2T Server Self-Signed Certificates"]
+
+                # Send the request without verifying the SSL certificate
+                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=verify)
 
                 # On successful response (status code 200)
                 if response.status_code == 200:
@@ -434,6 +443,13 @@ def send_audio_to_server():
 
                     # Send the transcribed text and receive a response
                     send_and_receive()
+                else:
+                    # Display an error message to the user
+                    user_input.scrolled_text.configure(state='normal')
+                    user_input.scrolled_text.delete("1.0", tk.END)
+                    user_input.scrolled_text.insert(tk.END, f"An error occurred (HTTP Status {response.status_code}): {response.text}")
+                    user_input.scrolled_text.configure(state='disabled')
+
 
             except Exception as e:
                 # log error message
@@ -445,6 +461,10 @@ def send_audio_to_server():
                 user_input.scrolled_text.insert(tk.END, f"An error occurred: {e}")
                 user_input.scrolled_text.configure(state='disabled')
             finally:
+                # done with file clean up
+                f.close()
+                if os.path.exists(file_to_send):
+                    os.remove(file_to_send)
                 loading_window.destroy()
 
 def send_and_receive():
@@ -553,11 +573,8 @@ def send_text_to_api(edited_text):
             app_settings.editable_settings["Model Endpoint"] = app_settings.editable_settings["Model Endpoint"][:-1]
 
         if app_settings.API_STYLE == "OpenAI":
-            response = requests.Response
-            if str(app_settings.SSL_SELFCERT) == "1" and str(app_settings.SSL_ENABLE) == "1":
-                response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=False)
-            else:
-                response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload)
+            verify = not app_settings.editable_settings["AI Server Self-Signed Certificates"]
+            response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=verify)
 
             response.raise_for_status()
             response_data = response.json()
@@ -565,10 +582,10 @@ def send_text_to_api(edited_text):
             return response_text
         elif app_settings.API_STYLE == "KoboldCpp":
             prompt = get_prompt(edited_text)
-            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=False)
-            else:
-                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt)
+
+            verify = not app_settings.editable_settings["AI Server Self-Signed Certificates"]
+            response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=verify)
+
             if response.status_code == 200:
                 results = response.json()['results']
                 response_text = results[0]['text']

@@ -25,8 +25,36 @@ Var /GLOBAL CPU_RADIO
 Var /GLOBAL NVIDIA_RADIO
 Var /GLOBAL SELECTED_OPTION
 
+Function Check_For_Old_Version_In_App_Data
+    ; Check if the old version exists in AppData
+    IfFileExists "$APPDATA\FreeScribe\freescribe-client.exe" 0 OldVersionDoesNotExist
+        ; Open Dialog to ask user if they want to uninstall the old version
+        MessageBox MB_YESNO|MB_ICONQUESTION "An old version of FreeScribe has been detected. Would you like to uninstall it?" IDYES UninstallOldVersion IDNO OldVersionDoesNotExist
+        UninstallOldVersion:
+            ; Remove the contents/folders of the old version
+            RMDir /r "$APPDATA\FreeScribe\presets"
+            RMDir /r "$APPDATA\FreeScribe\_internal"
+            RMDir /r "$APPDATA\FreeScribe\models"
+
+            ; Remove the old version executable
+            Delete "$APPDATA\FreeScribe\freescribe-client.exe"
+
+            ; Remove the uninstaller entry from the Control Panel
+            Delete "$APPDATA\FreeScribe\uninstall.exe"
+
+            ; Remove the start menu shortcut
+            Delete "$SMPROGRAMS\FreeScribe\FreeScribe.lnk"
+            RMDir "$SMPROGRAMS\FreeScribe"
+
+            ; Show message when uninstallation is complete
+            MessageBox MB_OK "FreeScribe has been successfully uninstalled."
+    OldVersionDoesNotExist:
+FunctionEnd
+
+
 ; Function to create a custom page with CPU/NVIDIA options
 Function ARCHITECHTURE_SELECT
+    Call Check_For_Old_Version_In_App_Data
     !insertmacro MUI_HEADER_TEXT "Architecture Selection" "Choose your preferred installation architecture based on your hardware"
 
     nsDialogs::Create 1018
@@ -88,6 +116,19 @@ Function .onInstSuccess
     MessageBox MB_OK "Installation completed successfully! Please note upon first launch start time may be slow. Please wait for the program to open!"
 FunctionEnd
 
+; Checks on installer start
+Function .onInit
+    nsExec::ExecToStack 'cmd /c tasklist /FI "IMAGENAME eq freescribe-client.exe" /NH | find /I "freescribe-client.exe" > nul'
+    Pop $0 ; Return value
+
+    ; Check if the process is running
+    ${If} $0 == 0
+        MessageBox MB_OK "FreeScribe is currently running. Please close the application before installing. Once closed please restart the installer."
+        Abort
+    ${EndIf}
+FunctionEnd
+
+
 ; Define the section of the installer
 Section "MainSection" SEC01
     ; Set output path to the installation directory
@@ -124,7 +165,7 @@ Section "MainSection" SEC01
 SectionEnd
 
 Section "GGUF Installs" GGUF_INSTALLS
-    AddSize 2800000 ; Add the size in kilobyes for the models
+    AddSize 2800000 ; Add the size in kilobytes for the models
 
     CreateDirectory "$INSTDIR\models"
     SetOutPath "$INSTDIR\models"
@@ -132,9 +173,14 @@ Section "GGUF Installs" GGUF_INSTALLS
     ; Copy the license
     File ".\assets\gemma_license.txt"
 
-    ; install the gemma 2 q8
+    ; Check if the file already exists
+    IfFileExists "$INSTDIR\models\gemma-2-2b-it-Q8_0.gguf" 0 +2
+    Goto SkipDownload
+
+    ; Install the gemma 2 q8
     inetc::get /TIMEOUT=30000 "https://huggingface.co/lmstudio-community/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q8_0.gguf?download=true" "$INSTDIR\models\gemma-2-2b-it-Q8_0.gguf" /END
 
+SkipDownload:
     SetOutPath "$INSTDIR"
 
 SectionEnd
