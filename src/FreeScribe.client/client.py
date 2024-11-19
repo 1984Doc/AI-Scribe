@@ -83,6 +83,7 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
 
+processing_cancelled_realtime = False
 
 def get_prompt(formatted_message):
 
@@ -190,7 +191,7 @@ def is_silent(data, threshold=0.01):
     return max_value < threshold
 
 def realtime_text():
-    global frames, is_realtimeactive, audio_queue
+    global frames, is_realtimeactive, audio_queue, processing_cancelled_realtime
     if not is_realtimeactive:
         is_realtimeactive = True
         model = None
@@ -202,6 +203,12 @@ def realtime_text():
                 messagebox.showerror("Model Error", f"Error loading model: {e}")
                 
         while True:
+            #  break if canceled
+            if processing_cancelled_realtime:
+                #reset the cancel state
+                processing_cancelled_realtime = False
+                break
+
             audio_data = audio_queue.get()
             if audio_data is None:
                 break
@@ -212,7 +219,8 @@ def realtime_text():
                     if app_settings.editable_settings["Local Whisper"] == True:
                         print("Local Real Time Whisper")
                         result = model.transcribe(audio_buffer, fp16=False)
-                        update_gui(result['text'])
+                        if processing_cancelled_realtime is False:
+                            update_gui(result['text'])
                     else:
                         print("Remote Real Time Whisper")
                         if frames:
@@ -235,7 +243,8 @@ def realtime_text():
                                 response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
                                 if response.status_code == 200:
                                     text = response.json()['text']
-                                    update_gui(text)
+                                    if not processing_cancelled_realtime is False:
+                                        update_gui(text)
                                 else:
                                     update_gui(f"Error (HTTP Status {response.status_code}): {response.text}")
                             except Exception as e:
@@ -297,17 +306,30 @@ def toggle_recording():
             recording_thread.join()  # Ensure the recording thread is terminated
 
         if app_settings.editable_settings["Real Time"]:
-            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.")
+
+            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=cancel_processing_realtime)
 
             timeout_timer = 0
-            while audio_queue.empty() is False and timeout_timer < 180:
+            while audio_queue.empty() is False and timeout_timer < 180 and processing_cancelled_realtime is False:
                 timeout_timer += 0.1
                 time.sleep(0.1)
             
             loading_window.destroy()
 
-        save_audio()
+        if cancel_processing_realtime is False:
+            save_audio()
+            
         mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
+
+        if cancel_processing_realtime:
+            #empty the queue
+            while not audio_queue.empty():
+                audio_queue.get()
+                audio_queue.task_done()
+
+def cancel_processing_realtime():
+    global processing_cancelled_realtime
+    processing_cancelled_realtime = True
 
 def clear_all_text_fields():
     user_input.scrolled_text.configure(state='normal')
