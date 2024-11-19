@@ -802,6 +802,8 @@ def toggle_view():
         root.bind('<Enter>', on_enter)
         root.bind('<Leave>', on_leave)
 
+        root.attributes('-toolwindow', True)
+
         window.destroy_docker_status_bar()
         if app_settings.editable_settings["Enable Scribe Template"]:
             window.destroy_scribe_template()
