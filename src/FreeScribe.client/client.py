@@ -813,8 +813,6 @@ def toggle_view():
         root.bind('<Enter>', on_enter)
         root.bind('<Leave>', on_leave)
 
-        root.attributes('-toolwindow', True)
-
         window.destroy_docker_status_bar()
         if app_settings.editable_settings["Enable Scribe Template"]:
             window.destroy_scribe_template()
@@ -823,6 +821,8 @@ def toggle_view():
         last_full_position = root.geometry()
         if last_minimal_position:
             root.geometry(last_minimal_position)
+            
+        root.attributes('-toolwindow', True)
         
     else:
         mic_button.config(width=11, height=2)
@@ -867,6 +867,8 @@ def toggle_view():
         last_minimal_position = root.geometry()
         if last_full_position is not None:
             root.geometry(last_full_position)
+
+        root.attributes('-toolwindow', False)
 
 def copy_text(widget):
     text = widget.get("1.0", tk.END)
