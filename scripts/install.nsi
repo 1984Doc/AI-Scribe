@@ -128,9 +128,25 @@ Function .onInit
     ${EndIf}
 FunctionEnd
 
+Function CleanUninstall
+    ; Remove the contents/folders of the old version
+    RMDir /r "$INSTDIR\presets"
+    RMDir /r "$INSTDIR\_internal"
+
+    ; Remove the old version executable
+    Delete "$INSTDIR\freescribe-client.exe"
+
+    ; Remove the uninstaller entry from the Control Panel
+    Delete "$INSTDIR\uninstall.exe"
+
+    ; Remove the start menu shortcut
+    Delete "$SMPROGRAMS\FreeScribe\FreeScribe.lnk"
+    RMDir "$SMPROGRAMS\FreeScribe"
+FunctionEnd
 
 ; Define the section of the installer
 Section "MainSection" SEC01
+    Call CleanUninstall
     ; Set output path to the installation directory
     SetOutPath "$INSTDIR"
 
