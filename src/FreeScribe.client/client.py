@@ -274,7 +274,7 @@ def save_audio():
         else:
             threaded_send_audio_to_server()
 
-DEFUALT_BUTTON_COLOUR = None
+DEFAULT_BUTTON_COLOUR= None
 
 def toggle_recording():
     global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue, current_view
@@ -295,7 +295,7 @@ def toggle_recording():
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
 
-        DEFUALT_BUTTON_COLOUR = mic_button.cget('background')
+        DEFAULT_BUTTON_COLOUR= mic_button.cget('background')
 
         if current_view == "full":
             mic_button.config(bg="red", text="Stop\nRecording")
