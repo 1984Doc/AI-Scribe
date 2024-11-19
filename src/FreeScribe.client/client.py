@@ -307,7 +307,7 @@ def toggle_recording():
 
         if app_settings.editable_settings["Real Time"]:
 
-            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=cancel_processing_realtime)
+            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=cancel_processing)
 
             timeout_timer = 0
             while audio_queue.empty() is False and timeout_timer < 180 and processing_cancelled_realtime is False:
@@ -316,18 +316,18 @@ def toggle_recording():
             
             loading_window.destroy()
 
-        if cancel_processing_realtime is False:
+        if processing_cancelled_realtime is False:
             save_audio()
             
         mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
 
-        if cancel_processing_realtime:
+        if processing_cancelled_realtime:
             #empty the queue
             while not audio_queue.empty():
                 audio_queue.get()
                 audio_queue.task_done()
 
-def cancel_processing_realtime():
+def cancel_processing():
     global processing_cancelled_realtime
     processing_cancelled_realtime = True
 
