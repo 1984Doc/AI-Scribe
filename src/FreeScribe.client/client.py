@@ -139,9 +139,16 @@ def toggle_pause():
 
     if is_paused:
         DEFAULT_PAUSE_BUTTON_COLOUR = pause_button.cget('background')
-        pause_button.config(text="Resume", bg="red")
+        if current_view == "full":
+            pause_button.config(text="Resume", bg="red")
+        elif current_view == "minimal":
+            pause_button.config(text="▶️", bg="red")
     else:
-        pause_button.config(text="Pause", bg=DEFAULT_PAUSE_BUTTON_COLOUR)
+        if current_view == "full":
+            pause_button.config(text="Pause", bg=DEFAULT_PAUSE_BUTTON_COLOUR)
+        elif current_view == "minimal":
+            pause_button.config(text="⏸️", bg=DEFAULT_PAUSE_BUTTON_COLOUR)
+    
 
 def record_audio():
     global is_paused, frames, audio_queue
@@ -270,7 +277,7 @@ def save_audio():
 DEFUALT_BUTTON_COLOUR = None
 
 def toggle_recording():
-    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue
+    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue, current_view
 
     realtime_thread = threaded_realtime_text()
 
@@ -289,7 +296,12 @@ def toggle_recording():
         recording_thread.start()
 
         DEFUALT_BUTTON_COLOUR = mic_button.cget('background')
-        mic_button.config(bg="red", text="Stop\nRecording")
+
+        if current_view == "full":
+            mic_button.config(bg="red", text="Stop\nRecording")
+        elif current_view == "minimal":
+            mic_button.config(bg="red", text="⏹️")
+        
         start_flashing()
     else:
         is_recording = False
@@ -307,7 +319,11 @@ def toggle_recording():
             loading_window.destroy()
 
         save_audio()
-        mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
+
+        if current_view == "full":
+            mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
+        elif current_view == "minimal":
+            mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="🎤")
 
 def clear_all_text_fields():
     user_input.scrolled_text.configure(state='normal')
@@ -751,23 +767,46 @@ def toggle_view():
         upload_button.grid_remove()
         response_display.grid_remove()
         timestamp_listbox.grid_remove()
-        mic_button.config(width=10, height=1)
-        pause_button.config(width=10, height=1)
-        switch_view_button.config(width=10, height=1)
-        mic_button.grid(row=0, column=0, pady=5)
-        pause_button.grid(row=0, column=1, pady=5)
-        switch_view_button.grid(row=0, column=2, pady=5)
-        switch_view_button.config(text="Maximize\nView")
-        blinking_circle_canvas.grid(row=0, column=3, pady=5)
+        blinking_circle_canvas.grid_remove()
+        
+        # Confifure the buttons for the minimal view
+        mic_button.config(width=2, height=1)
+        pause_button.config(width=2, height=1)
+        switch_view_button.config(width=2, height=1)
+        
+        mic_button.grid(row=0, column=0, pady=2, padx=2)
+        pause_button.grid(row=0, column=1, pady=2, padx=2)
+        switch_view_button.grid(row=0, column=2, pady=2, padx=2)
+
+        mic_button.config(text="🎤")
+        pause_button.config(text="⏸️")
+        switch_view_button.config(text="⬆️")
+
+        blinking_circle_canvas.grid(row=0, column=3, pady=2, padx=2)
+        
+        # Set window properties
+        root.attributes('-topmost', True)
+        root.minsize(125, 50)  # Even smaller minimum size
+        current_view = "minimal"
+
+        def on_enter(e):
+            # Check if mouse is actually entering the root window
+            if e.widget == root:
+                root.attributes('-alpha', 1.0)
+
+        def on_leave(e):
+            # Check if mouse is actually leaving the root window
+            if e.widget == root:
+                root.attributes('-alpha', 0.70)
+
+        root.bind('<Enter>', on_enter)
+        root.bind('<Leave>', on_leave)
+
+        window.destroy_docker_status_bar()
         if app_settings.editable_settings["Enable Scribe Template"]:
             window.destroy_scribe_template()
             window.create_scribe_template(row=1, column=0, columnspan=3, pady=5)
-
-        root.attributes('-topmost', True)
-        root.minsize(300, 100)
-        current_view = "minimal"
-        window.destroy_docker_status_bar()
-
+        
     else:
         mic_button.config(width=11, height=2)
         pause_button.config(width=11, height=2)
