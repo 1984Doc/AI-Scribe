@@ -332,6 +332,12 @@ def cancel_processing_realtime():
     processing_cancelled_realtime = True
 
 def clear_all_text_fields():
+    # Reset the recording status and clear the audio data
+    global is_recording, frames, audio_queue
+    if is_recording:
+        cancel_processing()
+        threaded_toggle_recording()
+
     user_input.scrolled_text.configure(state='normal')
     user_input.scrolled_text.delete("1.0", tk.END)
     user_input.scrolled_text.focus_set()
