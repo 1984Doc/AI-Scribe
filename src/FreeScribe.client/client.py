@@ -277,7 +277,7 @@ def save_audio():
 DEFAULT_BUTTON_COLOUR= None
 
 def toggle_recording():
-    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue, current_view
+    global is_recording, recording_thread, DEFAULT_BUTTON_COLOUR, realtime_thread, audio_queue, current_view
 
     realtime_thread = threaded_realtime_text()
 
@@ -321,9 +321,9 @@ def toggle_recording():
         save_audio()
 
         if current_view == "full":
-            mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
+            mic_button.config(bg=DEFAULT_BUTTON_COLOUR, text="Start\nRecording")
         elif current_view == "minimal":
-            mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="🎤")
+            mic_button.config(bg=DEFAULT_BUTTON_COLOUR, text="🎤")
 
 def clear_all_text_fields():
     user_input.scrolled_text.configure(state='normal')
@@ -757,12 +757,22 @@ def send_and_flash():
     start_flashing()
     send_and_receive()
 
+# Initialize variables to store window geometry for switching between views
 last_full_position = None
 last_minimal_position = None
 
 def toggle_view():
+    """
+    Toggles the user interface between a full view and a minimal view.
+
+    Full view includes all UI components, while minimal view limits the interface
+    to essential controls, reducing screen space usage. The function also manages
+    window properties, button states, and binds/unbinds hover events for transparency.
+    """
     global current_view, is_recording, is_paused, last_full_position, last_minimal_position
-    if current_view == "full":
+    
+    if current_view == "full":  # Transition to minimal view
+        # Remove all non-essential UI components
         user_input.grid_remove()
         send_button.grid_remove()
         clear_button.grid_remove()
@@ -772,7 +782,7 @@ def toggle_view():
         timestamp_listbox.grid_remove()
         blinking_circle_canvas.grid_remove()
         
-        # Confifure the buttons for the minimal view
+        # Configure minimal view button sizes and placements
         mic_button.config(width=2, height=1)
         pause_button.config(width=2, height=1)
         switch_view_button.config(width=2, height=1)
@@ -781,54 +791,50 @@ def toggle_view():
         pause_button.grid(row=0, column=1, pady=2, padx=2)
         switch_view_button.grid(row=0, column=2, pady=2, padx=2)
         
-        if is_recording:
-            mic_button.config(text="⏹️")
-        else:
-            mic_button.config(text="🎤")
+        # Update button text based on recording and pause states
+        mic_button.config(text="⏹️" if is_recording else "🎤")
+        pause_button.config(text="▶️" if is_paused else "⏸️")
+        switch_view_button.config(text="⬆️")  # Minimal view indicator
         
-        if is_paused:
-            pause_button.config(text="▶️")
-        else:
-            pause_button.config(text="⏸️")
-        
-        switch_view_button.config(text="⬆️")
-
         blinking_circle_canvas.grid(row=0, column=3, pady=2, padx=2)
-        
-        # Set window properties
+
+        # Update window properties for minimal view
         root.attributes('-topmost', True)
-        root.minsize(125, 50)  # Even smaller minimum size
+        root.minsize(125, 50)  # Smaller minimum size for minimal view
         current_view = "minimal"
 
+        # Set hover transparency events
         def on_enter(e):
-            # Check if mouse is actually entering the root window
-            if e.widget == root:
+            if e.widget == root:  # Ensure the event is from the root window
                 root.attributes('-alpha', 1.0)
 
         def on_leave(e):
-            # Check if mouse is actually leaving the root window
-            if e.widget == root:
+            if e.widget == root:  # Ensure the event is from the root window
                 root.attributes('-alpha', 0.70)
 
         root.bind('<Enter>', on_enter)
         root.bind('<Leave>', on_leave)
 
+        # Destroy and re-create components as needed
         window.destroy_docker_status_bar()
         if app_settings.editable_settings["Enable Scribe Template"]:
             window.destroy_scribe_template()
             window.create_scribe_template(row=1, column=0, columnspan=3, pady=5)
 
+        # Save full view geometry and restore last minimal view geometry
         last_full_position = root.geometry()
         if last_minimal_position:
             root.geometry(last_minimal_position)
-            
-        root.attributes('-toolwindow', True)
         
-    else:
+        root.attributes('-toolwindow', True)
+    
+    else:  # Transition back to full view
+        # Reset button sizes and placements for full view
         mic_button.config(width=11, height=2)
         pause_button.config(width=11, height=2)
-        switch_view_button.config(width=11, height=2)
-        switch_view_button.config(text="Minimize View")
+        switch_view_button.config(width=11, height=2, text="Minimize View")
+        
+        # Show all UI components
         user_input.grid()
         send_button.grid()
         clear_button.grid()
@@ -840,34 +846,27 @@ def toggle_view():
         pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
         switch_view_button.grid(row=1, column=7, pady=5, sticky='nsew')
         blinking_circle_canvas.grid(row=1, column=8, pady=5)
-        if app_settings.editable_settings["Enable Scribe Template"]:
-            window.destroy_scribe_template()
-            window.create_scribe_template()
-
-        if is_recording:
-            mic_button.config(bg="red", text="Stop\nRecording")
-        else:
-            mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
         
-        if is_paused:
-            pause_button.config(bg="red", text="Resume")
-        else:
-            pause_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Pause")
+        # Reconfigure button styles and text
+        mic_button.config(bg="red" if is_recording else DEFAULT_BUTTON_COLOUR,
+                          text="Stop\nRecording" if is_recording else "Start\nRecording")
+        pause_button.config(bg="red" if is_paused else DEFAULT_BUTTON_COLOUR,
+                            text="Resume" if is_paused else "Pause")
 
-        # Reset the window properties and events
+        # Unbind transparency events and reset window properties
         root.unbind('<Enter>')
         root.unbind('<Leave>')
         root.attributes('-alpha', 1.0)
-
         root.attributes('-topmost', False)
         root.minsize(900, 400)
         current_view = "full"
         window.create_docker_status_bar()
 
+        # Save minimal view geometry and restore last full view geometry
         last_minimal_position = root.geometry()
         if last_full_position is not None:
             root.geometry(last_full_position)
-
+        
         root.attributes('-toolwindow', False)
 
 def copy_text(widget):
