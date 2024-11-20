@@ -869,10 +869,10 @@ def set_full_view():
     upload_button.grid()
     response_display.grid()
     timestamp_listbox.grid()
-    mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
-    pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
-    switch_view_button.grid(row=1, column=7, pady=5, sticky='nsew')
-    blinking_circle_canvas.grid(row=1, column=8, pady=5)
+    mic_button.grid(row=1, column=1, pady=5, padx=0,sticky='nsew')
+    pause_button.grid(row=1, column=2, pady=5, padx=0,sticky='nsew')
+    switch_view_button.grid(row=1, column=7, pady=5, padx=0,sticky='nsew')
+    blinking_circle_canvas.grid(row=1, column=8, padx=0,pady=5)
 
     # Reconfigure button styles and text
     mic_button.config(bg="red" if is_recording else DEFAULT_BUTTON_COLOUR,
@@ -887,7 +887,14 @@ def set_full_view():
     root.attributes('-topmost', False)
     root.minsize(900, 400)
     current_view = "full"
-    window.create_docker_status_bar()
+
+    # create docker_status bar if enabled
+    if app_settings.editable_settings["Use Docker Status Bar"]:
+        window.create_docker_status_bar()
+
+    if app_settings.editable_settings["Enable Scribe Template"]:
+        window.destroy_scribe_template()
+        window.create_scribe_template()
 
     # Save minimal view geometry and restore last full view geometry
     last_minimal_position = root.geometry()
@@ -898,6 +905,7 @@ def set_full_view():
 
 
 def set_minimal_view():
+
     """
     Configures the application to display the minimal view interface.
 
