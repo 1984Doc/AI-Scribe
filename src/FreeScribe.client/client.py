@@ -523,19 +523,17 @@ def send_audio_to_server():
                 response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=verify)
 
                 response.raise_for_status()
-                # On successful response (status code 200)
-                if response.status_code == 200:
+                
+                # check if canceled, if so do not update the UI
+                if not is_audio_processing_whole_canceled:
+                    # Update the UI with the transcribed text
+                    transcribed_text = response.json()['text']
+                    user_input.scrolled_text.configure(state='normal')
+                    user_input.scrolled_text.delete("1.0", tk.END)
+                    user_input.scrolled_text.insert(tk.END, transcribed_text)
 
-                    # check if canceled, if so do not update the UI
-                    if not is_audio_processing_whole_canceled:
-                        # Update the UI with the transcribed text
-                        transcribed_text = response.json()['text']
-                        user_input.scrolled_text.configure(state='normal')
-                        user_input.scrolled_text.delete("1.0", tk.END)
-                        user_input.scrolled_text.insert(tk.END, transcribed_text)
-
-                        # Send the transcribed text and receive a response
-                        send_and_receive()
+                    # Send the transcribed text and receive a response
+                    send_and_receive()
             except Exception as e:
                 # log error message
                 #TODO: Implment proper logging to system
