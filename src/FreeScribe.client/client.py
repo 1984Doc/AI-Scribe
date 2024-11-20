@@ -222,6 +222,8 @@ def realtime_text():
 
             audio_data = audio_queue.get()
             if audio_data is None:
+                #reset flag here cause we are done
+                is_audio_processing_realtime_canceled = False
                 break
             if app_settings.editable_settings["Real Time"] == True:
                 print("Real Time Audio to Text")
@@ -292,7 +294,12 @@ def save_audio():
             is_audio_processing_whole_canceled = False
 
 def toggle_recording():
-    global is_recording, recording_thread, DEFAULT_BUTTON_COLOUR, realtime_thread, audio_queue, current_view
+    global is_recording, recording_thread, DEFAULT_BUTTON_COLOUR, realtime_thread, audio_queue, current_view, is_audio_processing_realtime_canceled, is_audio_processing_whole_canceled
+
+    # Reset the cancel flags going into a fresh recording
+    if not is_recording:
+        is_audio_processing_realtime_canceled = False
+        is_audio_processing_whole_canceled = False
 
     realtime_thread = threaded_realtime_text()
 
@@ -356,6 +363,8 @@ def cancel_processing():
     Sets the global flag to stop audio processing operations.
     """
     global is_audio_processing_realtime_canceled, is_audio_processing_whole_canceled
+
+    print("Processing canceled.")
 
     if app_settings.editable_settings["Real Time"]:
         is_audio_processing_realtime_canceled = True  # Flag to terminate processing
