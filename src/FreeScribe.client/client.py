@@ -344,6 +344,8 @@ def toggle_recording():
             
             loading_window.destroy()
 
+            realtime_thread.join()
+
         save_audio()
 
         if current_view == "full":
