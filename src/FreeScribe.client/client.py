@@ -378,10 +378,6 @@ def clear_all_text_fields():
     response_display.scrolled_text.config(fg='grey')
     response_display.scrolled_text.configure(state='disabled')
 
-def check_cancel_processing():
-    global is_audio_processing_canceled
-    return is_audio_processing_canceled
-
 def toggle_aiscribe():
     global use_aiscribe
     use_aiscribe = not use_aiscribe
