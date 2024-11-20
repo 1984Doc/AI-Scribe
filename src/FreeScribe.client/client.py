@@ -230,7 +230,7 @@ def realtime_text():
                     if app_settings.editable_settings["Local Whisper"] == True:
                         print("Local Real Time Whisper")
                         result = model.transcribe(audio_buffer, fp16=False)
-                        if is_audio_processing_realtime_canceled is False:
+                        if not is_audio_processing_realtime_canceled:
                             update_gui(result['text'])
                     else:
                         print("Remote Real Time Whisper")
@@ -254,7 +254,7 @@ def realtime_text():
                                 response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
                                 if response.status_code == 200:
                                     text = response.json()['text']
-                                    if not is_audio_processing_realtime_canceled is False:
+                                    if not is_audio_processing_realtime_canceled:
                                         update_gui(text)
                                 else:
                                     update_gui(f"Error (HTTP Status {response.status_code}): {response.text}")
