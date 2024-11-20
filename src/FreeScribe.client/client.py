@@ -378,6 +378,10 @@ def clear_all_text_fields():
     response_display.scrolled_text.config(fg='grey')
     response_display.scrolled_text.configure(state='disabled')
 
+def check_cancel_processing():
+    global is_audio_processing_canceled
+    return is_audio_processing_canceled
+
 def toggle_aiscribe():
     global use_aiscribe
     use_aiscribe = not use_aiscribe
@@ -442,13 +446,17 @@ def send_audio_to_server():
             if os.path.exists(file_to_send):
                 os.remove(file_to_send)
 
-            # Update the user input widget with the transcribed text
-            user_input.scrolled_text.configure(state='normal')
-            user_input.scrolled_text.delete("1.0", tk.END)
-            user_input.scrolled_text.insert(tk.END, transcribed_text)
+            global is_audio_processing_canceled
 
-            # Send the transcribed text and receive a response
-            send_and_receive()
+            #check if canceled, if so do not update the UI
+            if not is_audio_processing_canceled:
+                # Update the user input widget with the transcribed text
+                user_input.scrolled_text.configure(state='normal')
+                user_input.scrolled_text.delete("1.0", tk.END)
+                user_input.scrolled_text.insert(tk.END, transcribed_text)
+
+                # Send the transcribed text and receive a response
+                send_and_receive()
         except Exception as e:
             # Log the error message
             # TODO: Add system eventlogger
@@ -497,14 +505,18 @@ def send_audio_to_server():
 
                 # On successful response (status code 200)
                 if response.status_code == 200:
-                    # Update the UI with the transcribed text
-                    transcribed_text = response.json()['text']
-                    user_input.scrolled_text.configure(state='normal')
-                    user_input.scrolled_text.delete("1.0", tk.END)
-                    user_input.scrolled_text.insert(tk.END, transcribed_text)
+                    global is_audio_processing_canceled
 
-                    # Send the transcribed text and receive a response
-                    send_and_receive()
+                    # check if canceled, if so do not update the UI
+                    if not is_audio_processing_canceled:
+                        # Update the UI with the transcribed text
+                        transcribed_text = response.json()['text']
+                        user_input.scrolled_text.configure(state='normal')
+                        user_input.scrolled_text.delete("1.0", tk.END)
+                        user_input.scrolled_text.insert(tk.END, transcribed_text)
+
+                        # Send the transcribed text and receive a response
+                        send_and_receive()
                 else:
                     # Display an error message to the user
                     user_input.scrolled_text.configure(state='normal')
