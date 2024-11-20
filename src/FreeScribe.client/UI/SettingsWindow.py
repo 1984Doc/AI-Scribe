@@ -85,7 +85,6 @@ class SettingsWindow():
         self.whisper_settings = [
             "Whisper Endpoint",
             "Whisper Server API Key",
-            "Whisper Model",
             "Local Whisper",
             "Real Time",
             "S2T Server Self-Signed Certificates",

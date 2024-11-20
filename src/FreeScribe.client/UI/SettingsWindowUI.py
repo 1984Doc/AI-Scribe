@@ -163,7 +163,21 @@ class SettingsWindowUI:
         right_row = 0
 
 
-        self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.whisper_settings)
+        left_row, right_row = self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.whisper_settings)
+        # create the whisper model dropdown slection
+        tk.Label(right_frame, text="Whisper Model").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
+        whisper_models_drop_down_options = ["medium", "small", "tiny", "tiny.en", "base", "base.en", "small.en", "medium.en", "large"]
+        self.whisper_models_drop_down = ttk.Combobox(right_frame, values=whisper_models_drop_down_options, width=13)
+        self.whisper_models_drop_down.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
+
+        try:
+            # Try to set the whisper model dropdown to the current model
+            self.whisper_models_drop_down.current(whisper_models_drop_down_options.index(self.settings.editable_settings["Whisper Model"]))
+        except ValueError:
+            # If not in list then just force set text
+            self.whisper_models_drop_down.set(self.settings.editable_settings["Whisper Model"])
+
+        self.settings.editable_settings_entries["Whisper Model"] = self.whisper_models_drop_down
 
     def create_llm_settings(self):
         """
