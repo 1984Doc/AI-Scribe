@@ -503,6 +503,7 @@ def send_audio_to_server():
                 # Send the request without verifying the SSL certificate
                 response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=verify)
 
+                response.raise_for_status()
                 # On successful response (status code 200)
                 if response.status_code == 200:
                     global is_audio_processing_canceled
@@ -517,14 +518,6 @@ def send_audio_to_server():
 
                         # Send the transcribed text and receive a response
                         send_and_receive()
-                else:
-                    # Display an error message to the user
-                    user_input.scrolled_text.configure(state='normal')
-                    user_input.scrolled_text.delete("1.0", tk.END)
-                    user_input.scrolled_text.insert(tk.END, f"An error occurred (HTTP Status {response.status_code}): {response.text}")
-                    user_input.scrolled_text.configure(state='disabled')
-
-
             except Exception as e:
                 # log error message
                 #TODO: Implment proper logging to system
