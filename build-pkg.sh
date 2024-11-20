@@ -3,8 +3,15 @@
 # Ensure the script exits if any command fails
 set -e
 
+DIR_NAME="dist/client"
+IDENTIFIER="com.clinicianfocus.freescribe"
+
+# Create a directory to store the built application and move the app into it
+mkdir $DIR_NAME
+mv dist/freescribe-client.app $DIR_NAME
+
 # Build pkg installer for macOS using the pkgbuild command
-pkgbuild --root ./dist/freescribe-client --identifier com.clinicianfocus.freescribe --scripts ./mac/scripts/ --version 1.0 --install-location /Applications ./dist/installer.pkg
+pkgbuild --root $DIR_NAME --identifier $IDENTIFIER --scripts ./mac/scripts/ --version 1.0 --install-location /Applications ./dist/installer.pkg
 
 echo "Build complete. Installer created: dist/installer.pkg"
 
