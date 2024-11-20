@@ -146,7 +146,7 @@ def toggle_pause():
     if is_paused:
         pause_button.config(text="Resume", bg="red")
     else:
-        pause_button.config(text="Pause", bg="SystemButtonFace")
+        pause_button.config(text="Pause", bg=DEFUALT_BUTTON_COLOUR)
 
 def record_audio():
     global is_paused, frames, audio_queue
