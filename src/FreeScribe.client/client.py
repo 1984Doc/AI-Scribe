@@ -83,7 +83,11 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
 
-processing_cancelled_realtime = False
+is_audio_processing_canceled = False
+
+# Constants
+DEFUALT_BUTTON_COLOUR = "SystemButtonFace"
+
 
 def get_prompt(formatted_message):
 
@@ -133,16 +137,14 @@ def threaded_send_audio_to_server():
     return thread
 
 
-DEFAULT_PAUSE_BUTTON_COLOUR = None
 def toggle_pause():
-    global is_paused, DEFAULT_PAUSE_BUTTON_COLOUR
+    global is_paused
     is_paused = not is_paused
 
     if is_paused:
-        DEFAULT_PAUSE_BUTTON_COLOUR = pause_button.cget('background')
         pause_button.config(text="Resume", bg="red")
     else:
-        pause_button.config(text="Pause", bg=DEFAULT_PAUSE_BUTTON_COLOUR)
+        pause_button.config(text="Pause", bg="SystemButtonFace")
 
 def record_audio():
     global is_paused, frames, audio_queue
@@ -191,7 +193,7 @@ def is_silent(data, threshold=0.01):
     return max_value < threshold
 
 def realtime_text():
-    global frames, is_realtimeactive, audio_queue, processing_cancelled_realtime
+    global frames, is_realtimeactive, audio_queue, is_audio_processing_canceled
     if not is_realtimeactive:
         is_realtimeactive = True
         model = None
@@ -204,9 +206,9 @@ def realtime_text():
                 
         while True:
             #  break if canceled
-            if processing_cancelled_realtime:
+            if is_audio_processing_canceled:
                 #reset the cancel state
-                processing_cancelled_realtime = False
+                is_audio_processing_canceled = False
                 break
 
             audio_data = audio_queue.get()
@@ -219,7 +221,7 @@ def realtime_text():
                     if app_settings.editable_settings["Local Whisper"] == True:
                         print("Local Real Time Whisper")
                         result = model.transcribe(audio_buffer, fp16=False)
-                        if processing_cancelled_realtime is False:
+                        if is_audio_processing_canceled is False:
                             update_gui(result['text'])
                     else:
                         print("Remote Real Time Whisper")
@@ -243,7 +245,7 @@ def realtime_text():
                                 response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
                                 if response.status_code == 200:
                                     text = response.json()['text']
-                                    if not processing_cancelled_realtime is False:
+                                    if not is_audio_processing_canceled is False:
                                         update_gui(text)
                                 else:
                                     update_gui(f"Error (HTTP Status {response.status_code}): {response.text}")
@@ -276,8 +278,6 @@ def save_audio():
         else:
             threaded_send_audio_to_server()
 
-DEFUALT_BUTTON_COLOUR = None
-
 def toggle_recording():
     global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue
 
@@ -297,7 +297,6 @@ def toggle_recording():
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
 
-        DEFUALT_BUTTON_COLOUR = mic_button.cget('background')
         mic_button.config(bg="red", text="Stop\nRecording")
         start_flashing()
     else:
@@ -310,34 +309,41 @@ def toggle_recording():
             loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=cancel_processing)
 
             timeout_timer = 0
-            while audio_queue.empty() is False and timeout_timer < 180 and processing_cancelled_realtime is False:
+            while audio_queue.empty() is False and timeout_timer < 180 and is_audio_processing_canceled is False:
                 timeout_timer += 0.1
                 time.sleep(0.1)
             
             loading_window.destroy()
 
-        if processing_cancelled_realtime is False:
+        if is_audio_processing_canceled is False:
             save_audio()
             
         mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
 
-        if processing_cancelled_realtime:
+        if is_audio_processing_canceled:
             #empty the queue
             while not audio_queue.empty():
                 audio_queue.get()
                 audio_queue.task_done()
 
 def cancel_processing():
-    global processing_cancelled_realtime
-    processing_cancelled_realtime = True
+    global is_audio_processing_canceled
+    is_audio_processing_canceled = True
 
-def clear_all_text_fields():
+
+def clear_application_press():
+    clear_all_text_fields()
+    reset_recording_status()
+
+def reset_recording_status():
     # Reset the recording status and clear the audio data
     global is_recording, frames, audio_queue
     if is_recording:
         cancel_processing()
         threaded_toggle_recording()
 
+
+def clear_all_text_fields():
     user_input.scrolled_text.configure(state='normal')
     user_input.scrolled_text.delete("1.0", tk.END)
     user_input.scrolled_text.focus_set()
@@ -384,7 +390,7 @@ def send_audio_to_server():
 
     global uploaded_file_path
 
-    loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.")
+    loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=cancel_processing)
 
     # Check if Local Whisper is enabled in the editable settings
     if app_settings.editable_settings["Local Whisper"] == True:
@@ -879,7 +885,7 @@ send_button.grid(row=1, column=3, pady=5, sticky='nsew')
 pause_button = tk.Button(root, text="Pause", command=toggle_pause, height=2, width=11)
 pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
 
-clear_button = tk.Button(root, text="Clear", command=clear_all_text_fields, height=2, width=11)
+clear_button = tk.Button(root, text="Clear", command=clear_application_press, height=2, width=11)
 clear_button.grid(row=1, column=4, pady=5, sticky='nsew')
 
 toggle_button = tk.Button(root, text="AI Scribe\nON", command=toggle_aiscribe, height=2, width=11)
