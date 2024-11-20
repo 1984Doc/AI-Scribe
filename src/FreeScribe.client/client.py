@@ -139,9 +139,16 @@ def toggle_pause():
 
     if is_paused:
         DEFAULT_PAUSE_BUTTON_COLOUR = pause_button.cget('background')
-        pause_button.config(text="Resume", bg="red")
+        if current_view == "full":
+            pause_button.config(text="Resume", bg="red")
+        elif current_view == "minimal":
+            pause_button.config(text="▶️", bg="red")
     else:
-        pause_button.config(text="Pause", bg=DEFAULT_PAUSE_BUTTON_COLOUR)
+        if current_view == "full":
+            pause_button.config(text="Pause", bg=DEFAULT_PAUSE_BUTTON_COLOUR)
+        elif current_view == "minimal":
+            pause_button.config(text="⏸️", bg=DEFAULT_PAUSE_BUTTON_COLOUR)
+    
 
 def record_audio():
     global is_paused, frames, audio_queue
@@ -231,13 +238,13 @@ def realtime_text():
                             }
 
                             try:
-                                if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=False)
-                                else:
-                                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files)
+                                verify = not app_settings.editable_settings["S2T Server Self-Signed Certificates"]
+                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
                                 if response.status_code == 200:
                                     text = response.json()['text']
                                     update_gui(text)
+                                else:
+                                    update_gui(f"Error (HTTP Status {response.status_code}): {response.text}")
                             except Exception as e:
                                 update_gui(f"Error: {e}")
                             finally:
@@ -245,7 +252,6 @@ def realtime_text():
                                 if os.path.exists(file_to_send):
                                     f.close()
                                     os.remove(file_to_send)
-
                 audio_queue.task_done()
     else:
         is_realtimeactive = False
@@ -268,10 +274,10 @@ def save_audio():
         else:
             threaded_send_audio_to_server()
 
-DEFUALT_BUTTON_COLOUR = None
+DEFAULT_BUTTON_COLOUR= None
 
 def toggle_recording():
-    global is_recording, recording_thread, DEFUALT_BUTTON_COLOUR, realtime_thread, audio_queue
+    global is_recording, recording_thread, DEFAULT_BUTTON_COLOUR, realtime_thread, audio_queue, current_view
 
     realtime_thread = threaded_realtime_text()
 
@@ -289,8 +295,13 @@ def toggle_recording():
         recording_thread = threading.Thread(target=record_audio)
         recording_thread.start()
 
-        DEFUALT_BUTTON_COLOUR = mic_button.cget('background')
-        mic_button.config(bg="red", text="Stop\nRecording")
+        DEFAULT_BUTTON_COLOUR= mic_button.cget('background')
+
+        if current_view == "full":
+            mic_button.config(bg="red", text="Stop\nRecording")
+        elif current_view == "minimal":
+            mic_button.config(bg="red", text="⏹️")
+        
         start_flashing()
     else:
         is_recording = False
@@ -308,7 +319,11 @@ def toggle_recording():
             loading_window.destroy()
 
         save_audio()
-        mic_button.config(bg=DEFUALT_BUTTON_COLOUR, text="Start\nRecording")
+
+        if current_view == "full":
+            mic_button.config(bg=DEFAULT_BUTTON_COLOUR, text="Start\nRecording")
+        elif current_view == "minimal":
+            mic_button.config(bg=DEFAULT_BUTTON_COLOUR, text="🎤")
 
 def clear_all_text_fields():
     user_input.scrolled_text.configure(state='normal')
@@ -376,6 +391,7 @@ def send_audio_to_server():
 
             # Determine the file to send for transcription
             file_to_send = uploaded_file_path or get_resource_path('recording.wav')
+            delete_file = False if uploaded_file_path else True
             uploaded_file_path = None
 
             # Transcribe the audio file using the loaded model
@@ -383,7 +399,7 @@ def send_audio_to_server():
             transcribed_text = result["text"]
 
             # done with file clean up
-            if os.path.exists(file_to_send):
+            if os.path.exists(file_to_send) and delete_file is True:
                 os.remove(file_to_send)
 
             # Update the user input widget with the transcribed text
@@ -434,14 +450,10 @@ def send_audio_to_server():
             }
 
             try:
-                response = None
-                # Check for SSL and self-signed certificate settings
-                if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                    # Send the request without verifying the SSL certificate
-                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=False)
-                else:
-                    # Send the request with the audio file and headers/authorization
-                    response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files)
+                verify = not app_settings.editable_settings["S2T Server Self-Signed Certificates"]
+
+                # Send the request without verifying the SSL certificate
+                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=verify)
 
                 # On successful response (status code 200)
                 if response.status_code == 200:
@@ -453,6 +465,13 @@ def send_audio_to_server():
 
                     # Send the transcribed text and receive a response
                     send_and_receive()
+                else:
+                    # Display an error message to the user
+                    user_input.scrolled_text.configure(state='normal')
+                    user_input.scrolled_text.delete("1.0", tk.END)
+                    user_input.scrolled_text.insert(tk.END, f"An error occurred (HTTP Status {response.status_code}): {response.text}")
+                    user_input.scrolled_text.configure(state='disabled')
+
 
             except Exception as e:
                 # log error message
@@ -576,11 +595,8 @@ def send_text_to_api(edited_text):
             app_settings.editable_settings["Model Endpoint"] = app_settings.editable_settings["Model Endpoint"][:-1]
 
         if app_settings.API_STYLE == "OpenAI":
-            response = requests.Response
-            if str(app_settings.SSL_SELFCERT) == "1" and str(app_settings.SSL_ENABLE) == "1":
-                response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=False)
-            else:
-                response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload)
+            verify = not app_settings.editable_settings["AI Server Self-Signed Certificates"]
+            response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=verify)
 
             response.raise_for_status()
             response_data = response.json()
@@ -588,10 +604,10 @@ def send_text_to_api(edited_text):
             return response_text
         elif app_settings.API_STYLE == "KoboldCpp":
             prompt = get_prompt(edited_text)
-            if str(app_settings.SSL_ENABLE) == "1" and str(app_settings.SSL_SELFCERT) == "1":
-                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=False)
-            else:
-                response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt)
+
+            verify = not app_settings.editable_settings["AI Server Self-Signed Certificates"]
+            response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=verify)
+
             if response.status_code == 200:
                 results = response.json()['results']
                 response_text = results[0]['text']
@@ -741,58 +757,155 @@ def send_and_flash():
     start_flashing()
     send_and_receive()
 
+# Initialize variables to store window geometry for switching between views
+last_full_position = None
+last_minimal_position = None
+
 def toggle_view():
-    global current_view
-    if current_view == "full":
-        user_input.grid_remove()
-        send_button.grid_remove()
-        clear_button.grid_remove()
-        toggle_button.grid_remove()
-        upload_button.grid_remove()
-        response_display.grid_remove()
-        timestamp_listbox.grid_remove()
-        mic_button.config(width=10, height=1)
-        pause_button.config(width=10, height=1)
-        switch_view_button.config(width=10, height=1)
-        mic_button.grid(row=0, column=0, pady=5)
-        pause_button.grid(row=0, column=1, pady=5)
-        switch_view_button.grid(row=0, column=2, pady=5)
-        switch_view_button.config(text="Maximize\nView")
-        blinking_circle_canvas.grid(row=0, column=3, pady=5)
-        if app_settings.editable_settings["Enable Scribe Template"]:
-            window.destroy_scribe_template()
-            window.create_scribe_template(row=1, column=0, columnspan=3, pady=5)
+    """
+    Toggles the user interface between a full view and a minimal view.
 
-        root.attributes('-topmost', True)
-        root.minsize(300, 100)
-        current_view = "minimal"
-        window.destroy_docker_status_bar()
+    Full view includes all UI components, while minimal view limits the interface
+    to essential controls, reducing screen space usage. The function also manages
+    window properties, button states, and binds/unbinds hover events for transparency.
+    """
+    
+    if current_view == "full":  # Transition to minimal view
+        set_minimal_view()
+    
+    else:  # Transition back to full view
+        set_full_view()
 
-    else:
-        mic_button.config(width=11, height=2)
-        pause_button.config(width=11, height=2)
-        switch_view_button.config(width=11, height=2)
-        switch_view_button.config(text="Minimize View")
-        user_input.grid()
-        send_button.grid()
-        clear_button.grid()
-        toggle_button.grid()
-        upload_button.grid()
-        response_display.grid()
-        timestamp_listbox.grid()
-        mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
-        pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
-        switch_view_button.grid(row=1, column=7, pady=5, sticky='nsew')
-        blinking_circle_canvas.grid(row=1, column=8, pady=5)
-        if app_settings.editable_settings["Enable Scribe Template"]:
-            window.destroy_scribe_template()
-            window.create_scribe_template()
+def set_full_view():
+    """
+    Configures the application to display the full view interface.
+
+    Actions performed:
+    - Reconfigure button dimensions and text.
+    - Show all hidden UI components.
+    - Reset window attributes such as size, transparency, and 'always on top' behavior.
+    - Create the Docker status bar.
+    - Restore the last known full view geometry if available.
+
+    Global Variables:
+    - current_view: Tracks the current interface state ('full' or 'minimal').
+    - last_minimal_position: Saves the geometry of the window when switching from minimal view.
+    """
+    global current_view, last_minimal_position
+
+    # Reset button sizes and placements for full view
+    mic_button.config(width=11, height=2)
+    pause_button.config(width=11, height=2)
+    switch_view_button.config(width=11, height=2, text="Minimize View")
+
+    # Show all UI components
+    user_input.grid()
+    send_button.grid()
+    clear_button.grid()
+    toggle_button.grid()
+    upload_button.grid()
+    response_display.grid()
+    timestamp_listbox.grid()
+    mic_button.grid(row=1, column=1, pady=5, sticky='nsew')
+    pause_button.grid(row=1, column=2, pady=5, sticky='nsew')
+    switch_view_button.grid(row=1, column=7, pady=5, sticky='nsew')
+    blinking_circle_canvas.grid(row=1, column=8, pady=5)
+
+    # Reconfigure button styles and text
+    mic_button.config(bg="red" if is_recording else DEFAULT_BUTTON_COLOUR,
+                      text="Stop\nRecording" if is_recording else "Start\nRecording")
+    pause_button.config(bg="red" if is_paused else DEFAULT_BUTTON_COLOUR,
+                        text="Resume" if is_paused else "Pause")
+
+    # Unbind transparency events and reset window properties
+    root.unbind('<Enter>')
+    root.unbind('<Leave>')
+    root.attributes('-alpha', 1.0)
+    root.attributes('-topmost', False)
+    root.minsize(900, 400)
+    current_view = "full"
+    window.create_docker_status_bar()
+
+    # Save minimal view geometry and restore last full view geometry
+    last_minimal_position = root.geometry()
+    if last_full_position is not None:
+        root.geometry(last_full_position)
+
+    root.attributes('-toolwindow', False)
 
 
-        root.attributes('-topmost', False)
-        root.minsize(900, 400)
-        current_view = "full"
-        window.create_docker_status_bar()
+def set_minimal_view():
+    """
+    Configures the application to display the minimal view interface.
+
+    Actions performed:
+    - Reconfigure button dimensions and text.
+    - Hide non-essential UI components.
+    - Bind transparency hover events for better focus.
+    - Adjust window attributes such as size, transparency, and 'always on top' behavior.
+    - Destroy and optionally recreate specific components like the Scribe template.
+
+    Global Variables:
+    - current_view: Tracks the current interface state ('full' or 'minimal').
+    - last_full_position: Saves the geometry of the window when switching from full view.
+    """
+    global current_view, last_full_position
+
+    # Remove all non-essential UI components
+    user_input.grid_remove()
+    send_button.grid_remove()
+    clear_button.grid_remove()
+    toggle_button.grid_remove()
+    upload_button.grid_remove()
+    response_display.grid_remove()
+    timestamp_listbox.grid_remove()
+    blinking_circle_canvas.grid_remove()
+
+    # Configure minimal view button sizes and placements
+    mic_button.config(width=2, height=1)
+    pause_button.config(width=2, height=1)
+    switch_view_button.config(width=2, height=1)
+
+    mic_button.grid(row=0, column=0, pady=2, padx=2)
+    pause_button.grid(row=0, column=1, pady=2, padx=2)
+    switch_view_button.grid(row=0, column=2, pady=2, padx=2)
+
+    # Update button text based on recording and pause states
+    mic_button.config(text="⏹️" if is_recording else "🎤")
+    pause_button.config(text="▶️" if is_paused else "⏸️")
+    switch_view_button.config(text="⬆️")  # Minimal view indicator
+
+    blinking_circle_canvas.grid(row=0, column=3, pady=2, padx=2)
+
+    # Update window properties for minimal view
+    root.attributes('-topmost', True)
+    root.minsize(125, 50)  # Smaller minimum size for minimal view
+    current_view = "minimal"
+
+    # Set hover transparency events
+    def on_enter(e):
+        if e.widget == root:  # Ensure the event is from the root window
+            root.attributes('-alpha', 1.0)
+
+    def on_leave(e):
+        if e.widget == root:  # Ensure the event is from the root window
+            root.attributes('-alpha', 0.70)
+
+    root.bind('<Enter>', on_enter)
+    root.bind('<Leave>', on_leave)
+
+    # Destroy and re-create components as needed
+    window.destroy_docker_status_bar()
+    if app_settings.editable_settings["Enable Scribe Template"]:
+        window.destroy_scribe_template()
+        window.create_scribe_template(row=1, column=0, columnspan=3, pady=5)
+
+    # Save full view geometry and restore last minimal view geometry
+    last_full_position = root.geometry()
+    if last_minimal_position:
+        root.geometry(last_minimal_position)
+
+    root.attributes('-toolwindow', True)
 
 def copy_text(widget):
     text = widget.get("1.0", tk.END)
