@@ -7,7 +7,7 @@ DIR_NAME="dist/client"
 IDENTIFIER="com.clinicianfocus.freescribe"
 
 # Create a directory to store the built application and move the app into it
-mkdir $DIR_NAME
+mkdir -p $DIR_NAME
 mv dist/freescribe-client.app $DIR_NAME
 
 # Build pkg installer for macOS using the pkgbuild command
