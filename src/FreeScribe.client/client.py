@@ -289,7 +289,6 @@ def save_audio():
             threaded_send_audio_to_server()
         
         if app_settings.editable_settings["Real Time"] == False and is_audio_processing_whole_canceled:
-            print("Resetting flag")
             is_audio_processing_whole_canceled = False
 
 def toggle_recording():
