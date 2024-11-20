@@ -88,7 +88,7 @@ is_audio_processing_realtime_canceled = False
 is_audio_processing_whole_canceled = False
 
 # Constants
-DEFUALT_BUTTON_COLOUR = "SystemButtonFace"
+DEFAULT_BUTTON_COLOUR = "SystemButtonFace"
 
 
 def get_prompt(formatted_message):
@@ -150,9 +150,9 @@ def toggle_pause():
             pause_button.config(text="▶️", bg="red")
     else:
         if current_view == "full":
-            pause_button.config(text="Pause", bg=DEFUALT_BUTTON_COLOUR)
+            pause_button.config(text="Pause", bg=DEFAULT_BUTTON_COLOUR)
         elif current_view == "minimal":
-            pause_button.config(text="⏸️", bg=DEFUALT_BUTTON_COLOUR)
+            pause_button.config(text="⏸️", bg=DEFAULT_BUTTON_COLOUR)
     
 
 def record_audio():
