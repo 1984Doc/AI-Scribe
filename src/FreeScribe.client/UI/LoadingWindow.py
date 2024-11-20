@@ -135,4 +135,6 @@ class LoadingWindow:
                 self.parent.wm_attributes('-disabled', False)
             if self.progress.winfo_exists():
                 self.progress.stop()
-            self.popup.destroy()
+
+            if self.popup.winfo_exists():
+                self.popup.destroy()
