@@ -327,7 +327,11 @@ def toggle_recording():
             loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=cancel_processing)
 
             timeout_timer = 0
-            while audio_queue.empty() is False and timeout_timer < 180 and is_audio_processing_realtime_canceled is False:
+            while audio_queue.empty() is False and timeout_timer < 180:
+                # break because cancel was requested
+                if is_audio_processing_realtime_canceled:
+                    break
+                
                 timeout_timer += 0.1
                 time.sleep(0.1)
             
@@ -523,7 +527,7 @@ def send_audio_to_server():
                 response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=verify)
 
                 response.raise_for_status()
-                
+
                 # check if canceled, if so do not update the UI
                 if not is_audio_processing_whole_canceled:
                     # Update the UI with the transcribed text
