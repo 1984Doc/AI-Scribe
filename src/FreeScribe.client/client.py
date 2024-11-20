@@ -274,7 +274,7 @@ def update_gui(text):
     user_input.scrolled_text.see(tk.END)
 
 def save_audio():
-    global frames, is_audio_processing_realtime_canceled, is_audio_processing_whole_canceleds
+    global frames, is_audio_processing_realtime_canceled, is_audio_processing_whole_canceled
     if frames:
         with wave.open(get_resource_path("recording.wav"), 'wb') as wf:
             wf.setnchannels(CHANNELS)
@@ -282,10 +282,15 @@ def save_audio():
             wf.setframerate(RATE)
             wf.writeframes(b''.join(frames))
         frames = []  # Clear recorded data
+
         if app_settings.editable_settings["Real Time"] == True and is_audio_processing_realtime_canceled is False:
             send_and_receive()
         elif app_settings.editable_settings["Real Time"] == False and is_audio_processing_whole_canceled is False:
             threaded_send_audio_to_server()
+        
+        if app_settings.editable_settings["Real Time"] == False and is_audio_processing_whole_canceled:
+            print("Resetting flag")
+            is_audio_processing_whole_canceled = False
 
 def toggle_recording():
     global is_recording, recording_thread, DEFAULT_BUTTON_COLOUR, realtime_thread, audio_queue, current_view
