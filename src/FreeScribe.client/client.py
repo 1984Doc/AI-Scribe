@@ -327,28 +327,51 @@ def toggle_recording():
                 audio_queue.task_done()
 
 def cancel_processing():
+    """Cancels any ongoing audio processing.
+    
+    Sets the global flag to stop audio processing operations.
+    """
     global is_audio_processing_canceled
-    is_audio_processing_canceled = True
-
+    is_audio_processing_canceled = True  # Flag to terminate processing
 
 def clear_application_press():
-    clear_all_text_fields()
-    reset_recording_status()
+    """Resets the application state by clearing text fields and recording status."""
+    clear_all_text_fields()  # Clear UI text areas
+    reset_recording_status()  # Reset recording-related variables
 
 def reset_recording_status():
-    # Reset the recording status and clear the audio data
+    """Resets all recording-related variables and stops any active recording.
+    
+    Handles cleanup of recording state by:
+        - Checking if recording is active
+        - Canceling any processing
+        - Stopping the recording thread
+    """
     global is_recording, frames, audio_queue
-    if is_recording:
-        cancel_processing()
-        threaded_toggle_recording()
-
+    if is_recording:  # Only reset if currently recording
+        cancel_processing()  # Stop any ongoing processing
+        threaded_toggle_recording()  # Stop the recording thread
 
 def clear_all_text_fields():
+    """Clears and resets all text fields in the application UI.
+    
+    Performs the following:
+        - Clears user input field
+        - Resets focus
+        - Stops any flashing effects
+        - Resets response display with default text
+    """
+    # Enable and clear user input field
     user_input.scrolled_text.configure(state='normal')
     user_input.scrolled_text.delete("1.0", tk.END)
+    
+    # Reset focus to main window
     user_input.scrolled_text.focus_set()
     root.focus_set()
-    stop_flashing()
+    
+    stop_flashing()  # Stop any UI flashing effects
+    
+    # Reset response display with default text
     response_display.scrolled_text.configure(state='normal')
     response_display.scrolled_text.delete("1.0", tk.END)
     response_display.scrolled_text.insert(tk.END, "Medical Note")
