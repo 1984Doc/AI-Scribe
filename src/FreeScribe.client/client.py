@@ -198,6 +198,7 @@ def is_silent(data, threshold=0.01):
 
 def realtime_text():
     global frames, is_realtimeactive, audio_queue, is_audio_processing_realtime_canceled
+    local_cancel_flag = False
     if not is_realtimeactive:
         is_realtimeactive = True
         model = None
@@ -211,14 +212,11 @@ def realtime_text():
         while True:
             #  break if canceled
             if is_audio_processing_realtime_canceled:
-                #reset the cancel state
-                is_audio_processing_realtime_canceled = False
+                local_cancel_flag = True
                 break
 
             audio_data = audio_queue.get()
             if audio_data is None:
-                #reset flag here cause we are done
-                is_audio_processing_realtime_canceled = False
                 break
             if app_settings.editable_settings["Real Time"] == True:
                 print("Real Time Audio to Text")
@@ -227,7 +225,7 @@ def realtime_text():
                     if app_settings.editable_settings["Local Whisper"] == True:
                         print("Local Real Time Whisper")
                         result = model.transcribe(audio_buffer, fp16=False)
-                        if not is_audio_processing_realtime_canceled:
+                        if not local_cancel_flag and not is_audio_processing_realtime_canceled:
                             update_gui(result['text'])
                     else:
                         print("Remote Real Time Whisper")
@@ -251,7 +249,7 @@ def realtime_text():
                                 response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
                                 if response.status_code == 200:
                                     text = response.json()['text']
-                                    if not is_audio_processing_realtime_canceled:
+                                    if not local_cancel_flag and not is_audio_processing_realtime_canceled:
                                         update_gui(text)
                                 else:
                                     update_gui(f"Error (HTTP Status {response.status_code}): {response.text}")
@@ -284,9 +282,6 @@ def save_audio():
             send_and_receive()
         elif app_settings.editable_settings["Real Time"] == False and is_audio_processing_whole_canceled is False:
             threaded_send_audio_to_server()
-        
-        if app_settings.editable_settings["Real Time"] == False and is_audio_processing_whole_canceled:
-            is_audio_processing_whole_canceled = False
 
 def toggle_recording():
     global is_recording, recording_thread, DEFAULT_BUTTON_COLOUR, realtime_thread, audio_queue, current_view, is_audio_processing_realtime_canceled, is_audio_processing_whole_canceled
@@ -324,7 +319,7 @@ def toggle_recording():
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
 
-        if app_settings.editable_settings["Real Time"]:
+        if app_settings.editable_settings["Real Time"] and not is_audio_processing_realtime_canceled:
 
             loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=cancel_processing)
 
@@ -446,8 +441,13 @@ def send_audio_to_server():
     """
 
     global uploaded_file_path, is_audio_processing_whole_canceled
+    local_cancel = False
 
-    loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=cancel_processing)
+    def set_local_cancel():
+        nonlocal local_cancel
+        local_cancel = True
+
+    loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=lambda: (cancel_processing(), set_local_cancel()))
 
     # Check if Local Whisper is enabled in the editable settings
     if app_settings.editable_settings["Local Whisper"] == True:
@@ -478,7 +478,7 @@ def send_audio_to_server():
                 os.remove(file_to_send)
 
             #check if canceled, if so do not update the UI
-            if not is_audio_processing_whole_canceled:
+            if not is_audio_processing_whole_canceled and not local_cancel:
                 # Update the user input widget with the transcribed text
                 user_input.scrolled_text.configure(state='normal')
                 user_input.scrolled_text.delete("1.0", tk.END)
@@ -535,7 +535,7 @@ def send_audio_to_server():
                 response.raise_for_status()
 
                 # check if canceled, if so do not update the UI
-                if not is_audio_processing_whole_canceled:
+                if not is_audio_processing_whole_canceled and not local_cancel:
                     # Update the UI with the transcribed text
                     transcribed_text = response.json()['text']
                     user_input.scrolled_text.configure(state='normal')
@@ -559,10 +559,6 @@ def send_audio_to_server():
                 if os.path.exists(file_to_send):
                     os.remove(file_to_send)
                 loading_window.destroy()
-
-    if is_audio_processing_whole_canceled:
-        # reset the state of the flag
-        is_audio_processing_whole_canceled = False
 
 def send_and_receive():
     global use_aiscribe, user_message
