@@ -838,9 +838,20 @@ def generate_note_thread(text: str):
     :param text: The text to generate a note from.
     :type text: str
     """
-    loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait.")
     thread = threading.Thread(target=generate_note, args=(text,))
     thread.start()
+
+    generation_thread_id = thread.ident
+
+    def cancel_note_generation():
+        """Cancels any ongoing note generation.
+        
+        Sets the global flag to stop note generation operations.
+        """
+        nonlocal generation_thread_id
+        kill_thread(generation_thread_id)
+
+    loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait.", on_cancel=cancel_note_generation)
 
     def check_thread_status(thread, loading_window):
         if thread.is_alive():
