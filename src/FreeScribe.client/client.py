@@ -38,6 +38,7 @@ from UI.LoadingWindow import LoadingWindow
 from Model import  ModelManager
 from utils.ip_utils import is_private_ip
 from utils.file_utils import get_file_path, get_resource_path
+import ctypes
 
 # GUI Setup
 root = tk.Tk()
@@ -283,8 +284,10 @@ def save_audio():
         elif app_settings.editable_settings["Real Time"] == False and is_audio_processing_whole_canceled is False:
             threaded_send_audio_to_server()
 
+REALTIME_TRANSCRIBE_THREAD_ID = None
+
 def toggle_recording():
-    global is_recording, recording_thread, DEFAULT_BUTTON_COLOUR, realtime_thread, audio_queue, current_view, is_audio_processing_realtime_canceled, is_audio_processing_whole_canceled
+    global is_recording, recording_thread, DEFAULT_BUTTON_COLOUR, audio_queue, current_view, is_audio_processing_realtime_canceled, is_audio_processing_whole_canceled, REALTIME_TRANSCRIBE_THREAD_ID
 
     # Reset the cancel flags going into a fresh recording
     if not is_recording:
@@ -294,6 +297,7 @@ def toggle_recording():
     realtime_thread = threaded_realtime_text()
 
     if not is_recording:
+        REALTIME_TRANSCRIBE_THREAD_ID = realtime_thread.ident
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
         if not app_settings.editable_settings["Real Time"]:
@@ -320,8 +324,19 @@ def toggle_recording():
             recording_thread.join()  # Ensure the recording thread is terminated
 
         if app_settings.editable_settings["Real Time"] and not is_audio_processing_realtime_canceled:
+            def local_cancel():
+                """Cancels any ongoing audio processing.
+                
+                Sets the global flag to stop audio processing operations.
+                """
+                kill_thread(REALTIME_TRANSCRIBE_THREAD_ID)
+                
+                #empty the queue
+                while not audio_queue.empty():
+                    audio_queue.get()
+                    audio_queue.task_done()
 
-            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=cancel_processing)
+            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=lambda: (cancel_processing(), local_cancel()))
 
             timeout_timer = 0
             while audio_queue.empty() is False and timeout_timer < 180:
@@ -342,12 +357,6 @@ def toggle_recording():
             mic_button.config(bg=DEFAULT_BUTTON_COLOUR, text="Start\nRecording")
         elif current_view == "minimal":
             mic_button.config(bg=DEFAULT_BUTTON_COLOUR, text="🎤")
-
-        if is_audio_processing_realtime_canceled:
-            #empty the queue
-            while not audio_queue.empty():
-                audio_queue.get()
-                audio_queue.task_done()
 
 def cancel_processing():
     """Cancels any ongoing audio processing.
@@ -442,10 +451,16 @@ def send_audio_to_server():
 
     global uploaded_file_path, is_audio_processing_whole_canceled
     local_cancel = False
+    current_thread_id = threading.current_thread().ident
 
     def set_local_cancel():
         nonlocal local_cancel
+        nonlocal current_thread_id
+        global is_audio_processing_whole_canceled
         local_cancel = True
+        is_audio_processing_whole_canceled = False
+
+        kill_thread(current_thread_id)
 
     loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=lambda: (cancel_processing(), set_local_cancel()))
 
@@ -559,6 +574,36 @@ def send_audio_to_server():
                 if os.path.exists(file_to_send):
                     os.remove(file_to_send)
                 loading_window.destroy()
+
+def kill_thread(thread_id):
+    """
+    Terminate a thread with a given thread ID.
+
+    This function forcibly terminates a thread by raising a `SystemExit` exception in its context.
+    **Use with caution**, as this method is not safe and can lead to unpredictable behavior, 
+    including corruption of shared resources or deadlocks.
+
+    :param thread_id: The ID of the thread to terminate.
+    :type thread_id: int
+    :raises ValueError: If the thread ID is invalid.
+    :raises SystemError: If the operation fails due to an unexpected state.
+    """
+    # Call the C function `PyThreadState_SetAsyncExc` to asynchronously raise
+    # an exception in the target thread's context.
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+        ctypes.c_long(thread_id),  # The thread ID to target (converted to `long`).
+        ctypes.py_object(SystemExit)  # The exception to raise in the thread.
+    )
+
+    # Check the result of the function call.
+    if res == 0:
+        # If 0 is returned, the thread ID is invalid.
+        raise ValueError(f"Invalid thread ID: {thread_id}")
+    elif res > 1:
+        # If more than one thread was affected, something went wrong.
+        # Reset the state to prevent corrupting other threads.
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, None)
+        raise SystemError("PyThreadState_SetAsyncExc failed")
 
 def send_and_receive():
     global use_aiscribe, user_message
