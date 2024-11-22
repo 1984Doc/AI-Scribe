@@ -324,19 +324,19 @@ def toggle_recording():
             recording_thread.join()  # Ensure the recording thread is terminated
 
         if app_settings.editable_settings["Real Time"] and not is_audio_processing_realtime_canceled:
-            def local_cancel():
+            def cancel_realtime_processing(thread_id):
                 """Cancels any ongoing audio processing.
                 
                 Sets the global flag to stop audio processing operations.
                 """
-                kill_thread(REALTIME_TRANSCRIBE_THREAD_ID)
+                kill_thread(thread_id)
                 
                 #empty the queue
                 while not audio_queue.empty():
                     audio_queue.get()
                     audio_queue.task_done()
 
-            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=lambda: (cancel_processing(), local_cancel()))
+            loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=lambda: (cancel_processing(), cancel_realtime_processing(REALTIME_TRANSCRIBE_THREAD_ID)))
 
             timeout_timer = 0
             while audio_queue.empty() is False and timeout_timer < 180:
@@ -450,19 +450,15 @@ def send_audio_to_server():
     """
 
     global uploaded_file_path, is_audio_processing_whole_canceled
-    local_cancel = False
     current_thread_id = threading.current_thread().ident
 
-    def set_local_cancel():
-        nonlocal local_cancel
-        nonlocal current_thread_id
+    def cancel_whole_audio_process(thread_id):
         global is_audio_processing_whole_canceled
-        local_cancel = True
         is_audio_processing_whole_canceled = False
 
-        kill_thread(current_thread_id)
+        kill_thread(thread_id)
 
-    loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=lambda: (cancel_processing(), set_local_cancel()))
+    loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=lambda: (cancel_processing(), cancel_whole_audio_process(current_thread_id)))
 
     # Check if Local Whisper is enabled in the editable settings
     if app_settings.editable_settings["Local Whisper"] == True:
@@ -493,7 +489,7 @@ def send_audio_to_server():
                 os.remove(file_to_send)
 
             #check if canceled, if so do not update the UI
-            if not is_audio_processing_whole_canceled and not local_cancel:
+            if not is_audio_processing_whole_canceled:
                 # Update the user input widget with the transcribed text
                 user_input.scrolled_text.configure(state='normal')
                 user_input.scrolled_text.delete("1.0", tk.END)
@@ -550,7 +546,7 @@ def send_audio_to_server():
                 response.raise_for_status()
 
                 # check if canceled, if so do not update the UI
-                if not is_audio_processing_whole_canceled and not local_cancel:
+                if not is_audio_processing_whole_canceled:
                     # Update the UI with the transcribed text
                     transcribed_text = response.json()['text']
                     user_input.scrolled_text.configure(state='normal')
@@ -843,15 +839,14 @@ def generate_note_thread(text: str):
 
     generation_thread_id = thread.ident
 
-    def cancel_note_generation():
+    def cancel_note_generation(thread_id):
         """Cancels any ongoing note generation.
         
         Sets the global flag to stop note generation operations.
         """
-        nonlocal generation_thread_id
-        kill_thread(generation_thread_id)
+        kill_thread(thread_id)
 
-    loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait.", on_cancel=cancel_note_generation)
+    loading_window = LoadingWindow(root, "Generating Note.", "Generating Note. Please wait.", on_cancel=lambda: cancel_note_generation(generation_thread_id))
 
     def check_thread_status(thread, loading_window):
         if thread.is_alive():
