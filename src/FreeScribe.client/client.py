@@ -390,6 +390,11 @@ def reset_recording_status():
         cancel_processing()  # Stop any ongoing processing
         threaded_toggle_recording()  # Stop the recording thread
 
+        if app_settings.editable_settings["Real Time"]:
+            # Exit the current realtime thread
+            global REALTIME_TRANSCRIBE_THREAD_ID
+            kill_thread(REALTIME_TRANSCRIBE_THREAD_ID)
+
 def clear_all_text_fields():
     """Clears and resets all text fields in the application UI.
     
