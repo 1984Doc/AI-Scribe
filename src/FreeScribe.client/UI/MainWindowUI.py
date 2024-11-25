@@ -5,6 +5,9 @@ from UI.SettingsWindowUI import SettingsWindowUI
 from UI.MarkdownWindow import MarkdownWindow
 from utils.file_utils import get_file_path
 
+DOCKER_CONTAINER_CHECK_INTERVAL = 10000  # Interval in milliseconds to check the Docker container status
+DOCKER_DESKTOP_CHECK_INTERVAL = 10000  # Interval in milliseconds to check the Docker Desktop status
+
 class MainWindowUI:
     """
     This class handles the user interface (UI) for the main application window, 
@@ -246,7 +249,7 @@ class MainWindowUI:
 
             print("Docker client is not available.")
 
-        self.current_docker_status_check_id = self.root.after(10000, self._background_availbility_docker_check)
+        self.current_docker_status_check_id = self.root.after(DOCKER_DESKTOP_CHECK_INTERVAL, self._background_availbility_docker_check)
 
     def _background_check_container_status(self, llm_dot, whisper_dot):
         """
@@ -258,7 +261,7 @@ class MainWindowUI:
         if self.is_status_bar_enabled:
             self.logic.container_manager.set_status_icon_color(llm_dot, self.logic.check_llm_containers())
             self.logic.container_manager.set_status_icon_color(whisper_dot, self.logic.check_whisper_containers())
-            self.current_container_status_check_id = self.root.after(10000, self._background_check_container_status, llm_dot, whisper_dot)
+            self.current_container_status_check_id = self.root.after(DOCKER_CONTAINER_CHECK_INTERVAL, self._background_check_container_status, llm_dot, whisper_dot)
 
 
 
