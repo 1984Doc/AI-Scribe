@@ -23,6 +23,7 @@ class MainWindowUI:
         """
         self.root = root  # Tkinter root window
         self.docker_status_bar = None  # Docker status bar frame
+        self.is_status_bar_enabled = False  # Flag to indicate if the Docker status bar is enabled
         self.app_settings = settings  # Application settings
         self.logic = mw.MainWindow(self.app_settings)  # Logic to control the container behavior
         self.scribe_template = None
@@ -69,8 +70,8 @@ class MainWindowUI:
         self.docker_status_bar.grid(row=4, column=0, columnspan=14, sticky='nsew')
 
         # Add a label to indicate Docker container status section
-        docker_status = tk.Label(self.docker_status_bar, text="Docker Container Status:", padx=10)
-        docker_status.pack(side=tk.LEFT)
+        self.docker_status = tk.Label(self.docker_status_bar, text="Docker Container Status:", padx=10)
+        self.docker_status.pack(side=tk.LEFT)
 
         # Add LLM container status label
         llm_status = tk.Label(self.docker_status_bar, text="LLM Container Status:", padx=10)
@@ -106,16 +107,15 @@ class MainWindowUI:
         stop_llm_button = tk.Button(self.docker_status_bar, text="Stop LLM", command=lambda: self.logic.stop_LLM_container(llm_dot, self.app_settings))
         stop_llm_button.pack(side=tk.RIGHT)
 
-        if self.logic.container_manager.client is not None:
-            self.enable_docker_ui()
-        else:
-            docker_status.config(text="(Docker not found)")
-            self.disable_docker_ui()
+        self.is_status_bar_enabled = True
+        self._background_availbility_docker_check()
 
     def disable_docker_ui(self):
         """
         Disable the Docker status bar UI elements.
         """
+        self.is_status_bar_enabled = False
+        self.docker_status.config(text="(Docker not found)")
         if self.docker_status_bar is not None:
             for child in self.docker_status_bar.winfo_children():
                 child.configure(state='disabled')
@@ -124,6 +124,8 @@ class MainWindowUI:
         """
         Enable the Docker status bar UI elements.
         """
+        self.is_status_bar_enabled = True
+        self.docker_status.config(text="Docker Container Status: ")
         if self.docker_status_bar is not None:
             for child in self.docker_status_bar.winfo_children():
                 child.configure(state='normal')
@@ -210,4 +212,28 @@ class MainWindowUI:
         if self.scribe_template is not None:
             self.scribe_template.destroy()
             self.scribe_template = None
+
+    def _background_availbility_docker_check(self):
+        """
+        Check if the Docker client is available in the background.
+
+        This method is intended to be run in a separate thread to periodically
+        check the availability of the Docker client.
+        """
+        print("Checking Docker availability in the background...")
+        if self.logic.container_manager.check_docker_availability():
+            # Enable the Docker status bar UI elements if not enabled
+            if not self.is_status_bar_enabled:
+                self.enable_docker_ui()
+            print("Docker client is available.")
+        else:
+            # Disable the Docker status bar UI elements if not disabled
+            if self.is_status_bar_enabled:
+                self.disable_docker_ui()
+
+            print("Docker client is not available.")
+
+        self.root.after(10000, self._background_availbility_docker_check)
+
+
 

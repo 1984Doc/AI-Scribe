@@ -183,3 +183,17 @@ class ContainerManager:
                 self.set_status_icon_color(whisper_dot, ContainerState.CONTAINER_STOPPED)
 
             llm_dot.after(10000, lambda: self.check_docker_status_thread(llm_dot, whisper_dot, app_settings))
+
+    def check_docker_availability(self):
+        """
+        Check if the Docker client is available.
+
+        :return: True if the Docker client is available, False otherwise.
+        :rtype: bool
+        """
+        try:
+            self.client = docker.from_env()
+        except docker.errors.DockerException as e:
+            self.client = None
+            
+        return self.client is not None   
