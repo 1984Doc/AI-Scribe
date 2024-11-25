@@ -30,6 +30,9 @@ class MainWindowUI:
         self.setting_window = SettingsWindowUI(self.app_settings, self)  # Settings window
         self.root.iconbitmap(get_file_path('assets','logo.ico'))
 
+        self.current_docker_status_check_id = None  # ID for the current Docker status check
+        self.current_container_status_check_id = None  # ID for the current container status check
+
     def load_main_window(self):
         """
         Load the main window of the application.
@@ -109,6 +112,7 @@ class MainWindowUI:
 
         self.is_status_bar_enabled = True
         self._background_availbility_docker_check()
+        self._background_check_container_status(llm_dot, whisper_dot)
 
     def disable_docker_ui(self):
         """
@@ -137,6 +141,15 @@ class MainWindowUI:
         if self.docker_status_bar is not None:
             self.docker_status_bar.destroy()
             self.docker_status_bar = None
+
+        # cancel the check loop as the bar no longer exists and it is waster resources.
+        if self.current_docker_status_check_id is not None:
+            self.root.after_cancel(self.current_docker_status_check_id)
+            self.current_docker_status_check_id = None
+        
+        if self.current_container_status_check_id is not None:
+            self.root.after_cancel(self.current_container_status_check_id)
+            self.current_container_status_check_id = None
 
     def _create_menu_bar(self):
         """
@@ -233,7 +246,19 @@ class MainWindowUI:
 
             print("Docker client is not available.")
 
-        self.root.after(10000, self._background_availbility_docker_check)
+        self.current_docker_status_check_id = self.root.after(10000, self._background_availbility_docker_check)
+
+    def _background_check_container_status(self, llm_dot, whisper_dot):
+        """
+        Check the status of Docker containers in the background.
+
+        This method is intended to be run in a separate thread to periodically
+        check the status of the LLM and Whisper containers.
+        """
+        if self.is_status_bar_enabled:
+            self.logic.container_manager.set_status_icon_color(llm_dot, self.logic.check_llm_containers())
+            self.logic.container_manager.set_status_icon_color(whisper_dot, self.logic.check_whisper_containers())
+            self.current_container_status_check_id = self.root.after(10000, self._background_check_container_status, llm_dot, whisper_dot)
 
 
 
