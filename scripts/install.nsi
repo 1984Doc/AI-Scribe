@@ -161,7 +161,7 @@ Section "MainSection" SEC01
         ; Add files to the installer
         File /r "..\dist\freescribe-client-nvidia\freescribe-client-nvidia.exe"
         Rename "$INSTDIR\freescribe-client-nvidia.exe" "$INSTDIR\freescribe-client.exe"
-        File /r "..\dist\freescribe-client-nvidia\_internal"
+        File /r "..\dist\freescribe-client-nvidia\_internal"  
     ${EndIf}
 
 
@@ -218,14 +218,74 @@ Section "Uninstall"
     MessageBox MB_OK "FreeScribe has been successfully uninstalled."
 SectionEnd
 
-; Define the installer pages
+# Variables for checkboxes
+Var DesktopShortcutCheckbox
+Var StartMenuCheckbox
+Var RunAppCheckbox
+
+Function CustomizeFinishPage
+    !insertmacro MUI_HEADER_TEXT "Installation Complete" "Please select your preferences and close the installer."
+
+    nsDialogs::Create 1018
+    Pop $0
+    
+    ${If} $0 == error
+        Abort
+    ${EndIf}
+
+    # Run App Checkbox
+    ${NSD_CreateCheckbox} 10u 10u 100% 12u "Run FreeScribe after installation"
+    Pop $RunAppCheckbox
+    ${NSD_SetState} $RunAppCheckbox ${BST_CHECKED}
+
+    # Desktop Shortcut Checkbox
+    ${NSD_CreateCheckbox} 10u 30u 100% 12u "Create Desktop Shortcut"
+    Pop $DesktopShortcutCheckbox
+    ${NSD_SetState} $DesktopShortcutCheckbox ${BST_CHECKED}
+
+    # Start Menu Checkbox
+    ${NSD_CreateCheckbox} 10u 50u 100% 12u "Add to Start Menu"
+    Pop $StartMenuCheckbox
+    ${NSD_SetState} $StartMenuCheckbox ${BST_CHECKED}
+
+    nsDialogs::Show
+FunctionEnd
+
+Function RunApp
+    ${NSD_GetState} $RunAppCheckbox $0
+    ${If} $0 == ${BST_CHECKED}
+        Exec '"$INSTDIR\freescribe-client.exe"'
+    ${EndIf}
+
+    # Check Desktop Shortcut
+    ${NSD_GetState} $DesktopShortcutCheckbox $0
+    StrCmp $0 ${BST_CHECKED} +2
+        Goto SkipDesktopShortcut
+    CreateShortcut "$DESKTOP\FreeScribe.lnk" "$INSTDIR\freescribe-client.exe"
+    SkipDesktopShortcut:
+
+    # Check Start Menu
+    ${NSD_GetState} $StartMenuCheckbox $0
+    StrCmp $0 ${BST_CHECKED} +2
+        Goto SkipStartMenu
+    CreateDirectory "$SMPROGRAMS\FreeScribe"
+    CreateShortcut "$SMPROGRAMS\FreeScribe\FreeScribe.lnk" "$INSTDIR\freescribe-client.exe"
+    SkipStartMenu:
+FunctionEnd
+
+; Function to execute when leaving the InstallFiles page
+; Goes to the next page after the installation is complete
+Function InsfilesPageLeave
+    SetAutoClose true
+FunctionEnd
+
+; Define installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
 Page Custom ARCHITECHTURE_SELECT
 !insertmacro MUI_PAGE_DIRECTORY
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE InsfilesPageLeave
 !insertmacro MUI_PAGE_INSTFILES
-!define MUI_FINISHPAGE_RUN "$INSTDIR\freescribe-client.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Run App now"
-!insertmacro MUI_PAGE_FINISH
+Page Custom CustomizeFinishPage RunApp
 
 ; Define the uninstaller pages
 !insertmacro MUI_UNPAGE_CONFIRM
