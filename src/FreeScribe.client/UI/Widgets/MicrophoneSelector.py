@@ -36,7 +36,6 @@ class MicrophoneSelector:
             device_info = self.audio.get_device_info_by_index(i)
             if device_info['maxInputChannels'] > 0:  # Filter input devices
                 self.mic_list.append(device_info['name'])
-                print(f"Device {i}: {device_info}")
 
         # Update dropdown
         self.dropdown['values'] = self.mic_list
