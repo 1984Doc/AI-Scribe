@@ -1,5 +1,6 @@
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
+!include "FileFunc.nsh"
 
 ; Define the name of the installer
 OutFile "..\dist\FreeScribeInstaller.exe"
@@ -126,6 +127,18 @@ Function .onInit
         MessageBox MB_OK "FreeScribe is currently running. Please close the application before installing. Once closed please restart the installer."
         Abort
     ${EndIf}
+
+    IfSilent SILENT_MODE NOT_SILENT_MODE
+
+    SILENT_MODE:
+        ${GetParameters} $R0
+        ; Check for custom parameters
+        ${GetOptions} $R0 "/ARCH=" $R1
+        ${If} $R1 != ""
+            StrCpy $SELECTED_OPTION $R1
+        ${EndIf}
+        
+    NOT_SILENT_MODE:
 FunctionEnd
 
 Function CleanUninstall
@@ -278,6 +291,7 @@ FunctionEnd
 Function InsfilesPageLeave
     SetAutoClose true
 FunctionEnd
+
 
 ; Define installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
