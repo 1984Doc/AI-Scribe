@@ -299,6 +299,10 @@ def toggle_recording():
         is_audio_processing_realtime_canceled.clear()
         is_audio_processing_whole_canceled.clear()
 
+    print(is_paused)
+    if is_paused:
+        toggle_pause()
+
     realtime_thread = threaded_realtime_text()
 
     if not is_recording:
