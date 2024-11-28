@@ -45,7 +45,20 @@ class MicrophoneSelector:
             self.dropdown.set("No microphones available")
 
     def on_mic_selected(self, event):
-        MicrophoneSelector.SELECTED_MICROPHONE = self.dropdown.get()
+        selected_index = self.dropdown.get()
+        for mic in self.mic_info:
+            if mic["name"] == selected_index:
+                self.update_selected_microphone(mic["index"])
+                break
+
+    def update_selected_microphone(self, selected_index):
+        if selected_index >= 0 and selected_index < len(self.mic_info):
+            selected_mic = MicrophoneSelector.PYAUDIO.get_device_info_by_index(selected_index)
+            MicrophoneSelector.SELECTED_MICROPHONE_INDEX = selected_mic["index"]
+            MicrophoneSelector.SELECTED_MICROPHONE_NAME = selected_mic["name"]
+        else:
+            MicrophoneSelector.SELECTED_MICROPHONE_INDEX = None
+            MicrophoneSelector.SELECTED_MICROPHONE_NAME = None
 
     def close(self):
         self.audio.terminate()
