@@ -23,13 +23,11 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import requests
 import numpy as np
-import pyaudio
 from utils.file_utils import get_resource_path
 from Model import ModelManager
 import threading
 
 
-p = pyaudio.PyAudio()
 
 class SettingsWindow():
     """
@@ -159,6 +157,7 @@ class SettingsWindow():
             "Whisper Endpoint": "https://localhost:2224/whisperaudio",
             "Whisper Server API Key": "None",
             "Whisper Model": "small.en",
+            "Current Mic": "None",
             "Real Time": True,
             "Real Time Audio Length": 5,
             "Real Time Silence Length": 1,
