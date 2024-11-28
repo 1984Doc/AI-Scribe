@@ -183,7 +183,8 @@ class SettingsWindowUI:
         right_row += 1
 
         # create the whisper model dropdown slection
-        microphone_select = MicrophoneSelector(left_frame, left_row, 0)
+        microphone_select = MicrophoneSelector(left_frame, left_row, 0, self.settings)
+        self.settings.editable_settings_entries["Current Mic"] = microphone_select
         
         left_row += 1
 
