@@ -2,16 +2,15 @@ import tkinter as tk
 from tkinter import ttk
 import pyaudio
 
-
 class MicrophoneSelector:
 
-    SELECTED_MICROPHONE = 1
+    PYAUDIO = pyaudio.PyAudio()
+    SELECTED_MICROPHONE_INDEX = 1
+    SELECTED_MICROPHONE_NAME = PYAUDIO.get_device_info_by_index(SELECTED_MICROPHONE_INDEX)['name']
 
-    def __init__(self, root, row, column):
+    def __init__(self, root, row, column, app_settings):
         self.root = root
-
-        # Initialize PyAudio
-        self.audio = pyaudio.PyAudio()
+        self.settings = app_settings
 
         # Create UI elements
         self.label = tk.Label(root, text="Select a Microphone:")
@@ -19,9 +18,6 @@ class MicrophoneSelector:
 
         self.dropdown = ttk.Combobox(root, state="readonly", width=15)
         self.dropdown.grid(row=row, pady=5, column=1)
-
-        self.refresh_button = ttk.Button(root, text="↻", command=self.update_microphones)
-        self.refresh_button.grid(row=row + 1,pady=5, column=1)
 
         # Populate microphones in the dropdown
         self.update_microphones()
@@ -31,18 +27,31 @@ class MicrophoneSelector:
 
     def update_microphones(self):
         # Get microphone device list
-        self.mic_list = []
-        for i in range(self.audio.get_device_count()):
-            device_info = self.audio.get_device_info_by_index(i)
+        self.mic_info = []
+        mic_names = []
+        selected_index = -1
+
+        for i in range(MicrophoneSelector.PYAUDIO.get_device_count()):
+            device_info = MicrophoneSelector.PYAUDIO.get_device_info_by_index(i)
+
             if device_info['maxInputChannels'] > 0:  # Filter input devices
-                self.mic_list.append(device_info['name'])
+                if device_info['name'] == self.settings.editable_settings["Current Mic"] and selected_index == -1:
+                    selected_index = device_info["index"]
+
+                if device_info['name'] not in mic_names:
+                    mic_names.append(device_info['name'])
+                    self.mic_info.append({"name": device_info["name"],"index": device_info["index"], "channels": device_info['maxInputChannels'], "defaultSampleRate": device_info['defaultSampleRate']})
 
         # Update dropdown
         self.dropdown['values'] = self.mic_list
         if self.mic_list:
             self.dropdown.current(0)  # Set the first microphone as default
+            self.update_selected_microphone(0)  # Initialize selection
+
+            self.update_selected_microphone(0)
         else:
             self.dropdown.set("No microphones available")
+            self.update_selected_microphone(-1)
 
     def on_mic_selected(self, event):
         selected_index = self.dropdown.get()
@@ -61,6 +70,7 @@ class MicrophoneSelector:
             MicrophoneSelector.SELECTED_MICROPHONE_NAME = None
 
     def close(self):
-        self.audio.terminate()
         self.root.destroy()
 
+    def get(self):
+        return MicrophoneSelector.SELECTED_MICROPHONE_NAME
