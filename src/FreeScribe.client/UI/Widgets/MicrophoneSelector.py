@@ -81,7 +81,10 @@ class MicrophoneSelector:
 
         # Update dropdown
         self.dropdown['values'] = mic_names
-        if mic_names:
+        if selected_index != -1:
+            self.dropdown.set(self.settings.editable_settings["Current Mic"])
+            self.update_selected_microphone(selected_index)
+        elif mic_names:
             self.dropdown.current(0)  # Set the first microphone as default
             self.update_selected_microphone(0)  # Initialize selection
         else:
