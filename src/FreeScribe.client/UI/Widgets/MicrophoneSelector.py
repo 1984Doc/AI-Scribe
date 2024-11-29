@@ -17,8 +17,8 @@ class MicrophoneSelector:
     """
 
     PYAUDIO = pyaudio.PyAudio()
-    SELECTED_MICROPHONE_INDEX = 1
-    SELECTED_MICROPHONE_NAME = PYAUDIO.get_device_info_by_index(SELECTED_MICROPHONE_INDEX)['name']
+    SELECTED_MICROPHONE_INDEX = None
+    SELECTED_MICROPHONE_NAME = None
 
     @staticmethod
     def load_microphone_from_settings(app_settings):
