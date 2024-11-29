@@ -82,15 +82,16 @@ class SettingsWindow():
         ]
 
         self.whisper_settings = [
+            "BlankSpace", # Represents the local whisper checkbox that is manually placed
+            "Real Time",
+            "BlankSpace", # Represents the model dropdown that is manually placed
             "Whisper Endpoint",
             "Whisper Server API Key",
-            "Local Whisper",
-            "Real Time",
             "S2T Server Self-Signed Certificates",
         ]
+
         self.llm_settings = [
             "Model Endpoint",
-            "Use Local LLM",
             "AI Server Self-Signed Certificates",
         ]
 
