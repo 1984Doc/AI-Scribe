@@ -79,44 +79,48 @@ class MicrophoneSelector:
 
     def update_microphones(self):
         """
-        Populate the dropdown with available microphones and update the selection.
+        Update the microphone dropdown with available devices and manage selection.
         """
-        # Get microphone device list
-        self.mic_info = []
-        mic_names = []
+        # Initialize microphone mapping and list of names
+        self.mic_mapping = {}
         selected_index = -1
 
+        # Populate the microphone mapping with devices having input channels
         for i in range(MicrophoneSelector.PYAUDIO.get_device_count()):
             device_info = MicrophoneSelector.PYAUDIO.get_device_info_by_index(i)
 
-            # Include devices with input channels
             if device_info['maxInputChannels'] > 0:
-                # Check if the device matches the current mic setting
-                if device_info['name'] == self.settings.editable_settings["Current Mic"] and selected_index == -1:
-                    selected_index = device_info["index"]
+                name = device_info['name']
 
-                # Avoid duplicate microphone names
-                if device_info['name'] not in mic_names:
-                    mic_names.append(device_info['name'])
-                    self.mic_info.append({
-                        "name": device_info["name"],
-                        "index": device_info["index"],
+                if name not in self.mic_mapping:  # Avoid duplicates
+                    self.mic_mapping[name] = {
+                        "index": device_info['index'],
                         "channels": device_info['maxInputChannels'],
                         "defaultSampleRate": device_info['defaultSampleRate']
-                    })
+                    }
 
-        # Update dropdown
+                # Match the current mic setting, if applicable
+                if name == self.settings.editable_settings.get("Current Mic") and selected_index == -1:
+                    selected_index = device_info['index']
+
+        # Update the dropdown menu with the microphone names
+        mic_names = list(self.mic_mapping.keys())
         self.dropdown['values'] = mic_names
+
         if selected_index != -1:
+            # Set the dropdown and selected microphone to the current mic
             self.dropdown.set(self.settings.editable_settings["Current Mic"])
             self.update_selected_microphone(selected_index)
         elif mic_names:
-            self.dropdown.current(0)  # Set the first microphone as default
-            self.update_selected_microphone(0)  # Initialize selection
+            # Default to the first available microphone if none is selected
+            first_mic_name = mic_names[0]
+            self.dropdown.set(first_mic_name)
+            self.update_selected_microphone(self.mic_mapping[first_mic_name]['index'])
         else:
+            # Handle the case where no microphones are available
             self.dropdown.set("No microphones available")
             self.update_selected_microphone(-1)
-
+   
     def on_mic_selected(self, event):
         """
         Handle the event when a microphone is selected from the dropdown.
@@ -126,11 +130,10 @@ class MicrophoneSelector:
         event : tk.Event
             The event object containing information about the selection.
         """
-        selected_index = self.dropdown.get()
-        for mic in self.mic_info:
-            if mic["name"] == selected_index:
-                self.update_selected_microphone(mic["index"])
-                break
+        selected_name = self.dropdown.get()
+        if selected_name in self.mic_mapping:
+            selected_index = self.mic_mapping[selected_name]['index']
+            self.update_selected_microphone(selected_index)
 
     def update_selected_microphone(self, selected_index):
         """
@@ -141,10 +144,15 @@ class MicrophoneSelector:
         selected_index : int
             The index of the selected microphone.
         """
-        if selected_index >= 0 and selected_index < len(self.mic_info):
-            selected_mic = MicrophoneSelector.PYAUDIO.get_device_info_by_index(selected_index)
-            MicrophoneSelector.SELECTED_MICROPHONE_INDEX = selected_mic["index"]
-            MicrophoneSelector.SELECTED_MICROPHONE_NAME = selected_mic["name"]
+        if selected_index >= 0:
+            try:
+                selected_mic = MicrophoneSelector.PYAUDIO.get_device_info_by_index(selected_index)
+                MicrophoneSelector.SELECTED_MICROPHONE_INDEX = selected_mic["index"]
+                MicrophoneSelector.SELECTED_MICROPHONE_NAME = selected_mic["name"]
+            except OSError:
+                # Handle cases where the selected index is invalid
+                MicrophoneSelector.SELECTED_MICROPHONE_INDEX = None
+                MicrophoneSelector.SELECTED_MICROPHONE_NAME = None
         else:
             MicrophoneSelector.SELECTED_MICROPHONE_INDEX = None
             MicrophoneSelector.SELECTED_MICROPHONE_NAME = None
