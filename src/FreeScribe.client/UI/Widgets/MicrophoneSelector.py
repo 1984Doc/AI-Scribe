@@ -2,21 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import pyaudio
 
-class MicrophoneSelector:
-    """
-    A class to manage microphone selection using a Tkinter UI.
-
-    Attributes
-    ----------
-    PYAUDIO : pyaudio.PyAudio
-        A PyAudio instance used to interact with audio devices.
-    SELECTED_MICROPHONE_INDEX : int
-        The index of the currently selected microphone.
-    SELECTED_MICROPHONE_NAME : str
-        The name of the currently selected microphone.
-    """
-
-    PYAUDIO = pyaudio.PyAudio()
+class MicrophoneState:
     SELECTED_MICROPHONE_INDEX = None
     SELECTED_MICROPHONE_NAME = None
 
@@ -35,16 +21,32 @@ class MicrophoneSelector:
         str
             The name of the currently selected microphone.
         """
+        p = pyaudio.PyAudio()
+
         if "Current Mic" in app_settings.editable_settings:
-            MicrophoneSelector.SELECTED_MICROPHONE_NAME = app_settings.editable_settings["Current Mic"]
-            for i in range(MicrophoneSelector.PYAUDIO.get_device_count()):
-                device_info = MicrophoneSelector.PYAUDIO.get_device_info_by_index(i)
-                if device_info['name'] == MicrophoneSelector.SELECTED_MICROPHONE_NAME:
-                    MicrophoneSelector.SELECTED_MICROPHONE_INDEX = device_info["index"]
+            MicrophoneState.SELECTED_MICROPHONE_NAME = app_settings.editable_settings["Current Mic"]
+            for i in range(p.get_device_count()):
+                device_info = p.get_device_info_by_index(i)
+                if device_info['name'] == MicrophoneState.SELECTED_MICROPHONE_NAME:
+                    MicrophoneState.SELECTED_MICROPHONE_INDEX = device_info["index"]
                     break
         else:
-            MicrophoneSelector.SELECTED_MICROPHONE_INDEX = 0
-            MicrophoneSelector.SELECTED_MICROPHONE_NAME = MicrophoneSelector.PYAUDIO.get_device_info_by_index(0)['name']
+            MicrophoneState.SELECTED_MICROPHONE_INDEX = 0
+            MicrophoneState.SELECTED_MICROPHONE_NAME = p.get_device_info_by_index(0)['name']
+
+class MicrophoneSelector:
+    """
+    A class to manage microphone selection using a Tkinter UI.
+
+    Attributes
+    ----------
+    PYAUDIO : pyaudio.PyAudio
+        A PyAudio instance used to interact with audio devices.
+    SELECTED_MICROPHONE_INDEX : int
+        The index of the currently selected microphone.
+    SELECTED_MICROPHONE_NAME : str
+        The name of the currently selected microphone.
+    """
 
     def __init__(self, root, row, column, app_settings):
         """
@@ -63,6 +65,11 @@ class MicrophoneSelector:
         """
         self.root = root
         self.settings = app_settings
+
+        self.pyaudio = pyaudio.PyAudio()
+
+        self.selected_index = None
+        self.selected_name = None
 
         # Create UI elements
         self.label = tk.Label(root, text="Select a Microphone:")
@@ -86,8 +93,8 @@ class MicrophoneSelector:
         selected_index = -1
 
         # Populate the microphone mapping with devices having input channels
-        for i in range(MicrophoneSelector.PYAUDIO.get_device_count()):
-            device_info = MicrophoneSelector.PYAUDIO.get_device_info_by_index(i)
+        for i in range(self.pyaudio.get_device_count()):
+            device_info = self.pyaudio.get_device_info_by_index(i)
 
             if device_info['maxInputChannels'] > 0:
                 name = device_info['name']
@@ -146,16 +153,22 @@ class MicrophoneSelector:
         """
         if selected_index >= 0:
             try:
-                selected_mic = MicrophoneSelector.PYAUDIO.get_device_info_by_index(selected_index)
-                MicrophoneSelector.SELECTED_MICROPHONE_INDEX = selected_mic["index"]
-                MicrophoneSelector.SELECTED_MICROPHONE_NAME = selected_mic["name"]
+                selected_mic = self.pyaudio.get_device_info_by_index(selected_index)
+                MicrophoneState.SELECTED_MICROPHONE_INDEX = selected_mic["index"]
+                MicrophoneState.SELECTED_MICROPHONE_NAME = selected_mic["name"]
+                self.selected_index = selected_mic["index"]
+                self.selected_name = selected_mic["name"]
             except OSError:
                 # Handle cases where the selected index is invalid
-                MicrophoneSelector.SELECTED_MICROPHONE_INDEX = None
-                MicrophoneSelector.SELECTED_MICROPHONE_NAME = None
+                MicrophoneState.SELECTED_MICROPHONE_INDEX = None
+                MicrophoneState.SELECTED_MICROPHONE_NAME = None
+                self.selected_index = None
+                self.selected_name = None
         else:
-            MicrophoneSelector.SELECTED_MICROPHONE_INDEX = None
-            MicrophoneSelector.SELECTED_MICROPHONE_NAME = None
+            MicrophoneState.SELECTED_MICROPHONE_INDEX = None
+            MicrophoneState.SELECTED_MICROPHONE_NAME = None
+            self.selected_index = None
+            self.selected_name = None
 
     def close(self):
         """
@@ -172,4 +185,4 @@ class MicrophoneSelector:
         str
             The name of the currently selected microphone.
         """
-        return MicrophoneSelector.SELECTED_MICROPHONE_NAME
+        return MicrophoneState.SELECTED_MICROPHONE_NAME

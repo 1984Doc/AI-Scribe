@@ -35,7 +35,7 @@ from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
 from UI.LoadingWindow import LoadingWindow
-from UI.Widgets.MicrophoneSelector import MicrophoneSelector
+from UI.Widgets.MicrophoneSelector import MicrophoneState
 from Model import  ModelManager
 from utils.ip_utils import is_private_ip
 from utils.file_utils import get_file_path, get_resource_path
@@ -166,7 +166,7 @@ def record_audio():
             rate=RATE, 
             input=True,
             frames_per_buffer=CHUNK, 
-            input_device_index=int(MicrophoneSelector.SELECTED_MICROPHONE_INDEX))
+            input_device_index=int(MicrophoneState.SELECTED_MICROPHONE_INDEX))
     except (OSError, IOError) as e:
         messagebox.showerror("Audio Error", f"Please check your microphone settings under whisper settings. Error opening audio stream: {e}")
         return

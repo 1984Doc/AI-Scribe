@@ -19,7 +19,7 @@ from tkinter import ttk
 import pyaudio
 import numpy as np
 from threading import Thread
-from UI.Widgets.MicrophoneSelector import MicrophoneSelector
+from UI.Widgets.MicrophoneSelector import MicrophoneState
 
 class AudioMeter(tk.Frame):
     """
@@ -202,7 +202,7 @@ class AudioMeter(tk.Frame):
                     channels=1,
                     rate=self.RATE,
                     input=True,
-                    input_device_index=MicrophoneSelector.SELECTED_MICROPHONE_INDEX,
+                    input_device_index=MicrophoneState.SELECTED_MICROPHONE_INDEX,
                     frames_per_buffer=self.CHUNK,
                 )
             except (OSError, IOError) as e:

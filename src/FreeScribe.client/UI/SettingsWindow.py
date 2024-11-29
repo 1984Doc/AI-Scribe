@@ -26,7 +26,7 @@ import numpy as np
 from utils.file_utils import get_resource_path
 from Model import ModelManager
 import threading
-from UI.Widgets.MicrophoneSelector import MicrophoneSelector
+from UI.Widgets.MicrophoneSelector import MicrophoneState
 
 
 class SettingsWindow():
@@ -200,7 +200,7 @@ class SettingsWindow():
         self.get_dropdown_values_and_mapping()
         self._create_settings_and_aiscribe_if_not_exist()
 
-        MicrophoneSelector.load_microphone_from_settings(self)
+        MicrophoneState.load_microphone_from_settings(self)
 
     def get_dropdown_values_and_mapping(self):
         """
