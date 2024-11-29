@@ -209,7 +209,7 @@ class SettingsWindowUI:
             self.widgets[setting].config(state=state)
         
         # set the local option to disabled on switch to remote
-        inveresd_state = "disabled" if current_state == 0 else "normal"
+        inverted _state = "disabled" if current_state == 0 else "normal"
         self.whisper_models_drop_down.config(state=inveresd_state)
 
 
