@@ -20,6 +20,32 @@ class MicrophoneSelector:
     SELECTED_MICROPHONE_INDEX = 1
     SELECTED_MICROPHONE_NAME = PYAUDIO.get_device_info_by_index(SELECTED_MICROPHONE_INDEX)['name']
 
+    @staticmethod
+    def load_microphone_from_settings(app_settings):
+        """
+        Load the microphone settings from the application settings.
+
+        Parameters
+        ----------
+        app_settings : dict
+            Application settings including editable settings.
+
+        Returns
+        -------
+        str
+            The name of the currently selected microphone.
+        """
+        if "Current Mic" in app_settings.editable_settings:
+            MicrophoneSelector.SELECTED_MICROPHONE_NAME = app_settings.editable_settings["Current Mic"]
+            for i in range(MicrophoneSelector.PYAUDIO.get_device_count()):
+                device_info = MicrophoneSelector.PYAUDIO.get_device_info_by_index(i)
+                if device_info['name'] == MicrophoneSelector.SELECTED_MICROPHONE_NAME:
+                    MicrophoneSelector.SELECTED_MICROPHONE_INDEX = device_info["index"]
+                    break
+        else:
+            MicrophoneSelector.SELECTED_MICROPHONE_INDEX = 0
+            MicrophoneSelector.SELECTED_MICROPHONE_NAME = MicrophoneSelector.PYAUDIO.get_device_info_by_index(0)['name']
+
     def __init__(self, root, row, column, app_settings):
         """
         Initialize the MicrophoneSelector class.
