@@ -94,7 +94,6 @@ class SettingsWindow():
 
         self.llm_settings = [
             "Model Endpoint",
-            "Use Local LLM",
             "AI Server Self-Signed Certificates",
         ]
 
