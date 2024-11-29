@@ -323,6 +323,11 @@ class SettingsWindowUI:
         """
         row = start_row
         for setting_name in settings:
+
+            if setting_name == "BlankSpace":
+                row += 1
+                continue
+
             value = self.settings.editable_settings[setting_name]
             if value in [True, False]:
                 self._create_checkbox(frame, setting_name, setting_name, row)
