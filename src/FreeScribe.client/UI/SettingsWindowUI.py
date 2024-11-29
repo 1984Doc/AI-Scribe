@@ -67,6 +67,7 @@ class SettingsWindowUI:
         self.docker_settings_frame = None
         self.basic_settings_frame = None
         self.advanced_settings_frame = None
+        self.widgets = {}
         
 
     def open_settings_window(self):
@@ -162,13 +163,21 @@ class SettingsWindowUI:
         left_row = 0
         right_row = 0
 
+        # Create the local whisper button to handle custom behavior
+        tk.Label(left_frame, text="Local Whisper").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
+        value = tk.IntVar(value=(self.settings.editable_settings["Local Whisper"]))
+        self.local_whisper_checkbox = tk.Checkbutton(left_frame, variable=value, command=self.toggle_remote_whisper_settings)
+        self.local_whisper_checkbox.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
+        self.settings.editable_settings_entries["Local Whisper"] = value
+
+        left_row += 1
 
         left_row, right_row = self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.whisper_settings)
         # create the whisper model dropdown slection
-        tk.Label(right_frame, text="Whisper Model").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
+        tk.Label(left_frame, text="Whisper Model").grid(row=3, column=0, padx=0, pady=5, sticky="w")
         whisper_models_drop_down_options = ["medium", "small", "tiny", "tiny.en", "base", "base.en", "small.en", "medium.en", "large"]
-        self.whisper_models_drop_down = ttk.Combobox(right_frame, values=whisper_models_drop_down_options, width=13)
-        self.whisper_models_drop_down.grid(row=right_row, column=1, padx=0, pady=5, sticky="w")
+        self.whisper_models_drop_down = ttk.Combobox(left_frame, values=whisper_models_drop_down_options, width=13)
+        self.whisper_models_drop_down.grid(row=3, column=1, padx=0, pady=5, sticky="w")
 
         try:
             # Try to set the whisper model dropdown to the current model
@@ -178,6 +187,21 @@ class SettingsWindowUI:
             self.whisper_models_drop_down.set(self.settings.editable_settings["Whisper Model"])
 
         self.settings.editable_settings_entries["Whisper Model"] = self.whisper_models_drop_down
+
+        # set the state of the whisper settings based on the local whisper checkbox once all widgets are created
+        self.toggle_remote_whisper_settings()
+
+    def toggle_remote_whisper_settings(self):
+        current_state = self.settings.editable_settings_entries["Local Whisper"].get()
+        
+        for setting in self.settings.whisper_settings:
+            if setting == "Real Time" or setting == "BlankSpace":
+                continue
+            
+            state = "normal" if current_state == 0 else "disabled"
+            self.widgets[setting].config(state=state)
+
+
 
     def create_llm_settings(self):
         """
@@ -330,9 +354,9 @@ class SettingsWindowUI:
 
             value = self.settings.editable_settings[setting_name]
             if value in [True, False]:
-                self._create_checkbox(frame, setting_name, setting_name, row)
+                self.widgets[setting_name] = self._create_checkbox(frame, setting_name, setting_name, row)
             else:
-                self._create_entry(frame, setting_name, setting_name, row)
+                self.widgets[setting_name] = self._create_entry(frame, setting_name, setting_name, row)
             row += 1
         return row
 
@@ -534,6 +558,7 @@ class SettingsWindowUI:
         checkbox = tk.Checkbutton(frame, variable=value)
         checkbox.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
         self.settings.editable_settings_entries[setting_name] = value
+        return checkbox
 
     def _create_entry(self, frame, label, setting_name, row_idx):
         """
@@ -553,6 +578,7 @@ class SettingsWindowUI:
         entry.insert(0, str(value))
         entry.grid(row=row_idx, column=1, padx=0, pady=5, sticky="w")
         self.settings.editable_settings_entries[setting_name] = entry
+        return entry
 
     def _create_section_header(self, text, row, text_colour="black"):
         """
