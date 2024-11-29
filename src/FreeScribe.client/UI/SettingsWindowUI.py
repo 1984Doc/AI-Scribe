@@ -189,6 +189,12 @@ class SettingsWindowUI:
 
         self.settings.editable_settings_entries["Whisper Model"] = self.whisper_models_drop_down
 
+        # create the whisper model dropdown slection
+        microphone_select = MicrophoneSelector(left_frame, left_row, 0, self.settings)
+        self.settings.editable_settings_entries["Current Mic"] = microphone_select
+        
+        left_row += 1
+
         # set the state of the whisper settings based on the local whisper checkbox once all widgets are created
         self.toggle_remote_whisper_settings()
 
