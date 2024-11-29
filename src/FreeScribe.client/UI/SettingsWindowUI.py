@@ -264,7 +264,7 @@ class SettingsWindowUI:
 
         left_row += 1
 
-        right_frame, right_row = self.create_editable_settings(right_frame, self.settings.llm_settings)
+        right_frame, right_row = self.create_editable_settings(right_frame, self.settings.llm_settings, padx=0, pady=0)
 
         # 2. OpenAI API Key (Right Column)
         tk.Label(right_frame, text="OpenAI API Key:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
@@ -459,7 +459,7 @@ class SettingsWindowUI:
         """
         self.create_editable_settings(self.docker_settings_frame, self.settings.docker_settings)
 
-    def create_editable_settings(self, frame, settings_set, start_row=0):
+    def create_editable_settings(self, frame, settings_set, start_row=0, padx=10, pady=5):
         """
         Creates editable settings UI elements.
 
@@ -470,7 +470,7 @@ class SettingsWindowUI:
         """
         
         i_frame = ttk.Frame(frame)
-        i_frame.grid(row=0, column=0, padx=10, pady=5, sticky="nw")
+        i_frame.grid(row=0, column=0, padx=padx, pady=pady, sticky="nw")
         row = self._process_column(i_frame, settings_set, start_row)
         return i_frame, row
 
