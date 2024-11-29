@@ -276,15 +276,6 @@ class SettingsWindowUI:
         self.api_dropdown.grid(row=right_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
         right_row += 1
 
-        # create the whisper model dropdown slection
-        microphone_select = MicrophoneSelector(left_frame, left_row, 0, self.settings)
-        self.settings.editable_settings_entries["Current Mic"] = microphone_select
-        
-        left_row += 1
-
-
-        # self.create_editable_settings_col(left_frame, right_frame, left_row, right_row, self.settings.llm_settings)
-
         # set the state of the llm settings based on the local llm checkbox once all widgets are created
         self.toggle_remote_llm_settings()
  
