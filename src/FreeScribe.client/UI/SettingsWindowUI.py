@@ -27,6 +27,7 @@ import threading
 from Model import Model, ModelManager
 from utils.file_utils import get_file_path
 from UI.MarkdownWindow import MarkdownWindow
+from UI.Widgets.MicrophoneSelector import MicrophoneSelector
 
 
 
@@ -178,6 +179,14 @@ class SettingsWindowUI:
             self.whisper_models_drop_down.set(self.settings.editable_settings["Whisper Model"])
 
         self.settings.editable_settings_entries["Whisper Model"] = self.whisper_models_drop_down
+
+        right_row += 1
+
+        # create the whisper model dropdown slection
+        microphone_select = MicrophoneSelector(left_frame, left_row, 0, self.settings)
+        self.settings.editable_settings_entries["Current Mic"] = microphone_select
+        
+        left_row += 1
 
     def create_llm_settings(self):
         """
