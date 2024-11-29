@@ -195,14 +195,19 @@ class AudioMeter(tk.Frame):
         """
         if not self.running:
             self.running = True
-            self.stream = self.p.open(
-                format=self.FORMAT,
-                channels=1,
-                rate=self.RATE,
-                input=True,
-                input_device_index=MicrophoneSelector.SELECTED_MICROPHONE_INDEX,
-                frames_per_buffer=self.CHUNK,
-            )
+            
+            try:
+                self.stream = self.p.open(
+                    format=self.FORMAT,
+                    channels=1,
+                    rate=self.RATE,
+                    input=True,
+                    input_device_index=MicrophoneSelector.SELECTED_MICROPHONE_INDEX,
+                    frames_per_buffer=self.CHUNK,
+                )
+            except Exception as e:
+                tk.messagebox.showerror("Error", f"Please check your microphone settings under the speech2text settings tab. Error opening audio stream: {e}")
+
             self.monitoring_thread = Thread(target=self.update_meter)
             self.monitoring_thread.start()
         else:
