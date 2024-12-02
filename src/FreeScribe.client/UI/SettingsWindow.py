@@ -455,7 +455,7 @@ class SettingsWindow():
 
             self.editable_settings["Preset"] = preset_name
             #close the settings window 
-            settings_class.settings_window.destroy()
+            settings_class.close_window()
 
             # save the settings to the file
             self.save_settings_to_file()
