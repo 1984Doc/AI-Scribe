@@ -305,6 +305,15 @@ class SettingsWindowUI:
             
             self.widgets[setting].config(state=state)
 
+        inverted_state = "disabled" if current_state == 0 else "normal"
+        self.architecture_dropdown.config(state=inverted_state)
+
+        if current_state == 1:
+            self.save_settings(False)
+            threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,)).start()
+            self.on_model_selection_change(None)
+            
+
     def on_model_selection_change(self, event):
         """
         Handle switching between model dropdown and custom model entry.
