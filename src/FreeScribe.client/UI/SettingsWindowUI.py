@@ -670,5 +670,6 @@ class SettingsWindowUI:
         """
         self.settings_window.unbind_all("<MouseWheel>") # Unbind mouse wheel event causing errors
         self.settings_window.unbind_all("<Configure>") # Unbind the configure event causing errors
+        self.cutoff_slider.destroy()
 
         self.settings_window.destroy()
