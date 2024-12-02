@@ -519,9 +519,14 @@ class SettingsWindow():
         # Either CPU_INSTALL or NVIDIA_INSTALL file
         # Can add more in the future like METAL_INSTALL
 
-        if os.path.isfile(get_file_path("state_files", "CPU_INSTALL.txt")):
+        if os.path.isfile(get_file_path("state_files", "CPU_INSTALL.txt")) and not os.path.isfile(get_file_path("state_files", "NVIDIA_INSTALL.txt")):
+            #if only CPU exists return CPU
             return ["CPU"]
-        elif os.path.isfile(get_file_path("state_files", "NVIDIA_INSTALL.txt")):
+        elif os.path.isfile(get_file_path("state_files", "NVIDIA_INSTALL.txt")) and not os.path.isfile(get_file_path("state_files", "CPU_INSTALL.txt")):
+            # If only Nvidia exists return Nvidia and cpu
+            return ["CPU", "CUDA (Nvidia GPU)"]
+        elif os.path.isfile(get_file_path("state_files", "CPU_INSTALL.txt")) and os.path.isfile(get_file_path("state_files", "NVIDIA_INSTALL.txt")):
+            # IF both for some reason exist return both, Thanks sourcery AI :)
             return ["CPU", "CUDA (Nvidia GPU)"]
         else:
             # Safety net return CPU only as cpu should only work... 
