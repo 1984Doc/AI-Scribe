@@ -505,7 +505,6 @@ class SettingsWindowUI:
         This method retrieves the values from the UI elements and calls the
         `save_settings` method of the `settings` object to save the settings.
         """
-
         self.settings.load_or_unload_model(self.settings.editable_settings["Model"],
             self.get_selected_model(),
             self.settings.editable_settings["Use Local LLM"],
@@ -564,7 +563,7 @@ class SettingsWindowUI:
         
         # 1. LLM Preset (Left Column)
         tk.Label(frame, text="Settings Presets:").grid(row=row, column=0, padx=0, pady=5, sticky="w")
-        llm_preset_options = ["JanAI", "ChatGPT", "ClinicianFocus Toolbox", "Custom"]
+        llm_preset_options = ["Local AI", "ChatGPT", "ClinicianFocus Toolbox", "Custom"]
         self.llm_preset_dropdown = ttk.Combobox(frame, values=llm_preset_options, width=15, state="readonly")
         self.llm_preset_dropdown.current(llm_preset_options.index(self.settings.editable_settings["Preset"]))
         self.llm_preset_dropdown.grid(row=row, column=1, padx=0, pady=5, sticky="w")
