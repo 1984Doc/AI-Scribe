@@ -573,7 +573,7 @@ class SettingsWindowUI:
         if self.settings.editable_settings["Preset"] in llm_preset_options:
             self.llm_preset_dropdown.current(llm_preset_options.index(self.settings.editable_settings["Preset"]))
         else:
-            self.llm_preset_dropdown.set("Saved preset not found. Please select a new one.")
+            self.llm_preset_dropdown.set("Custom")
         self.llm_preset_dropdown.grid(row=row, column=1, padx=0, pady=5, sticky="w")
 
         load_preset_btn = ttk.Button(frame, text="Load", width=5, 
