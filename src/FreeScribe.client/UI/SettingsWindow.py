@@ -452,11 +452,23 @@ class SettingsWindow():
         if preset_name != "Custom":
             # load the settigns from the json preset file
             self.load_settings_from_file("presets/" + preset_name + ".json")
-            messagebox.showinfo("Settings Preset", "Settings preset loaded successfully. Closing settings window. Please re-open and set respective API keys.")
-            
+
             self.editable_settings["Preset"] = preset_name
+            #close the settings window 
             settings_class.settings_window.destroy()
+
+            # save the settings to the file
             self.save_settings_to_file()
+
+            if preset_name != "Local AI":
+                messagebox.showinfo("Settings Preset", "Settings preset loaded successfully. Closing settings window. Please re-open and set respective API keys.")
+
+                # Unload ai model if switching
+                # already has safety check in unload to check if model exist.
+                ModelManager.unload_model()
+            else: # if is local ai
+                # load the models here
+                ModelManager.start_model_threaded(self, self.main_window.root)
         else:
             messagebox.showinfo("Custom Settings", "To use custom settings then please fill in the values and save them.")
 
