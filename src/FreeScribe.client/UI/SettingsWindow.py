@@ -67,7 +67,7 @@ class SettingsWindow():
 
     CPU_INSTALL_FILE = "CPU_INSTALL.txt"
     NVIDIA_INSTALL_FILE = "NVIDIA_INSTALL.txt"
-    STATE_FILES_DIR = "state_files"
+    STATE_FILES_DIR = "install_state"
 
     def __init__(self):
         """Initializes the ApplicationSettings with default values."""
