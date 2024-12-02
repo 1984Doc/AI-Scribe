@@ -523,7 +523,11 @@ class SettingsWindow():
         # Either CPU_INSTALL or NVIDIA_INSTALL file
         # Can add more in the future like METAL_INSTALL
 
-        if os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.CPU_INSTALL_FILE)) and not os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.NVIDIA_INSTALL_FILE)):
+        cpu_install_exists = os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, 
+                                                         SettingsWindow.CPU_INSTALL_FILE))
+        nvidia_install_exists = os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR,
+                                                            SettingsWindow.NVIDIA_INSTALL_FILE))
+        if cpu_install_exists and not nvidia_install_exists:
             #if only CPU exists return CPU
             print("CPU exists, returning CPU")
             return ["CPU"]
