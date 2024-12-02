@@ -502,3 +502,28 @@ class SettingsWindow():
             print("AIScribe2 file not found. Creating default AIScribe2 file.")
             with open(get_resource_path('aiscribe2.txt'), 'w') as f:
                 f.write(self.AISCRIBE2)
+
+    def get_available_architectures(self):
+        """
+        Returns a list of available architectures for the user to choose from.
+
+        Based on the install state files in _internal folder
+
+        Files must be named CPU_INSTALL or NVIDIA_INSTALL
+
+        Returns:
+            list: A list of available architectures for the user to choose from.
+        """
+
+        # Check the internal folder for state file
+        # Either CPU_INSTALL or NVIDIA_INSTALL file
+        # Can add more in the future like METAL_INSTALL
+
+        if os.path.exists(".\\_internal\\CPU_INSTALL"):
+            return ["CPU"]
+        elif os.path.exists(".\\_internal\\NVIDIA_INSTALL"):
+            return ["CPU", "CUDA (Nvidia GPU)"]
+        else: 
+            # Safety net return CPU only as cpu should only work... 
+            # ie someone deletes something file gets lost during install
+            return ["CPU"]
