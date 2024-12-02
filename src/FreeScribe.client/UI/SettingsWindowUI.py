@@ -240,7 +240,7 @@ class SettingsWindowUI:
 
         #6. GPU OR CPU SELECTION (Right Column)
         tk.Label(left_frame, text="Local Architecture").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-        architecture_options = ["CPU", "CUDA (Nvidia GPU)"]
+        architecture_options = self.settings.get_available_architectures()
         self.architecture_dropdown = ttk.Combobox(left_frame, values=architecture_options, width=15, state="readonly")
         self.architecture_dropdown.current(architecture_options.index(self.settings.editable_settings["Architecture"]))
 
