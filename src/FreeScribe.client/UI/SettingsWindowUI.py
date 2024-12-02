@@ -566,6 +566,7 @@ class SettingsWindowUI:
         tk.Label(frame, text="Settings Presets:").grid(row=row, column=0, padx=0, pady=5, sticky="w")
         llm_preset_options = ["JanAI", "ChatGPT", "ClinicianFocus Toolbox", "Custom"]
         self.llm_preset_dropdown = ttk.Combobox(frame, values=llm_preset_options, width=15, state="readonly")
+        if self.settings.editable_settings["Preset"] in llm_preset_options:
         self.llm_preset_dropdown.current(llm_preset_options.index(self.settings.editable_settings["Preset"]))
         self.llm_preset_dropdown.grid(row=row, column=1, padx=0, pady=5, sticky="w")
 
