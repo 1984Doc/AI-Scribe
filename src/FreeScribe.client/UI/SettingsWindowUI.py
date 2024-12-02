@@ -240,9 +240,13 @@ class SettingsWindowUI:
 
         #6. GPU OR CPU SELECTION (Right Column)
         tk.Label(left_frame, text="Local Architecture").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-        architecture_options = ["CPU", "CUDA (Nvidia GPU)"]
+        architecture_options = self.settings.get_available_architectures()
         self.architecture_dropdown = ttk.Combobox(left_frame, values=architecture_options, width=15, state="readonly")
-        self.architecture_dropdown.current(architecture_options.index(self.settings.editable_settings["Architecture"]))
+        if self.settings.editable_settings["Architecture"] in architecture_options:
+            self.architecture_dropdown.current(architecture_options.index(self.settings.editable_settings["Architecture"]))
+        else:
+            # Default cpu
+            self.architecture_dropdown.set("CPU")
 
         self.architecture_dropdown.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
 
@@ -566,7 +570,10 @@ class SettingsWindowUI:
         tk.Label(frame, text="Settings Presets:").grid(row=row, column=0, padx=0, pady=5, sticky="w")
         llm_preset_options = ["JanAI", "ChatGPT", "ClinicianFocus Toolbox", "Custom"]
         self.llm_preset_dropdown = ttk.Combobox(frame, values=llm_preset_options, width=15, state="readonly")
-        self.llm_preset_dropdown.current(llm_preset_options.index(self.settings.editable_settings["Preset"]))
+        if self.settings.editable_settings["Preset"] in llm_preset_options:
+            self.llm_preset_dropdown.current(llm_preset_options.index(self.settings.editable_settings["Preset"]))
+        else:
+            self.llm_preset_dropdown.set("Custom")
         self.llm_preset_dropdown.grid(row=row, column=1, padx=0, pady=5, sticky="w")
 
         load_preset_btn = ttk.Button(frame, text="Load", width=5, 
