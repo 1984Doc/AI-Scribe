@@ -523,7 +523,7 @@ class SettingsWindow():
             return ["CPU"]
         elif os.path.exists(".\\_internal\\NVIDIA_INSTALL"):
             return ["CPU", "CUDA (Nvidia GPU)"]
-        else: 
+        else:
             # Safety net return CPU only as cpu should only work... 
             # ie someone deletes something file gets lost during install
             return ["CPU"]
