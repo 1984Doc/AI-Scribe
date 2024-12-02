@@ -529,15 +529,12 @@ class SettingsWindow():
                                                             SettingsWindow.NVIDIA_INSTALL_FILE))
         if cpu_install_exists and not nvidia_install_exists:
             #if only CPU exists return CPU
-            print("CPU exists, returning CPU")
             return ["CPU"]
-        elif os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.NVIDIA_INSTALL_FILE)) and not os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.CPU_INSTALL_FILE)):
+        elif not cpu_install_exists and nvidia_install_exists:
             # If only Nvidia exists return Nvidia and cpu
-            print("Nvidia exists, returning both")
             return ["CPU", "CUDA (Nvidia GPU)"]
-        elif os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.CPU_INSTALL_FILE)) and os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.NVIDIA_INSTALL_FILE)):
+        elif cpu_install_exists and not nvidia_install_exists:
             # IF both for some reason exist return both, Thanks sourcery AI :)
-            print("Both files exist, returning both")
             return ["CPU", "CUDA (Nvidia GPU)"]
         else:
             # Safety net return CPU only as cpu should only work... 
