@@ -23,7 +23,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import requests
 import numpy as np
-from utils.file_utils import get_resource_path
+from utils.file_utils import get_resource_path, get_file_path
 from Model import ModelManager
 import threading
 from UI.Widgets.MicrophoneSelector import MicrophoneState
@@ -519,9 +519,9 @@ class SettingsWindow():
         # Either CPU_INSTALL or NVIDIA_INSTALL file
         # Can add more in the future like METAL_INSTALL
 
-        if os.path.exists(".\\_internal\\CPU_INSTALL"):
+        if os.path.isfile(get_file_path("state_files", "CPU_INSTALL.txt")):
             return ["CPU"]
-        elif os.path.exists(".\\_internal\\NVIDIA_INSTALL"):
+        elif os.path.isfile(get_file_path("state_files", "NVIDIA_INSTALL.txt")):
             return ["CPU", "CUDA (Nvidia GPU)"]
         else:
             # Safety net return CPU only as cpu should only work... 
