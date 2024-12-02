@@ -65,6 +65,10 @@ class SettingsWindow():
         Clears the content of settings files and closes the settings window.
     """
 
+    CPU_INSTALL_FILE = "CPU_INSTALL.txt"
+    NVIDIA_INSTALL_FILE = "NVIDIA_INSTALL.txt"
+    STATE_FILES_DIR = "state_files"
+
     def __init__(self):
         """Initializes the ApplicationSettings with default values."""
 
@@ -519,14 +523,17 @@ class SettingsWindow():
         # Either CPU_INSTALL or NVIDIA_INSTALL file
         # Can add more in the future like METAL_INSTALL
 
-        if os.path.isfile(get_file_path("state_files", "CPU_INSTALL.txt")) and not os.path.isfile(get_file_path("state_files", "NVIDIA_INSTALL.txt")):
+        if os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.CPU_INSTALL_FILE)) and not os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.NVIDIA_INSTALL_FILE)):
             #if only CPU exists return CPU
+            print("CPU exists, returning CPU")
             return ["CPU"]
-        elif os.path.isfile(get_file_path("state_files", "NVIDIA_INSTALL.txt")) and not os.path.isfile(get_file_path("state_files", "CPU_INSTALL.txt")):
+        elif os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.NVIDIA_INSTALL_FILE)) and not os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.CPU_INSTALL_FILE)):
             # If only Nvidia exists return Nvidia and cpu
+            print("Nvidia exists, returning both")
             return ["CPU", "CUDA (Nvidia GPU)"]
-        elif os.path.isfile(get_file_path("state_files", "CPU_INSTALL.txt")) and os.path.isfile(get_file_path("state_files", "NVIDIA_INSTALL.txt")):
+        elif os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.CPU_INSTALL_FILE)) and os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, SettingsWindow.NVIDIA_INSTALL_FILE)):
             # IF both for some reason exist return both, Thanks sourcery AI :)
+            print("Both files exist, returning both")
             return ["CPU", "CUDA (Nvidia GPU)"]
         else:
             # Safety net return CPU only as cpu should only work... 
