@@ -168,12 +168,6 @@ Section "MainSection" SEC01
         File /r "..\dist\freescribe-client-cpu\freescribe-client-cpu.exe"
         Rename "$INSTDIR\freescribe-client-cpu.exe" "$INSTDIR\freescribe-client.exe"
         File /r "..\dist\freescribe-client-cpu\_internal"
-
-        #Create state file in the installation directory
-        FileOpen $0 "$INSTDIR\_internal\CPU_INSTALL" w
-        FileWrite $0 "CPU"
-        FileClose $0
-
     ${EndIf}
 
     ${If} $SELECTED_OPTION == "NVIDIA"
@@ -181,11 +175,6 @@ Section "MainSection" SEC01
         File /r "..\dist\freescribe-client-nvidia\freescribe-client-nvidia.exe"
         Rename "$INSTDIR\freescribe-client-nvidia.exe" "$INSTDIR\freescribe-client.exe"
         File /r "..\dist\freescribe-client-nvidia\_internal"  
-
-        #Create state file in the installation directory
-        FileOpen $0 "$INSTDIR\_internal\NVIDIA_INSTALL" w
-        FileWrite $0 "NVIDIA"
-        FileClose $0
     ${EndIf}
 
 
