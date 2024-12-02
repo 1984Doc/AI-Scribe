@@ -518,25 +518,10 @@ class SettingsWindow():
         Returns:
             list: A list of available architectures for the user to choose from.
         """
+        architectures = ["CPU"]  # CPU is always available as fallback
 
-        # Check the internal folder for state file
-        # Either CPU_INSTALL or NVIDIA_INSTALL file
-        # Can add more in the future like METAL_INSTALL
+        # Check for NVIDIA support
+        if os.path.isfile(get_file_path(self.STATE_FILES_DIR, self.NVIDIA_INSTALL_FILE)):
+            architectures.append("CUDA (Nvidia GPU)")
 
-        cpu_install_exists = os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR, 
-                                                         SettingsWindow.CPU_INSTALL_FILE))
-        nvidia_install_exists = os.path.isfile(get_file_path(SettingsWindow.STATE_FILES_DIR,
-                                                            SettingsWindow.NVIDIA_INSTALL_FILE))
-        if cpu_install_exists and not nvidia_install_exists:
-            #if only CPU exists return CPU
-            return ["CPU"]
-        elif not cpu_install_exists and nvidia_install_exists:
-            # If only Nvidia exists return Nvidia and cpu
-            return ["CPU", "CUDA (Nvidia GPU)"]
-        elif cpu_install_exists and not nvidia_install_exists:
-            # IF both for some reason exist return both, Thanks sourcery AI :)
-            return ["CPU", "CUDA (Nvidia GPU)"]
-        else:
-            # Safety net return CPU only as cpu should only work... 
-            # ie someone deletes something file gets lost during install
-            return ["CPU"]
+        return architectures
