@@ -35,6 +35,7 @@ from UI.MainWindowUI import MainWindowUI
 from UI.SettingsWindow import SettingsWindow
 from UI.Widgets.CustomTextBox import CustomTextBox
 from UI.LoadingWindow import LoadingWindow
+from UI.Widgets.MicrophoneSelector import MicrophoneState
 from Model import  ModelManager
 from utils.ip_utils import is_private_ip
 from utils.file_utils import get_file_path, get_resource_path
@@ -157,7 +158,20 @@ def toggle_pause():
 
 def record_audio():
     global is_paused, frames, audio_queue
-    stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK, input_device_index=1)
+
+    try:
+        stream = p.open(
+            format=FORMAT, 
+            channels=1, 
+            rate=RATE, 
+            input=True,
+            frames_per_buffer=CHUNK, 
+            input_device_index=int(MicrophoneState.SELECTED_MICROPHONE_INDEX))
+    except (OSError, IOError) as e:
+        messagebox.showerror("Audio Error", f"Please check your microphone settings under whisper settings. Error opening audio stream: {e}")
+        return
+
+    
     current_chunk = []
     silent_duration = 0
     record_duration = 0
@@ -298,6 +312,10 @@ def toggle_recording():
     if not is_recording:
         is_audio_processing_realtime_canceled.clear()
         is_audio_processing_whole_canceled.clear()
+
+    print(is_paused)
+    if is_paused:
+        toggle_pause()
 
     realtime_thread = threaded_realtime_text()
 

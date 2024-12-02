@@ -23,13 +23,11 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import requests
 import numpy as np
-import pyaudio
 from utils.file_utils import get_resource_path
 from Model import ModelManager
 import threading
+from UI.Widgets.MicrophoneSelector import MicrophoneState
 
-
-p = pyaudio.PyAudio()
 
 class SettingsWindow():
     """
@@ -84,15 +82,16 @@ class SettingsWindow():
         ]
 
         self.whisper_settings = [
+            "BlankSpace", # Represents the local whisper checkbox that is manually placed
+            "Real Time",
+            "BlankSpace", # Represents the model dropdown that is manually placed
             "Whisper Endpoint",
             "Whisper Server API Key",
-            "Local Whisper",
-            "Real Time",
             "S2T Server Self-Signed Certificates",
         ]
+
         self.llm_settings = [
             "Model Endpoint",
-            "Use Local LLM",
             "AI Server Self-Signed Certificates",
         ]
 
@@ -159,6 +158,7 @@ class SettingsWindow():
             "Whisper Endpoint": "https://localhost:2224/whisperaudio",
             "Whisper Server API Key": "None",
             "Whisper Model": "small.en",
+            "Current Mic": "None",
             "Real Time": True,
             "Real Time Audio Length": 5,
             "Real Time Silence Length": 1,
@@ -200,6 +200,8 @@ class SettingsWindow():
 
         self.get_dropdown_values_and_mapping()
         self._create_settings_and_aiscribe_if_not_exist()
+
+        MicrophoneState.load_microphone_from_settings(self)
 
     def get_dropdown_values_and_mapping(self):
         """
