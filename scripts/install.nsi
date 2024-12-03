@@ -158,9 +158,21 @@ Function CleanUninstall
     RMDir "$SMPROGRAMS\FreeScribe"
 FunctionEnd
 
+Function CheckForOldConfig
+    ; Check if the old version exists in AppData
+    IfFileExists "$APPDATA\FreeScribe\settings.txt" 0 OldConfigDoesNotExist
+        ; Open Dialog to ask user if they want to uninstall the old version
+        MessageBox MB_YESNO|MB_ICONQUESTION "An old configuration file has been detected. Would you like to remove it?" IDYES RemoveOldConfig IDNO OldConfigDoesNotExist
+        RemoveOldConfig:
+            ; Remove the old version executable
+            RMDir /r "$APPDATA\FreeScribe"
+    OldConfigDoesNotExist:
+FunctionEnd
+
 ; Define the section of the installer
 Section "MainSection" SEC01
     Call CleanUninstall
+    Call CheckForOldConfig
     ; Set output path to the installation directory
     SetOutPath "$INSTDIR"
 
