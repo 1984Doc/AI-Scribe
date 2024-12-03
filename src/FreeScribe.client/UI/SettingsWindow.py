@@ -416,6 +416,10 @@ class SettingsWindow():
             response = requests.get(endpoint + "/models", headers=headers, timeout=1.0, verify=verify)
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
+            
+            if not models:
+                return ["No models available", "Custom"]
+
             available_models = [model["id"] for model in models]
             available_models.append("Custom")
             return available_models
