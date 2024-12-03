@@ -1016,6 +1016,8 @@ def set_full_view():
     switch_view_button.grid(row=1, column=7, pady=5, padx=0,sticky='nsew')
     blinking_circle_canvas.grid(row=1, column=8, padx=0,pady=5)
 
+    window.toggle_menu_bar(enable=True)
+
     # Reconfigure button styles and text
     mic_button.config(bg="red" if is_recording else DEFAULT_BUTTON_COLOUR,
                       text="Stop\nRecording" if is_recording else "Start\nRecording")
@@ -1089,6 +1091,8 @@ def set_minimal_view():
     switch_view_button.config(text="⬆️")  # Minimal view indicator
 
     blinking_circle_canvas.grid(row=0, column=3, pady=2, padx=2)
+
+    window.toggle_menu_bar(enable=False)
 
     # Update window properties for minimal view
     root.attributes('-topmost', True)

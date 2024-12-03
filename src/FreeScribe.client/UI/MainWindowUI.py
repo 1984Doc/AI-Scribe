@@ -154,6 +154,18 @@ class MainWindowUI:
             self.root.after_cancel(self.current_container_status_check_id)
             self.current_container_status_check_id = None
 
+    def toggle_menu_bar(self, enable: bool):
+        """
+        Enable or disable the menu bar.
+
+        :param enable: True to enable the menu bar, False to disable it.
+        :type enable: bool
+        """
+        if enable:
+            self._create_menu_bar()
+        else:
+            self._destroy_menu_bar()
+
     def _create_menu_bar(self):
         """
         Private method to create menu bar.
@@ -165,11 +177,32 @@ class MainWindowUI:
         self._create_settings_menu()
         self._create_help_menu()
 
+    def _destroy_menu_bar(self):
+        """
+        Private method to destroy the menu bar.
+        Destroy the menu bar if it exists.
+        """
+        if self.menu_bar is not None:
+            self.menu_bar.destroy()
+            self.menu_bar = None
+            self._destroy_settings_menu()
+            self._destroy_help_menu()
+
     def _create_settings_menu(self):
         # Add Settings menu
         setting_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label="Settings", menu=setting_menu)
         setting_menu.add_command(label="Settings", command=self.setting_window.open_settings_window)
+
+    def _destroy_settings_menu(self):
+        """
+        Private method to destroy the Settings menu.
+        Destroy the Settings menu if it exists.
+        """
+        if self.menu_bar is not None:
+            setting_menu = self.menu_bar.nametowidget('Settings')
+            if setting_menu is not None:
+                setting_menu.destroy()
 
     def _create_help_menu(self):
         # Add Help menu
@@ -177,6 +210,15 @@ class MainWindowUI:
         self.menu_bar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label="About", command=lambda: self._show_md_content(get_file_path('markdown','help','about.md'), 'About'))
 
+    def _destroy_help_menu(self):
+        """
+        Private method to destroy the Help menu.
+        Destroy the Help menu if it exists.
+        """
+        if self.menu_bar is not None:
+            help_menu = self.menu_bar.nametowidget('Help')
+            if help_menu is not None:
+                help_menu.destroy()
     
     def _show_md_content(self, file_path: str, title: str, show_checkbox: bool = False):
         """
