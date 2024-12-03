@@ -403,7 +403,7 @@ class SettingsWindow():
 
         try:
             verify = not self.editable_settings["AI Server Self-Signed Certificates"]
-            response = requests.get(endpoint + "/models", headers=headers, timeout=2.0, verify=verify)
+            response = requests.get(endpoint + "/models", headers=headers, timeout=1.0, verify=verify)
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
             available_models = [model["id"] for model in models]
@@ -425,7 +425,7 @@ class SettingsWindow():
             dropdown["values"] = ["gemma-2-2b-it-Q8_0.gguf"]
             dropdown.set("gemma-2-2b-it-Q8_0.gguf")
         else:
-            dropdown["values"] = []
+            dropdown["values"] = ["Loading models...", "Custom"]
             dropdown.set("Loading models...")
             models = self.get_available_models(endpoint=endpoint)
             dropdown["values"] = models
