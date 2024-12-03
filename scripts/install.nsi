@@ -25,6 +25,8 @@ VIAddVersionKey "FileDescription" "FreeScribe Installer"
 Var /GLOBAL CPU_RADIO
 Var /GLOBAL NVIDIA_RADIO
 Var /GLOBAL SELECTED_OPTION
+Var /GLOBAL REMOVE_CONFIG_CHECKBOX
+Var /GLOBAL REMOVE_CONFIG
 
 Function Check_For_Old_Version_In_App_Data
     ; Check if the old version exists in AppData
@@ -292,6 +294,26 @@ Function InsfilesPageLeave
     SetAutoClose true
 FunctionEnd
 
+Function CreateUninstallPage
+    nsDialogs::Create 1018
+    Pop $Dialog
+    ${If} $Dialog == error
+        Abort
+    ${EndIf}
+
+    ${NSD_CreateLabel} 0 0 100% 12u "Do you want to remove the configuration files (e.g., settings)?"
+    Pop $Label
+
+    ${NSD_CreateCheckbox} 0 20u 100% 12u "Remove configuration files"
+    Pop $REMOVE_CONFIG_CHECKBOX
+
+    nsDialogs::Show
+FunctionEnd
+
+Function UninstallPageLeave
+    ${NSD_GetState} $REMOVE_CONFIG_CHECKBOX $REMOVE_CONFIG
+FunctionEnd
+
 
 ; Define installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
@@ -303,6 +325,7 @@ Page Custom CustomizeFinishPage RunApp
 
 ; Define the uninstaller pages
 !insertmacro MUI_UNPAGE_CONFIRM
+Page custom RemoveConfigFilesPage RemoveConfigFilesPageLeave
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_UNPAGE_FINISH
 
