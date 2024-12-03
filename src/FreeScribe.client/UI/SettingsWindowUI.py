@@ -422,7 +422,7 @@ class SettingsWindowUI:
         def create_processing_section(label_text, setting_key, text_content, row):
             frame = tk.Frame(self.advanced_settings_frame, width=800)
             frame.grid(row=row, column=0, padx=10, pady=0, sticky="nw")
-            self._create_checkbox(frame, f"Use {label_text}", f"Use {label_text}", 0)
+            self._create_checkbox(frame, f"Use {label_text}", setting_key, 0)
             row += 1
             
             text_area, row = self._create_text_area(label_text, text_content, row)
@@ -604,7 +604,7 @@ class SettingsWindowUI:
         note_label.grid(padx=10, pady=5, sticky="w")
 
 
-    def _create_checkbox(self, frame, label, setting_name, row_idx):
+    def _create_checkbox(self, frame, label, setting_name, row_idx, setting_key=None):
         """
         Creates a checkbox in the given frame.
 
