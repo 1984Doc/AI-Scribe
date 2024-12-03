@@ -320,14 +320,8 @@ class SettingsWindowUI:
         inverted_state = "disabled" if current_state == 0 else "normal"
         self.architecture_dropdown.config(state=inverted_state)
 
-        # if local llm is now disabled do what we need to aka update the models
-        if current_state == 0:
-            threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,self.settings.editable_settings_entries["Model Endpoint"].get(),)).start()
-            self.on_model_selection_change(None)
-        else:
-            # when turned on again provide local models
-            threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,self.settings.editable_settings_entries["Model Endpoint"].get(),)).start()
-            self.on_model_selection_change(None)
+        threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,self.settings.editable_settings_entries["Model Endpoint"].get(),)).start()  
+        self.on_model_selection_change(None)
 
             
 
