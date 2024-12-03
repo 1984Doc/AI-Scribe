@@ -240,9 +240,13 @@ class SettingsWindowUI:
 
         #6. GPU OR CPU SELECTION (Right Column)
         tk.Label(left_frame, text="Local Architecture").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-        architecture_options = ["CPU", "CUDA (Nvidia GPU)"]
+        architecture_options = self.settings.get_available_architectures()
         self.architecture_dropdown = ttk.Combobox(left_frame, values=architecture_options, width=15, state="readonly")
-        self.architecture_dropdown.current(architecture_options.index(self.settings.editable_settings["Architecture"]))
+        if self.settings.editable_settings["Architecture"] in architecture_options:
+            self.architecture_dropdown.current(architecture_options.index(self.settings.editable_settings["Architecture"]))
+        else:
+            # Default cpu
+            self.architecture_dropdown.set("CPU")
 
         self.architecture_dropdown.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
 
@@ -527,7 +531,6 @@ class SettingsWindowUI:
         This method retrieves the values from the UI elements and calls the
         `save_settings` method of the `settings` object to save the settings.
         """
-
         self.settings.load_or_unload_model(self.settings.editable_settings["Model"],
             self.get_selected_model(),
             self.settings.editable_settings["Use Local LLM"],
@@ -586,9 +589,12 @@ class SettingsWindowUI:
         
         # 1. LLM Preset (Left Column)
         tk.Label(frame, text="Settings Presets:").grid(row=row, column=0, padx=0, pady=5, sticky="w")
-        llm_preset_options = ["ClinicianFocus Toolbox", "Custom"]
+        llm_preset_options = ["Local AI", "ClinicianFocus Toolbox", "Custom"]
         self.llm_preset_dropdown = ttk.Combobox(frame, values=llm_preset_options, width=15, state="readonly")
-        self.llm_preset_dropdown.current(llm_preset_options.index(self.settings.editable_settings["Preset"]))
+        if self.settings.editable_settings["Preset"] in llm_preset_options:
+            self.llm_preset_dropdown.current(llm_preset_options.index(self.settings.editable_settings["Preset"]))
+        else:
+            self.llm_preset_dropdown.set("Custom")
         self.llm_preset_dropdown.grid(row=row, column=1, padx=0, pady=5, sticky="w")
 
         load_preset_btn = ttk.Button(frame, text="Load", width=5, 
@@ -693,5 +699,6 @@ class SettingsWindowUI:
         """
         self.settings_window.unbind_all("<MouseWheel>") # Unbind mouse wheel event causing errors
         self.settings_window.unbind_all("<Configure>") # Unbind the configure event causing errors
+        self.cutoff_slider.destroy()
 
         self.settings_window.destroy()

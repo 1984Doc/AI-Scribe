@@ -23,7 +23,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import requests
 import numpy as np
-from utils.file_utils import get_resource_path
+from utils.file_utils import get_resource_path, get_file_path
 from Model import ModelManager
 import threading
 from UI.Widgets.MicrophoneSelector import MicrophoneState
@@ -64,6 +64,10 @@ class SettingsWindow():
     clear_settings_file(settings_window):
         Clears the content of settings files and closes the settings window.
     """
+
+    CPU_INSTALL_FILE = "CPU_INSTALL.txt"
+    NVIDIA_INSTALL_FILE = "NVIDIA_INSTALL.txt"
+    STATE_FILES_DIR = "install_state"
 
     def __init__(self):
         """Initializes the ApplicationSettings with default values."""
@@ -453,11 +457,23 @@ class SettingsWindow():
         if preset_name != "Custom":
             # load the settigns from the json preset file
             self.load_settings_from_file("presets/" + preset_name + ".json")
-            messagebox.showinfo("Settings Preset", "Settings preset loaded successfully. Closing settings window. Please re-open and set respective API keys.")
-            
+
             self.editable_settings["Preset"] = preset_name
-            settings_class.settings_window.destroy()
+            #close the settings window 
+            settings_class.close_window()
+
+            # save the settings to the file
             self.save_settings_to_file()
+
+            if preset_name != "Local AI":
+                messagebox.showinfo("Settings Preset", "Settings preset loaded successfully. Closing settings window. Please re-open and set respective API keys.")
+
+                # Unload ai model if switching
+                # already has safety check in unload to check if model exist.
+                ModelManager.unload_model()
+            else: # if is local ai
+                # load the models here
+                ModelManager.start_model_threaded(self, self.main_window.root)
         else:
             messagebox.showinfo("Custom Settings", "To use custom settings then please fill in the values and save them.")
 
@@ -503,3 +519,22 @@ class SettingsWindow():
             print("AIScribe2 file not found. Creating default AIScribe2 file.")
             with open(get_resource_path('aiscribe2.txt'), 'w') as f:
                 f.write(self.AISCRIBE2)
+
+    def get_available_architectures(self):
+        """
+        Returns a list of available architectures for the user to choose from.
+
+        Based on the install state files in _internal folder
+
+        Files must be named CPU_INSTALL or NVIDIA_INSTALL
+
+        Returns:
+            list: A list of available architectures for the user to choose from.
+        """
+        architectures = ["CPU"]  # CPU is always available as fallback
+
+        # Check for NVIDIA support
+        if os.path.isfile(get_file_path(self.STATE_FILES_DIR, self.NVIDIA_INSTALL_FILE)):
+            architectures.append("CUDA (Nvidia GPU)")
+
+        return architectures
