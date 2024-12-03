@@ -219,7 +219,21 @@ class MainWindowUI:
             help_menu = self.menu_bar.nametowidget('Help')
             if help_menu is not None:
                 help_menu.destroy()
+
+    def disable_settings_menu(self):
+        """
+        Disable the Settings menu.
+        """
+        if self.menu_bar is not None:
+            self.menu_bar.entryconfig("Settings", state="disabled")  # Disables the entire Settings menu
     
+    def enable_settings_menu(self):
+        """
+        Enable the Settings menu.
+        """
+        if self.menu_bar is not None:
+            self.menu_bar.entryconfig("Settings", state="normal")
+
     def _show_md_content(self, file_path: str, title: str, show_checkbox: bool = False):
         """
         Private method to display help/about information.
