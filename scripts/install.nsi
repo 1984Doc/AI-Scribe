@@ -26,7 +26,6 @@ Var /GLOBAL CPU_RADIO
 Var /GLOBAL NVIDIA_RADIO
 Var /GLOBAL SELECTED_OPTION
 Var /GLOBAL REMOVE_CONFIG_CHECKBOX
-Var /GLOBAL REMOVE_CONFIG
 
 Function Check_For_Old_Version_In_App_Data
     ; Check if the old version exists in AppData
@@ -218,6 +217,7 @@ SectionEnd
 
 ; Define the uninstaller section
 Section "Uninstall"
+    Call CreateRemoveConfigFilesPage
 
     ; Remove the installation directory and all its contents
     RMDir /r "$INSTDIR"
@@ -228,6 +228,12 @@ Section "Uninstall"
 
     ; Remove the uninstaller entry from the Control Panel
     Delete "$INSTDIR\Uninstall.exe"
+
+    ; Remove configuration files if the checkbox is selected
+    ${NSD_GetState} $REMOVE_CONFIG_CHECKBOX $0
+    ${If} $0 == ${BST_CHECKED}
+        RMDir /r "$APPDATA\FreeScribe"
+    ${EndIf}
     
     ; Show message when uninstallation is complete
     MessageBox MB_OK "FreeScribe has been successfully uninstalled."
@@ -294,7 +300,7 @@ Function InsfilesPageLeave
     SetAutoClose true
 FunctionEnd
 
-Function RemoveConfigFilesPage
+Function CreateRemoveConfigFilesPage
     !insertmacro MUI_HEADER_TEXT "Remove Configuration Files" "Do you want to remove the configuration files (e.g., settings)?"
     nsDialogs::Create 1018
     Pop $0
@@ -304,12 +310,9 @@ Function RemoveConfigFilesPage
 
     ${NSD_CreateCheckbox} 0 20u 100% 12u "Remove configuration files"
     Pop $REMOVE_CONFIG_CHECKBOX
+    ${NSD_SetState} $REMOVE_CONFIG_CHECKBOX ${BST_CHECKED}
 
     nsDialogs::Show
-FunctionEnd
-
-Function RemoveConfigFilesPageLeave
-    ${NSD_GetState} $REMOVE_CONFIG_CHECKBOX $REMOVE_CONFIG
 FunctionEnd
 
 ; Define installer pages
@@ -322,7 +325,6 @@ Page Custom CustomizeFinishPage RunApp
 
 ; Define the uninstaller pages
 !insertmacro MUI_UNPAGE_CONFIRM
-Page custom RemoveConfigFilesPage RemoveConfigFilesPageLeave
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_UNPAGE_FINISH
 
