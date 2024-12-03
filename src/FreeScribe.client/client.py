@@ -767,25 +767,34 @@ def send_text_to_api(edited_text):
         if app_settings.editable_settings["Model Endpoint"].endswith('/'):
             app_settings.editable_settings["Model Endpoint"] = app_settings.editable_settings["Model Endpoint"][:-1]
 
-        if app_settings.API_STYLE == "OpenAI":
-            verify = not app_settings.editable_settings["AI Server Self-Signed Certificates"]
-            response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=verify)
+        # Open API Style
+        verify = not app_settings.editable_settings["AI Server Self-Signed Certificates"]
+        response = requests.post(app_settings.editable_settings["Model Endpoint"]+"/chat/completions", headers=headers, json=payload, verify=verify)
 
-            response.raise_for_status()
-            response_data = response.json()
-            response_text = (response_data['choices'][0]['message']['content'])
-            return response_text
-        elif app_settings.API_STYLE == "KoboldCpp":
-            prompt = get_prompt(edited_text)
+        response.raise_for_status()
+        response_data = response.json()
+        response_text = (response_data['choices'][0]['message']['content'])
+        return response_text
 
-            verify = not app_settings.editable_settings["AI Server Self-Signed Certificates"]
-            response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=verify)
+        #############################################################
+        #                                                           #
+        #                   OpenAI API Style                        #
+        #           Uncomment to use API Style Selector             #
+        #                                                           #
+        #############################################################
+        
+        # if app_settings.API_STYLE == "OpenAI":                    
+        # elif app_settings.API_STYLE == "KoboldCpp":
+        #     prompt = get_prompt(edited_text)
 
-            if response.status_code == 200:
-                results = response.json()['results']
-                response_text = results[0]['text']
-                response_text = response_text.replace("  ", " ").strip()
-                return response_text
+        #     verify = not app_settings.editable_settings["AI Server Self-Signed Certificates"]
+        #     response = requests.post(app_settings.editable_settings["Model Endpoint"] + "/api/v1/generate", json=prompt, verify=verify)
+
+        #     if response.status_code == 200:
+        #         results = response.json()['results']
+        #         response_text = results[0]['text']
+        #         response_text = response_text.replace("  ", " ").strip()
+        #         return response_text
 
     except Exception as e:
         raise e
