@@ -294,15 +294,13 @@ Function InsfilesPageLeave
     SetAutoClose true
 FunctionEnd
 
-Function CreateUninstallPage
+Function RemoveConfigFilesPage
+    !insertmacro MUI_HEADER_TEXT "Remove Configuration Files" "Do you want to remove the configuration files (e.g., settings)?"
     nsDialogs::Create 1018
-    Pop $Dialog
-    ${If} $Dialog == error
+    Pop $0
+    ${If} $0 == error
         Abort
     ${EndIf}
-
-    ${NSD_CreateLabel} 0 0 100% 12u "Do you want to remove the configuration files (e.g., settings)?"
-    Pop $Label
 
     ${NSD_CreateCheckbox} 0 20u 100% 12u "Remove configuration files"
     Pop $REMOVE_CONFIG_CHECKBOX
@@ -310,10 +308,9 @@ Function CreateUninstallPage
     nsDialogs::Show
 FunctionEnd
 
-Function UninstallPageLeave
+Function RemoveConfigFilesPageLeave
     ${NSD_GetState} $REMOVE_CONFIG_CHECKBOX $REMOVE_CONFIG
 FunctionEnd
-
 
 ; Define installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
