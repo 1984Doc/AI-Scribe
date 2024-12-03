@@ -229,7 +229,7 @@ SectionEnd
 
 ; Define the uninstaller section
 Section "Uninstall"
-    Call CreateRemoveConfigFilesPage
+    Call un.CreateRemoveConfigFilesPage
 
     ; Remove the installation directory and all its contents
     RMDir /r "$INSTDIR"
@@ -312,7 +312,7 @@ Function InsfilesPageLeave
     SetAutoClose true
 FunctionEnd
 
-Function CreateRemoveConfigFilesPage
+Function un.CreateRemoveConfigFilesPage
     !insertmacro MUI_HEADER_TEXT "Remove Configuration Files" "Do you want to remove the configuration files (e.g., settings)?"
     nsDialogs::Create 1018
     Pop $0
