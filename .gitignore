@@ -15,3 +15,4 @@ client.spec
 realtime.wav
 src/FreeScribe.client/models
 freescribe-client.spec
+scripts/FreeScribeInstaller.exe
