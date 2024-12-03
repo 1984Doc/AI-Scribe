@@ -27,6 +27,7 @@ from utils.file_utils import get_resource_path, get_file_path
 from Model import ModelManager
 import threading
 from UI.Widgets.MicrophoneSelector import MicrophoneState
+from utils.ip_utils import is_valid_url
 
 
 class SettingsWindow():
@@ -404,6 +405,11 @@ class SettingsWindow():
         }
 
         endpoint = endpoint or self.editable_settings_entries["Model Endpoint"].get()
+
+        # url validate the endpoint
+        if not is_valid_url(endpoint):
+            print("Invalid LLM Endpoint")
+            return ["Invalid LLM Endpoint", "Custom"]
 
         try:
             verify = not self.editable_settings["AI Server Self-Signed Certificates"]
