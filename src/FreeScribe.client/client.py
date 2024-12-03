@@ -313,13 +313,13 @@ def toggle_recording():
         is_audio_processing_realtime_canceled.clear()
         is_audio_processing_whole_canceled.clear()
 
-    print(is_paused)
     if is_paused:
         toggle_pause()
 
     realtime_thread = threaded_realtime_text()
 
     if not is_recording:
+        disable_recording_ui_elements()
         REALTIME_TRANSCRIBE_THREAD_ID = realtime_thread.ident
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
@@ -342,6 +342,7 @@ def toggle_recording():
         
         start_flashing()
     else:
+        enable_recording_ui_elements()
         is_recording = False
         if recording_thread.is_alive():
             recording_thread.join()  # Ensure the recording thread is terminated
@@ -390,6 +391,24 @@ def toggle_recording():
             mic_button.config(bg=DEFAULT_BUTTON_COLOUR, text="Start\nRecording")
         elif current_view == "minimal":
             mic_button.config(bg=DEFAULT_BUTTON_COLOUR, text="🎤")
+
+def disable_recording_ui_elements():
+    window.disable_settings_menu()
+    user_input.scrolled_text.configure(state='disabled')
+    send_button.config(state='disabled')
+    toggle_button.config(state='disabled')
+    upload_button.config(state='disabled')
+    response_display.scrolled_text.configure(state='disabled')
+    timestamp_listbox.config(state='disabled')
+
+def enable_recording_ui_elements():
+    window.enable_settings_menu()
+    user_input.scrolled_text.configure(state='normal')
+    send_button.config(state='normal')
+    toggle_button.config(state='normal')
+    upload_button.config(state='normal')
+    timestamp_listbox.config(state='normal')
+    
 
 def cancel_processing():
     """Cancels any ongoing audio processing.
@@ -1025,6 +1044,8 @@ def set_full_view():
     switch_view_button.grid(row=1, column=7, pady=5, padx=0,sticky='nsew')
     blinking_circle_canvas.grid(row=1, column=8, padx=0,pady=5)
 
+    window.toggle_menu_bar(enable=True)
+
     # Reconfigure button styles and text
     mic_button.config(bg="red" if is_recording else DEFAULT_BUTTON_COLOUR,
                       text="Stop\nRecording" if is_recording else "Start\nRecording")
@@ -1098,6 +1119,8 @@ def set_minimal_view():
     switch_view_button.config(text="⬆️")  # Minimal view indicator
 
     blinking_circle_canvas.grid(row=0, column=3, pady=2, padx=2)
+
+    window.toggle_menu_bar(enable=False)
 
     # Update window properties for minimal view
     root.attributes('-topmost', True)
