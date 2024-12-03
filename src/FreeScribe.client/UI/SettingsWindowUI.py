@@ -278,13 +278,21 @@ class SettingsWindowUI:
         
         right_row += 1
 
-        # 3. API Style (Left Column)
-        tk.Label(right_frame, text="API Style:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
-        api_options = ["OpenAI", "KoboldCpp"]
-        self.api_dropdown = ttk.Combobox(right_frame, values=api_options, width=15, state="readonly")
-        self.api_dropdown.current(api_options.index(self.settings.API_STYLE))
-        self.api_dropdown.grid(row=right_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
-        right_row += 1
+        #################################################################
+        #                                                               #
+        #               API STYLE SELECTION                             #
+        #   THIS SECTION IS COMENTED OUT FOR FUTURE RELEASE AND REVIEW. #
+        #   THE ONLY API STYLE SUPPORTED FOR NOW IS OPENAI.             #
+        #   THE KOBOLD API STYLE HAS BEEN REMOVED FOR SIMPLIFICATION    #
+        #                                                               #
+        #################################################################
+        # # 3. API Style (Left Column)
+        # tk.Label(right_frame, text="API Style:").grid(row=right_row, column=0, padx=0, pady=5, sticky="w")
+        # api_options = ["OpenAI", "KoboldCpp"]
+        # self.api_dropdown = ttk.Combobox(right_frame, values=api_options, width=15, state="readonly")
+        # self.api_dropdown.current(api_options.index(self.settings.API_STYLE))
+        # self.api_dropdown.grid(row=right_row, column=1, columnspan=2, padx=0, pady=5, sticky="w")
+        # right_row += 1
 
         # set the state of the llm settings based on the local llm checkbox once all widgets are created
         self.toggle_remote_llm_settings()
@@ -297,7 +305,7 @@ class SettingsWindowUI:
 
         # toggle all manual settings based on the local llm checkbox
         self.openai_api_key_entry.config(state=state)
-        self.api_dropdown.config(state=state)
+        # self.api_dropdown.config(state=state)
 
         for setting in self.settings.llm_settings:
             if setting == "BlankSpace":
@@ -537,7 +545,7 @@ class SettingsWindowUI:
             self.aiscribe_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
             self.aiscribe2_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
             self.settings_window,
-            self.api_dropdown.get(),
+            # self.api_dropdown.get(),
             self.cutoff_slider.threshold / 32768,
         )
 

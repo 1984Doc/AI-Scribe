@@ -41,8 +41,8 @@ class SettingsWindow():
         Placeholder for the first AI Scribe settings.
     AISCRIBE2 : str
         Placeholder for the second AI Scribe settings.
-    API_STYLE : str
-        The API style to be used (default is 'OpenAI').
+    # API_STYLE : str FUTURE FEATURE REVISION
+    #     The API style to be used (default is 'OpenAI'). FUTURE FEATURE
 
     editable_settings : dict
         A dictionary containing user-editable settings such as model parameters, audio 
@@ -55,7 +55,7 @@ class SettingsWindow():
     save_settings_to_file():
         Saves the current settings to a JSON file.
     save_settings(openai_api_key, aiscribe_text, aiscribe2_text, 
-                  settings_window, api_style, preset):
+                  settings_window, preset):
         Saves the current settings, including API keys, IP addresses, and user-defined parameters.
     load_aiscribe_from_file():
         Loads the first AI Scribe text from a file.
@@ -70,7 +70,7 @@ class SettingsWindow():
 
 
         self.OPENAI_API_KEY = "None"
-        self.API_STYLE = "OpenAI"
+        # self.API_STYLE = "OpenAI" # FUTURE FEATURE REVISION
         self.main_window = None
         self.scribe_template_values = []
         self.scribe_template_mapping = {}
@@ -249,7 +249,7 @@ class SettingsWindow():
                     settings = json.load(file)
                 except json.JSONDecodeError:
                     print("Error loading settings file. Using default settings.")
-                    return self.OPENAI_API_KEY, self.API_STYLE
+                    return self.OPENAI_API_KEY
 
                 self.OPENAI_API_KEY = settings.get("openai_api_key", self.OPENAI_API_KEY)
                 self.API_STYLE = settings.get("api_style", self.API_STYLE)
@@ -268,7 +268,7 @@ class SettingsWindow():
                 return self.OPENAI_API_KEY, self.API_STYLE
         except FileNotFoundError:
             print("Settings file not found. Using default settings.")
-            return self.OPENAI_API_KEY, self.API_STYLE
+            return self.OPENAI_API_KEY
 
     def save_settings_to_file(self):
         """
@@ -282,14 +282,14 @@ class SettingsWindow():
         """
         settings = {
             "openai_api_key": self.OPENAI_API_KEY,
-            "editable_settings": self.editable_settings,
-            "api_style": self.API_STYLE
+            "editable_settings": self.editable_settings
+            # "api_style": self.API_STYLE # FUTURE FEATURE REVISION
         }
         with open(get_resource_path('settings.txt'), 'w') as file:
             json.dump(settings, file)
 
     def save_settings(self, openai_api_key, aiscribe_text, aiscribe2_text, settings_window,
-                      api_style, silence_cutoff):
+                      silence_cutoff):
         """
         Save the current settings, including IP addresses, API keys, and user-defined parameters.
 
@@ -303,7 +303,7 @@ class SettingsWindow():
         :param str api_style: The style of API being used.
         """
         self.OPENAI_API_KEY = openai_api_key
-        self.API_STYLE = api_style
+        # self.API_STYLE = api_style
 
         self.editable_settings["Silence cut-off"] = silence_cutoff
 
