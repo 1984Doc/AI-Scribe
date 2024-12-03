@@ -252,7 +252,7 @@ class SettingsWindow():
                     return self.OPENAI_API_KEY
 
                 self.OPENAI_API_KEY = settings.get("openai_api_key", self.OPENAI_API_KEY)
-                self.API_STYLE = settings.get("api_style", self.API_STYLE)
+                # self.API_STYLE = settings.get("api_style", self.API_STYLE) # FUTURE FEATURE REVISION
                 loaded_editable_settings = settings.get("editable_settings", {})
                 for key, value in loaded_editable_settings.items():
                     if key in self.editable_settings:
@@ -265,7 +265,7 @@ class SettingsWindow():
                     self.main_window.create_scribe_template()
 
 
-                return self.OPENAI_API_KEY, self.API_STYLE
+                return self.OPENAI_API_KEY
         except FileNotFoundError:
             print("Settings file not found. Using default settings.")
             return self.OPENAI_API_KEY
@@ -300,7 +300,6 @@ class SettingsWindow():
         :param str aiscribe_text: The text for the first AI Scribe.
         :param str aiscribe2_text: The text for the second AI Scribe.
         :param tk.Toplevel settings_window: The settings window instance to be destroyed after saving.
-        :param str api_style: The style of API being used.
         """
         self.OPENAI_API_KEY = openai_api_key
         # self.API_STYLE = api_style
@@ -383,7 +382,7 @@ class SettingsWindow():
             # Print any exception that occurs during file handling or window destruction.
             print(f"Error clearing settings files: {e}")
 
-    def get_available_models(self):
+    def get_available_models(self,endpoint=None):
         """
         Returns a list of available models for the user to choose from.
 
@@ -400,9 +399,11 @@ class SettingsWindow():
             "X-API-Key": self.OPENAI_API_KEY
         }
 
+        endpoint = endpoint or self.editable_settings_entries["Model Endpoint"].get()
+
         try:
             verify = not self.editable_settings["AI Server Self-Signed Certificates"]
-            response = requests.get(self.editable_settings["Model Endpoint"] + "/models", headers=headers, timeout=2.0, verify=verify)
+            response = requests.get(endpoint + "/models", headers=headers, timeout=2.0, verify=verify)
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
             available_models = [model["id"] for model in models]
@@ -413,20 +414,20 @@ class SettingsWindow():
             print(e)
             return ["Failed to load models", "Custom"]
 
-    def update_models_dropdown(self, dropdown):
+    def update_models_dropdown(self, dropdown, endpoint=None):
         """
         Updates the models dropdown with the available models.
 
         This method fetches the available models from the AI Scribe service and updates
         the dropdown widget in the settings window with the new list of models.
         """
-        if self.editable_settings["Use Local LLM"]:
+        if self.editable_settings_entries["Use Local LLM"].get():
             dropdown["values"] = ["gemma-2-2b-it-Q8_0.gguf"]
             dropdown.set("gemma-2-2b-it-Q8_0.gguf")
         else:
             dropdown["values"] = []
             dropdown.set("Loading models...")
-            models = self.get_available_models()
+            models = self.get_available_models(endpoint=endpoint)
             dropdown["values"] = models
             if self.editable_settings["Model"] in models:
                 dropdown.set(self.editable_settings["Model"])
