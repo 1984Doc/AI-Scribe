@@ -468,7 +468,7 @@ class SettingsWindowUI:
         )
         
         self.postprocess_text, _ = create_processing_section(
-            "Post-Processing",
+            "Post-Processing (Experimental. Use with caution.)",
             "Use Post-Processing", 
             self.settings.editable_settings["Post-Processing"],
             row
