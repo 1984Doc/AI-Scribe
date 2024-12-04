@@ -120,13 +120,15 @@ Function .onInstSuccess
 FunctionEnd
 
 Function CheckIfFreeScribeIsRunning
+    CheckIfFreeScribeIsRunning:
     nsExec::ExecToStack 'cmd /c tasklist /FI "IMAGENAME eq freescribe-client.exe" /NH | find /I "freescribe-client.exe" > nul'
     Pop $0 ; Return value
 
     ; Check if the process is running
     ${If} $0 == 0
-        MessageBox MB_OK "FreeScribe is currently running. Please close the application before installing. Once closed please restart the installer."
-        Abort
+        MessageBox MB_RETRYCANCEL "FreeScribe is currently running. Please close the application and try again." IDRETRY CheckIfFreeScribeIsRunning IDCANCEL abort
+        abort:
+            Abort
     ${EndIf}
 FunctionEnd
 
