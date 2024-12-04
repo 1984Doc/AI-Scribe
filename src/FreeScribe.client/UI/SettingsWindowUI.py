@@ -28,7 +28,7 @@ from Model import Model, ModelManager
 from utils.file_utils import get_file_path
 from UI.MarkdownWindow import MarkdownWindow
 from UI.Widgets.MicrophoneSelector import MicrophoneSelector
-
+from UI.SettingsWindow import SettingsKeys
 
 
 class SettingsWindowUI:
@@ -164,12 +164,12 @@ class SettingsWindowUI:
         left_row = 0
         right_row = 0
 
-        # Create the local whisper button to handle custom behavior
-        tk.Label(left_frame, text="Local Whisper").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-        value = tk.IntVar(value=(self.settings.editable_settings["Local Whisper"]))
+        # Create the SettingsKeys.LOCAL_WHISPER button to handle custom behavior
+        tk.Label(left_frame, text=f"{SettingsKeys.LOCAL_WHISPER.value}").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
+        value = tk.IntVar(value=(self.settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value]))
         self.local_whisper_checkbox = tk.Checkbutton(left_frame, variable=value, command=self.toggle_remote_whisper_settings)
         self.local_whisper_checkbox.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
-        self.settings.editable_settings_entries["Local Whisper"] = value
+        self.settings.editable_settings_entries[SettingsKeys.LOCAL_WHISPER.value] = value
 
         left_row += 1
 
@@ -195,11 +195,11 @@ class SettingsWindowUI:
         
         left_row += 1
 
-        # set the state of the whisper settings based on the local whisper checkbox once all widgets are created
+        # set the state of the whisper settings based on the SettingsKeys.LOCAL_WHISPER.value checkbox once all widgets are created
         self.toggle_remote_whisper_settings()
 
     def toggle_remote_whisper_settings(self):
-        current_state = self.settings.editable_settings_entries["Local Whisper"].get()
+        current_state = self.settings.editable_settings_entries[SettingsKeys.LOCAL_WHISPER.value].get()
         
         for setting in self.settings.whisper_settings:
             if setting in ["Real Time", "BlankSpace"]:

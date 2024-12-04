@@ -28,6 +28,11 @@ from Model import ModelManager
 import threading
 from UI.Widgets.MicrophoneSelector import MicrophoneState
 from utils.ip_utils import is_valid_url
+from enum import Enum
+
+class SettingsKeys(Enum):
+    LOCAL_WHISPER = "Built-in Speech2Text"
+
 
 
 class SettingsWindow():
@@ -87,7 +92,7 @@ class SettingsWindow():
         ]
 
         self.whisper_settings = [
-            "BlankSpace", # Represents the local whisper checkbox that is manually placed
+            "BlankSpace", # Represents the SettingsKeys.LOCAL_WHISPER.value checkbox that is manually placed
             "Real Time",
             "BlankSpace", # Represents the model dropdown that is manually placed
             "Whisper Endpoint",
@@ -159,7 +164,7 @@ class SettingsWindow():
             "frmtrmblln": False,
             "best_of": 2,
             "Use best_of": False,
-            "Local Whisper": True,
+            SettingsKeys.LOCAL_WHISPER.value: True,
             "Whisper Endpoint": "https://localhost:2224/whisperaudio",
             "Whisper Server API Key": "None",
             "Whisper Model": "small.en",

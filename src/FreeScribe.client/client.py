@@ -32,7 +32,7 @@ import time
 import queue
 import atexit
 from UI.MainWindowUI import MainWindowUI
-from UI.SettingsWindow import SettingsWindow
+from UI.SettingsWindow import SettingsWindow, SettingsKeys
 from UI.Widgets.CustomTextBox import CustomTextBox
 from UI.LoadingWindow import LoadingWindow
 from UI.Widgets.MicrophoneSelector import MicrophoneState
@@ -244,7 +244,7 @@ def realtime_text():
                 print("Real Time Audio to Text")
                 audio_buffer = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768
                 if not is_silent(audio_buffer):
-                    if app_settings.editable_settings["Local Whisper"] == True:
+                    if app_settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value] == True:
                         print("Local Real Time Whisper")
                         result = model.transcribe(audio_buffer, fp16=False)
                         if not local_cancel_flag and not is_audio_processing_realtime_canceled.is_set():
@@ -514,7 +514,7 @@ def send_audio_to_server():
     Raises:
     -------
     ValueError
-        If the `app_settings.editable_settings["Local Whisper"]` flag is not a boolean.
+        If the `app_settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value]` flag is not a boolean.
     FileNotFoundError
         If the specified audio file does not exist.
     requests.exceptions.RequestException
@@ -540,10 +540,10 @@ def send_audio_to_server():
 
     loading_window = LoadingWindow(root, "Processing Audio", "Processing Audio. Please wait.", on_cancel=lambda: (cancel_processing(), cancel_whole_audio_process(current_thread_id)))
 
-    # Check if Local Whisper is enabled in the editable settings
-    if app_settings.editable_settings["Local Whisper"] == True:
-        # Inform the user that Local Whisper is being used for transcription
-        print("Using Local Whisper for transcription.")
+    # Check if SettingsKeys.LOCAL_WHISPER is enabled in the editable settings
+    if app_settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value] == True:
+        # Inform the user that SettingsKeys.LOCAL_WHISPER.value is being used for transcription
+        print(f"Using SettingsKeys.LOCAL_WHISPER for transcription.")
         # Configure the user input widget to be editable and clear its content
         user_input.scrolled_text.configure(state='normal')
         user_input.scrolled_text.delete("1.0", tk.END)
