@@ -170,9 +170,9 @@ FunctionEnd
 
 Function CheckForOldConfig
     ; Check if the old version exists in AppData
-    IfFileExists "$APPDATA\FreeScribe\settings.txt" 0 OldConfigDoesNotExist
+    IfFileExists "$APPDATA\FreeScribe\settings.txt" 0 End
         ; Open Dialog to ask user if they want to uninstall the old version
-        MessageBox MB_YESNO|MB_ICONQUESTION "An old configuration file has been detected. Would you like to remove it?" IDYES RemoveOldConfig IDNO OldConfigDoesNotExist
+        MessageBox MB_YESNO|MB_ICONQUESTION "An old configuration file has been detected. Would you like to remove it?" IDYES RemoveOldConfig IDNO End
         RemoveOldConfig:
             ClearErrors
             ; Remove the old version executable
@@ -180,10 +180,9 @@ Function CheckForOldConfig
             ${If} ${Errors}
                 MessageBox MB_RETRYCANCEL "Unable to remove old configuration. Please close any applications using these files and try again." IDRETRY RemoveOldConfig IDCANCEL ConfigFilesFailed
             ${EndIf}
-    Goto End
+            Goto End
     ConfigFilesFailed:
         MessageBox MB_OK|MB_ICONEXCLAMATION "Old configuration files could not be removed. Proceeding with installation."
-    OldConfigDoesNotExist:
     End:
 FunctionEnd
 
@@ -273,8 +272,6 @@ Section "Uninstall"
 
     ConfigFilesFailed:
         MessageBox MB_OK|MB_ICONEXCLAMATION "FreeScribe has been successfully uninstalled, but the configuration files could not be removed. Please close any applications using these files and try again."
-        Abort
-
     EndUninstall:
 SectionEnd
 
