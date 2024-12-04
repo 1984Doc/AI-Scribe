@@ -40,6 +40,11 @@ from Model import  ModelManager
 from utils.ip_utils import is_private_ip
 from utils.file_utils import get_file_path, get_resource_path
 import ctypes
+import sys
+from UI.DebugWindow import DualOutput, TerminalApp
+
+dual = DualOutput()
+sys.stdout = dual
 
 # GUI Setup
 root = tk.Tk()
