@@ -111,9 +111,21 @@ class DebugPrintWindow:
 
         # Add refresh button
         refresh_button = tk.Button(self.window, text="Refresh", command=self.refresh_output)
-        refresh_button.pack(pady=10)
+        refresh_button.pack(side=tk.RIGHT,pady=10, padx=10)
+
+        # Add copy to clipboard button
+        copy_button = tk.Button(self.window, text="Copy to Clipboard", command=self._copy_to_clipboard)
+        copy_button.pack(side=tk.LEFT, pady=10, padx=10)
 
         self.refresh_output()
+
+    def _copy_to_clipboard(self):
+        # Copy the content of the Text widget to the clipboard
+        content = self.text_widget.get("1.0", tk.END).strip()
+        self.window.clipboard_clear()
+        self.window.clipboard_append(content)
+        self.window.update_idletasks()
+
 
     def refresh_output(self):
         """
