@@ -169,9 +169,13 @@ Function CheckForOldConfig
             ; Remove the old version executable
             RMDir /r "$APPDATA\FreeScribe"
             ${If} ${Errors}
-                MessageBox MB_OK|MB_ICONEXCLAMATION "Unable to remove old configuration. Please close any applications using these files and try again."
+                MessageBox MB_RETRYCANCEL "Unable to remove old configuration. Please close any applications using these files and try again." IDRETRY RemoveOldConfig IDCANCEL ConfigFilesFailed
             ${EndIf}
+    Goto End
+    ConfigFilesFailed:
+        MessageBox MB_OK|MB_ICONEXCLAMATION "Old configuration files could not be removed. Proceeding with installation."
     OldConfigDoesNotExist:
+    End:
 FunctionEnd
 
 ; Define the section of the installer
@@ -244,18 +248,25 @@ Section "Uninstall"
     ; Remove the uninstaller entry from the Control Panel
     Delete "$INSTDIR\Uninstall.exe"
 
-    ; Remove configuration files if the checkbox is selected
-    MessageBox MB_OK "$REMOVE_CONFIG ${BST_CHECKED}"
-    ${If} $REMOVE_CONFIG == ${BST_CHECKED}
-        ClearErrors
-        RMDir /r "$APPDATA\FreeScribe"
-        ${If} ${Errors}
-            MessageBox MB_OK|MB_ICONEXCLAMATION "Unable to remove old configuration. Please close any applications using these files and try again."
+    RemoveConfigFiles:
+        ; Remove configuration files if the checkbox is selected
+        ${If} $REMOVE_CONFIG == ${BST_CHECKED}
+            ClearErrors
+            RMDir /r "$APPDATA\FreeScribe"
+            ${If} ${Errors}
+                MessageBox MB_RETRYCANCEL "Unable to remove old configuration. Please close any applications using these files and try again." IDRETRY RemoveConfigFiles IDCANCEL ConfigFilesFailed
+            ${EndIf}
         ${EndIf}
-    ${EndIf}
     
     ; Show message when uninstallation is complete
     MessageBox MB_OK "FreeScribe has been successfully uninstalled."
+    Goto EndUninstall
+
+    ConfigFilesFailed:
+        MessageBox MB_OK|MB_ICONEXCLAMATION "FreeScribe has been successfully uninstalled, but the configuration files could not be removed. Please close any applications using these files and try again."
+        Abort
+
+    EndUninstall:
 SectionEnd
 
 # Variables for checkboxes
