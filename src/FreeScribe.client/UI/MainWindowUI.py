@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import UI.MainWindow as mw
+from UI.SettingsWindow import FeatureToggle
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.MarkdownWindow import MarkdownWindow
 from utils.file_utils import get_file_path
@@ -67,6 +68,9 @@ class MainWindowUI:
         Create a Docker status bar to display the status of the LLM and Whisper containers.
         Adds start and stop buttons for each container.
         """
+        # if not feature do not do this
+        if FeatureToggle.DOCKER_STATUS_BAR is not True:
+            return
         
         if self.docker_status_bar is not None:
             return
@@ -121,6 +125,11 @@ class MainWindowUI:
         """
         Disable the Docker status bar UI elements.
         """
+        
+        if FeatureToggle.DOCKER_STATUS_BAR is not True:
+            return
+
+        
         self.is_status_bar_enabled = False
         self.docker_status.config(text="(Docker not found)")
         if self.docker_status_bar is not None:
@@ -131,6 +140,10 @@ class MainWindowUI:
         """
         Enable the Docker status bar UI elements.
         """
+
+        if FeatureToggle.DOCKER_STATUS_BAR is not True:
+            return
+        
         self.is_status_bar_enabled = True
         self.docker_status.config(text="Docker Container Status: ")
         if self.docker_status_bar is not None:
@@ -141,6 +154,9 @@ class MainWindowUI:
         """
         Destroy the Docker status bar if it exists.
         """
+        if FeatureToggle.DOCKER_STATUS_BAR is not True:
+            return
+            
         if self.docker_status_bar is not None:
             self.docker_status_bar.destroy()
             self.docker_status_bar = None

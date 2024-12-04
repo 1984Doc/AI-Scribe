@@ -28,7 +28,17 @@ from Model import ModelManager
 import threading
 from UI.Widgets.MicrophoneSelector import MicrophoneState
 from utils.ip_utils import is_valid_url
+from enum import Enum
 
+class SettingsKeys(Enum):
+    LOCAL_WHISPER = "Built-in Speech2Text"
+    WHISPER_ENDPOINT = "Speech2Text (Whisper) Endpoint"
+    WHISPER_SERVER_API_KEY = "Speech2Text (Whisper) API Key"
+
+
+class FeatureToggle:
+    DOCKER_SETTINGS_TAB = False
+    DOCKER_STATUS_BAR = False
 
 class SettingsWindow():
     """
@@ -87,11 +97,11 @@ class SettingsWindow():
         ]
 
         self.whisper_settings = [
-            "BlankSpace", # Represents the local whisper checkbox that is manually placed
+            "BlankSpace", # Represents the SettingsKeys.LOCAL_WHISPER.value checkbox that is manually placed
             "Real Time",
             "BlankSpace", # Represents the model dropdown that is manually placed
-            "Whisper Endpoint",
-            "Whisper Server API Key",
+            SettingsKeys.WHISPER_ENDPOINT.value,
+            SettingsKeys.WHISPER_SERVER_API_KEY.value,
             "S2T Server Self-Signed Certificates",
         ]
 
@@ -159,9 +169,9 @@ class SettingsWindow():
             "frmtrmblln": False,
             "best_of": 2,
             "Use best_of": False,
-            "Local Whisper": True,
-            "Whisper Endpoint": "https://localhost:2224/whisperaudio",
-            "Whisper Server API Key": "None",
+            SettingsKeys.LOCAL_WHISPER.value: True,
+            SettingsKeys.WHISPER_ENDPOINT.value: "https://localhost:2224/whisperaudio",
+            SettingsKeys.WHISPER_SERVER_API_KEY.value: "",
             "Whisper Model": "small.en",
             "Current Mic": "None",
             "Real Time": True,
@@ -416,6 +426,10 @@ class SettingsWindow():
             response = requests.get(endpoint + "/models", headers=headers, timeout=1.0, verify=verify)
             response.raise_for_status()  # Raise an error for bad responses
             models = response.json().get("data", [])  # Extract the 'data' field
+            
+            if not models:
+                return ["No models available", "Custom"]
+
             available_models = [model["id"] for model in models]
             available_models.append("Custom")
             return available_models

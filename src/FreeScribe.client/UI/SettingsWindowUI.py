@@ -28,7 +28,7 @@ from Model import Model, ModelManager
 from utils.file_utils import get_file_path
 from UI.MarkdownWindow import MarkdownWindow
 from UI.Widgets.MicrophoneSelector import MicrophoneSelector
-
+from UI.SettingsWindow import SettingsKeys, FeatureToggle
 
 
 class SettingsWindowUI:
@@ -102,7 +102,6 @@ class SettingsWindowUI:
         self.notebook.add(self.llm_settings_frame, text="AI Settings")
         self.notebook.add(self.whisper_settings_frame, text="Speech-to-Text Settings")
         self.notebook.add(self.advanced_frame, text="Advanced Settings")
-        self.notebook.add(self.docker_settings_frame, text="Docker Settings")
 
         self.settings_window.protocol("WM_DELETE_WINDOW", self.close_window)
 
@@ -116,7 +115,11 @@ class SettingsWindowUI:
         self.create_llm_settings()
         self.create_whisper_settings()
         self.create_advanced_settings()
-        self.create_docker_settings()
+
+        if FeatureToggle.DOCKER_SETTINGS_TAB is True:
+            self.notebook.add(self.docker_settings_frame, text="Docker Settings")
+            self.create_docker_settings()
+        
         self.create_buttons()
 
 
@@ -164,12 +167,12 @@ class SettingsWindowUI:
         left_row = 0
         right_row = 0
 
-        # Create the local whisper button to handle custom behavior
-        tk.Label(left_frame, text="Local Whisper").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
-        value = tk.IntVar(value=(self.settings.editable_settings["Local Whisper"]))
+        # Create the SettingsKeys.LOCAL_WHISPER button to handle custom behavior
+        tk.Label(left_frame, text=f"{SettingsKeys.LOCAL_WHISPER.value}").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
+        value = tk.IntVar(value=(self.settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value]))
         self.local_whisper_checkbox = tk.Checkbutton(left_frame, variable=value, command=self.toggle_remote_whisper_settings)
         self.local_whisper_checkbox.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
-        self.settings.editable_settings_entries["Local Whisper"] = value
+        self.settings.editable_settings_entries[SettingsKeys.LOCAL_WHISPER.value] = value
 
         left_row += 1
 
@@ -195,11 +198,11 @@ class SettingsWindowUI:
         
         left_row += 1
 
-        # set the state of the whisper settings based on the local whisper checkbox once all widgets are created
+        # set the state of the whisper settings based on the SettingsKeys.LOCAL_WHISPER.value checkbox once all widgets are created
         self.toggle_remote_whisper_settings()
 
     def toggle_remote_whisper_settings(self):
-        current_state = self.settings.editable_settings_entries["Local Whisper"].get()
+        current_state = self.settings.editable_settings_entries[SettingsKeys.LOCAL_WHISPER.value].get()
         
         for setting in self.settings.whisper_settings:
             if setting in ["Real Time", "BlankSpace"]:
@@ -299,6 +302,7 @@ class SettingsWindowUI:
         # right_row += 1
 
         # set the state of the llm settings based on the local llm checkbox once all widgets are created
+        self.settings_opened = True
         self.toggle_remote_llm_settings()
  
     def toggle_remote_llm_settings(self):
@@ -319,8 +323,13 @@ class SettingsWindowUI:
 
         inverted_state = "disabled" if current_state == 0 else "normal"
         self.architecture_dropdown.config(state=inverted_state)
-
-        threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,self.settings.editable_settings_entries["Model Endpoint"].get(),)).start()  
+        
+        #flag used for determining if window was just opened so we dont spam the API.
+        if not self.settings_opened:
+            threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,self.settings.editable_settings_entries["Model Endpoint"].get(),)).start()
+        else:
+            self.settings_opened = False
+            
         self.on_model_selection_change(None)
 
             
@@ -422,7 +431,7 @@ class SettingsWindowUI:
         def create_processing_section(label_text, setting_key, text_content, row):
             frame = tk.Frame(self.advanced_settings_frame, width=800)
             frame.grid(row=row, column=0, padx=10, pady=0, sticky="nw")
-            self._create_checkbox(frame, f"Use {label_text}", f"Use {label_text}", 0)
+            self._create_checkbox(frame, f"Use {label_text}", setting_key, 0)
             row += 1
             
             text_area, row = self._create_text_area(label_text, text_content, row)
@@ -468,7 +477,7 @@ class SettingsWindowUI:
         )
         
         self.postprocess_text, _ = create_processing_section(
-            "Post-Processing",
+            "Post-Processing (Experimental. Use with caution.)",
             "Use Post-Processing", 
             self.settings.editable_settings["Post-Processing"],
             row
@@ -604,7 +613,7 @@ class SettingsWindowUI:
         note_label.grid(padx=10, pady=5, sticky="w")
 
 
-    def _create_checkbox(self, frame, label, setting_name, row_idx):
+    def _create_checkbox(self, frame, label, setting_name, row_idx, setting_key=None):
         """
         Creates a checkbox in the given frame.
 
