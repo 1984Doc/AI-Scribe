@@ -51,7 +51,7 @@ class SettingsWindowUI:
         advanced_settings_frame (tk.Frame): The scrollable frame for advanced settings.
     """
 
-    def __init__(self, settings, main_window):
+    def __init__(self, settings, main_window, root):
         """
         Initializes the SettingsWindowUI.
 
@@ -60,6 +60,7 @@ class SettingsWindowUI:
         """
         self.settings = settings
         self.main_window = main_window
+        self.root = root
         self.settings_window = None
         self.main_frame = None
         self.notebook = None
@@ -550,6 +551,10 @@ class SettingsWindowUI:
             # self.api_dropdown.get(),
             self.cutoff_slider.threshold / 32768,
         )
+
+        # if Local Whisper is selected, load the Whisper Model
+        if self.settings.editable_settings["Local Whisper"]:
+            self.root.event_generate("<<LoadSttModel>>")
 
         if self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is None:
             self.main_window.create_docker_status_bar()

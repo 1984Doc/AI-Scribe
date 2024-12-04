@@ -91,6 +91,9 @@ DEFAULT_BUTTON_COLOUR = "SystemButtonFace"
 REALTIME_TRANSCRIBE_THREAD_ID = None
 GENERATION_THREAD_ID = None
 
+# Global instance of whisper model
+stt_local_model = None
+
 
 def get_prompt(formatted_message):
 
@@ -223,14 +226,7 @@ def realtime_text():
     local_cancel_flag = False 
     if not is_realtimeactive:
         is_realtimeactive = True
-        model = None
-        if app_settings.editable_settings["Real Time"]:
-            try:
-                model_name = app_settings.editable_settings["Whisper Model"].strip()
-                model = whisper.load_model(model_name)
-            except Exception as e:
-                messagebox.showerror("Model Error", f"Error loading model: {e}")
-                
+
         while True:
             #  break if canceled
             if is_audio_processing_realtime_canceled.is_set():
@@ -246,7 +242,7 @@ def realtime_text():
                 if not is_silent(audio_buffer):
                     if app_settings.editable_settings["Local Whisper"] == True:
                         print("Local Real Time Whisper")
-                        result = model.transcribe(audio_buffer, fp16=False)
+                        result = stt_local_model.transcribe(audio_buffer, fp16=False)
                         if not local_cancel_flag and not is_audio_processing_realtime_canceled.is_set():
                             update_gui(result['text'])
                     else:
@@ -551,17 +547,13 @@ def send_audio_to_server():
         # Display a message indicating that audio to text processing is in progress
         user_input.scrolled_text.insert(tk.END, "Audio to Text Processing...Please Wait")
         try:
-            # Load the specified Whisper model
-            model_name = app_settings.editable_settings["Whisper Model"].strip()
-            model = whisper.load_model(model_name)
-
             # Determine the file to send for transcription
             file_to_send = uploaded_file_path or get_resource_path('recording.wav')
             delete_file = False if uploaded_file_path else True
             uploaded_file_path = None
 
             # Transcribe the audio file using the loaded model
-            result = model.transcribe(file_to_send)
+            result = stt_local_model.transcribe(file_to_send)
             transcribed_text = result["text"]
 
             # done with file clean up
@@ -1166,6 +1158,26 @@ def remove_placeholder(event, text_widget, placeholder_text="Text box"):
         text_widget.delete("1.0", "end")
         text_widget.config(fg='black')
 
+# to load the STT model on startup if it is enabled
+def load_stt_model(event=None):
+    global stt_local_model
+    model = app_settings.editable_settings["Whisper Model"].strip()
+    # Create a loading window to display the loading message
+    stt_loading_window = LoadingWindow(root, "Speech to Text", "Loading Speech to Text. Please wait.")
+    print(f"Loading STT model: {model}")
+    try:
+        # Load the specified Whisper model
+        stt_local_model = whisper.load_model(model)
+        print("STT model loaded successfully.")
+    except Exception as e:
+        # Log the error message
+        print(f"An error occurred while loading STT: {e}")
+        stt_local_model = None
+        messagebox.showerror("Error", f"An error occurred while loading the STT model: {e}")
+    finally:
+        stt_loading_window.destroy()
+        print("Closing STT loading window.")
+
 
 # Configure grid weights for scalability
 root.grid_columnconfigure(0, weight=1, minsize= 10)
@@ -1259,6 +1271,13 @@ root.minsize(900, 400)
 #Wait for the UI root to be intialized then load the model. If using local llm.
 if app_settings.editable_settings["Use Local LLM"]:
     root.after(100, lambda:(ModelManager.setup_model(app_settings=app_settings, root=root)))  
+
+if app_settings.editable_settings["Local Whisper"]:
+    # Inform the user that Local Whisper is being used for transcription
+    print("Using Local Whisper for transcription.")
+    root.after(100, lambda: (load_stt_model()))
+
+root.bind("<<LoadSttModel>>", load_stt_model)
 
 root.mainloop()
 
