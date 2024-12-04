@@ -25,6 +25,8 @@ VIAddVersionKey "FileDescription" "FreeScribe Installer"
 Var /GLOBAL CPU_RADIO
 Var /GLOBAL NVIDIA_RADIO
 Var /GLOBAL SELECTED_OPTION
+Var /GLOBAL REMOVE_CONFIG_CHECKBOX
+Var /GLOBAL REMOVE_CONFIG
 
 Function Check_For_Old_Version_In_App_Data
     ; Check if the old version exists in AppData
@@ -117,15 +119,29 @@ Function .onInstSuccess
     MessageBox MB_OK "Installation completed successfully! Please note upon first launch start time may be slow. Please wait for the program to open!"
 FunctionEnd
 
-; Checks on installer start
-Function .onInit
+Function un.onInit
+    CheckIfFreeScribeIsRunning:
     nsExec::ExecToStack 'cmd /c tasklist /FI "IMAGENAME eq freescribe-client.exe" /NH | find /I "freescribe-client.exe" > nul'
     Pop $0 ; Return value
 
     ; Check if the process is running
     ${If} $0 == 0
-        MessageBox MB_OK "FreeScribe is currently running. Please close the application before installing. Once closed please restart the installer."
-        Abort
+        MessageBox MB_RETRYCANCEL "FreeScribe is currently running. Please close the application and try again." IDRETRY CheckIfFreeScribeIsRunning IDCANCEL abort
+        abort:
+            Abort
+    ${EndIf}
+FunctionEnd
+; Checks on installer start
+Function .onInit
+    CheckIfFreeScribeIsRunning:
+    nsExec::ExecToStack 'cmd /c tasklist /FI "IMAGENAME eq freescribe-client.exe" /NH | find /I "freescribe-client.exe" > nul'
+    Pop $0 ; Return value
+
+    ; Check if the process is running
+    ${If} $0 == 0
+        MessageBox MB_RETRYCANCEL "FreeScribe is currently running. Please close the application and try again." IDRETRY CheckIfFreeScribeIsRunning IDCANCEL abort
+        abort:
+            Abort
     ${EndIf}
 
     IfSilent SILENT_MODE NOT_SILENT_MODE
@@ -157,9 +173,28 @@ Function CleanUninstall
     RMDir "$SMPROGRAMS\FreeScribe"
 FunctionEnd
 
+Function CheckForOldConfig
+    ; Check if the old version exists in AppData
+    IfFileExists "$APPDATA\FreeScribe\settings.txt" 0 End
+        ; Open Dialog to ask user if they want to uninstall the old version
+        MessageBox MB_YESNO|MB_ICONQUESTION "An old configuration file has been detected. We recommend removing it to prevent conflict with new versions. Would you like to remove it?" IDYES RemoveOldConfig IDNO End
+        RemoveOldConfig:
+            ClearErrors
+            ; Remove the old version executable
+            RMDir /r "$APPDATA\FreeScribe"
+            ${If} ${Errors}
+                MessageBox MB_RETRYCANCEL "Unable to remove old configuration. Please close any applications using these files and try again." IDRETRY RemoveOldConfig IDCANCEL ConfigFilesFailed
+            ${EndIf}
+            Goto End
+    ConfigFilesFailed:
+        MessageBox MB_OK|MB_ICONEXCLAMATION "Old configuration files could not be removed. Proceeding with installation."
+    End:
+FunctionEnd
+
 ; Define the section of the installer
 Section "MainSection" SEC01
     Call CleanUninstall
+    Call CheckForOldConfig
     ; Set output path to the installation directory
     SetOutPath "$INSTDIR"
 
@@ -216,7 +251,6 @@ SectionEnd
 
 ; Define the uninstaller section
 Section "Uninstall"
-
     ; Remove the installation directory and all its contents
     RMDir /r "$INSTDIR"
 
@@ -226,9 +260,24 @@ Section "Uninstall"
 
     ; Remove the uninstaller entry from the Control Panel
     Delete "$INSTDIR\Uninstall.exe"
+
+    RemoveConfigFiles:
+        ; Remove configuration files if the checkbox is selected
+        ${If} $REMOVE_CONFIG == ${BST_CHECKED}
+            ClearErrors
+            RMDir /r "$APPDATA\FreeScribe"
+            ${If} ${Errors}
+                MessageBox MB_RETRYCANCEL "Unable to remove old configuration. Please close any applications using these files and try again." IDRETRY RemoveConfigFiles IDCANCEL ConfigFilesFailed
+            ${EndIf}
+        ${EndIf}
     
     ; Show message when uninstallation is complete
     MessageBox MB_OK "FreeScribe has been successfully uninstalled."
+    Goto EndUninstall
+
+    ConfigFilesFailed:
+        MessageBox MB_OK|MB_ICONEXCLAMATION "FreeScribe has been successfully uninstalled, but the configuration files could not be removed. Please close any applications using these files and try again."
+    EndUninstall:
 SectionEnd
 
 # Variables for checkboxes
@@ -292,6 +341,26 @@ Function InsfilesPageLeave
     SetAutoClose true
 FunctionEnd
 
+Function un.CreateRemoveConfigFilesPage
+    !insertmacro MUI_HEADER_TEXT "Remove Configuration Files" "Do you want to remove the configuration files (e.g., settings)?"
+    
+    nsDialogs::Create 1018
+    Pop $0
+
+    ${If} $0 == error
+        Abort
+    ${EndIf}
+
+    ${NSD_CreateCheckbox} 0 20u 100% 12u "Remove configuration files"
+    Pop $REMOVE_CONFIG_CHECKBOX
+    ${NSD_SetState} $REMOVE_CONFIG_CHECKBOX ${BST_CHECKED}
+
+    nsDialogs::Show
+FunctionEnd
+
+Function un.RemoveConfigFilesPageLeave
+    ${NSD_GetState} $REMOVE_CONFIG_CHECKBOX $REMOVE_CONFIG
+FunctionEnd
 
 ; Define installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
@@ -303,6 +372,7 @@ Page Custom CustomizeFinishPage RunApp
 
 ; Define the uninstaller pages
 !insertmacro MUI_UNPAGE_CONFIRM
+UninstPage custom un.CreateRemoveConfigFilesPage un.RemoveConfigFilesPageLeave
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_UNPAGE_FINISH
 
