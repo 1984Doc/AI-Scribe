@@ -32,7 +32,7 @@ class MainWindowUI:
         self.app_settings = settings  # Application settings
         self.logic = mw.MainWindow(self.app_settings)  # Logic to control the container behavior
         self.scribe_template = None
-        self.setting_window = SettingsWindowUI(self.app_settings, self)  # Settings window
+        self.setting_window = SettingsWindowUI(self.app_settings, self, self.root)  # Settings window
         self.root.iconbitmap(get_file_path('assets','logo.ico'))
 
         self.current_docker_status_check_id = None  # ID for the current Docker status check
