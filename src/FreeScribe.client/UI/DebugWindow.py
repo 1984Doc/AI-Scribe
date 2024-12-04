@@ -57,10 +57,10 @@ class DualOutput:
         """
         Retrieve all content stored in the buffer.
         
-        :return: The complete buffer contents
+        :return: The complete buffer contents as a single string.
         :rtype: str
         """
-        return DualOutput.buffer.getvalue()
+        return ''.join(DualOutput.buffer)
 
 class DebugPrintWindow:
     """
