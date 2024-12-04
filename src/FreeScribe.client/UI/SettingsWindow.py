@@ -29,6 +29,9 @@ import threading
 from UI.Widgets.MicrophoneSelector import MicrophoneState
 from utils.ip_utils import is_valid_url
 
+class FeatureToggle:
+    DOCKER_SETTINGS_TAB = False
+    DOCKER_STATUS_BAR = False
 
 class SettingsWindow():
     """
