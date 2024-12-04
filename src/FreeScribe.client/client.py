@@ -601,7 +601,7 @@ def send_audio_to_server():
         # Display a message indicating that audio to text processing is in progress
         user_input.scrolled_text.insert(tk.END, "Audio to Text Processing...Please Wait")
 
-        delete_file = True if uploaded_file_path else False
+        delete_file = False if uploaded_file_path else True
 
         # Determine the file to send for transcription
         if uploaded_file_path:
