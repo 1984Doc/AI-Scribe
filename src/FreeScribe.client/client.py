@@ -263,12 +263,12 @@ def realtime_text():
                             files = {'audio': f}
 
                             headers = {
-                                "Authorization": "Bearer "+app_settings.editable_settings["Whisper Server API Key"]
+                                "Authorization": "Bearer "+app_settings.editable_settings[SettingsKeys.WHISPER_SERVER_API_KEY.value]
                             }
 
                             try:
                                 verify = not app_settings.editable_settings["S2T Server Self-Signed Certificates"]
-                                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers,files=files, verify=verify)
+                                response = requests.post(app_settings.editable_settings[SettingsKeys.WHISPER_ENDPOINT.value], headers=headers,files=files, verify=verify)
                                 if response.status_code == 200:
                                     text = response.json()['text']
                                     if not local_cancel_flag and not is_audio_processing_realtime_canceled.is_set():
@@ -614,14 +614,14 @@ def send_audio_to_server():
 
             # Add the Bearer token to the headers for authentication
             headers = {
-                "Authorization": f"Bearer {app_settings.editable_settings['Whisper Server API Key']}"
+                "Authorization": f"Bearer {app_settings.editable_settings[SettingsKeys.WHISPER_SERVER_API_KEY.value]}"
             }
 
             try:
                 verify = not app_settings.editable_settings["S2T Server Self-Signed Certificates"]
 
                 # Send the request without verifying the SSL certificate
-                response = requests.post(app_settings.editable_settings["Whisper Endpoint"], headers=headers, files=files, verify=verify)
+                response = requests.post(app_settings.editable_settings[SettingsKeys.WHISPER_ENDPOINT.value], headers=headers, files=files, verify=verify)
 
                 response.raise_for_status()
 

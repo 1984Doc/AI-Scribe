@@ -32,6 +32,8 @@ from enum import Enum
 
 class SettingsKeys(Enum):
     LOCAL_WHISPER = "Built-in Speech2Text"
+    WHISPER_ENDPOINT = "Speech2Text (Whisper) Endpoint"
+    WHISPER_SERVER_API_KEY = "Speech2Text (Whisper) API Key"
 
 
 
@@ -95,8 +97,8 @@ class SettingsWindow():
             "BlankSpace", # Represents the SettingsKeys.LOCAL_WHISPER.value checkbox that is manually placed
             "Real Time",
             "BlankSpace", # Represents the model dropdown that is manually placed
-            "Whisper Endpoint",
-            "Whisper Server API Key",
+            SettingsKeys.WHISPER_ENDPOINT.value,
+            SettingsKeys.WHISPER_SERVER_API_KEY.value,
             "S2T Server Self-Signed Certificates",
         ]
 
@@ -165,8 +167,8 @@ class SettingsWindow():
             "best_of": 2,
             "Use best_of": False,
             SettingsKeys.LOCAL_WHISPER.value: True,
-            "Whisper Endpoint": "https://localhost:2224/whisperaudio",
-            "Whisper Server API Key": "None",
+            SettingsKeys.WHISPER_ENDPOINT.value: "https://localhost:2224/whisperaudio",
+            SettingsKeys.WHISPER_SERVER_API_KEY.value: "",
             "Whisper Model": "small.en",
             "Current Mic": "None",
             "Real Time": True,
