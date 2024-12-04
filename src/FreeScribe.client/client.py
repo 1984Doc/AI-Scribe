@@ -601,6 +601,8 @@ def send_audio_to_server():
         # Display a message indicating that audio to text processing is in progress
         user_input.scrolled_text.insert(tk.END, "Audio to Text Processing...Please Wait")
 
+        delete_file = True if uploaded_file_path else False
+
         # Determine the file to send for transcription
         if uploaded_file_path:
             file_to_send = uploaded_file_path
@@ -647,7 +649,7 @@ def send_audio_to_server():
             finally:
                 # done with file clean up
                 f.close()
-                if os.path.exists(file_to_send):
+                if os.path.exists(file_to_send) and delete_file:
                     os.remove(file_to_send)
                 loading_window.destroy()
 
