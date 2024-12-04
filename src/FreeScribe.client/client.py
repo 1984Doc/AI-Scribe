@@ -242,6 +242,10 @@ def realtime_text():
                 if not is_silent(audio_buffer):
                     if app_settings.editable_settings["Local Whisper"] == True:
                         print("Local Real Time Whisper")
+                        if stt_local_model is None:
+                            update_gui("Local Whisper model not loaded. Please check your settings.")
+                            break
+
                         result = stt_local_model.transcribe(audio_buffer, fp16=False)
                         if not local_cancel_flag and not is_audio_processing_realtime_canceled.is_set():
                             update_gui(result['text'])
