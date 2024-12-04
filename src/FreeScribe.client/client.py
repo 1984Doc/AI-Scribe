@@ -1158,8 +1158,11 @@ def remove_placeholder(event, text_widget, placeholder_text="Text box"):
         text_widget.delete("1.0", "end")
         text_widget.config(fg='black')
 
-# to load the STT model on startup if it is enabled
 def load_stt_model(event=None):
+    thread = threading.Thread(target=_load_stt_model_thread, daemon=True)
+    thread.start()
+
+def _load_stt_model_thread():
     global stt_local_model
     model = app_settings.editable_settings["Whisper Model"].strip()
     # Create a loading window to display the loading message
