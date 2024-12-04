@@ -119,8 +119,7 @@ Function .onInstSuccess
     MessageBox MB_OK "Installation completed successfully! Please note upon first launch start time may be slow. Please wait for the program to open!"
 FunctionEnd
 
-; Checks on installer start
-Function .onInit
+Function CheckIfFreeScribeIsRunning
     nsExec::ExecToStack 'cmd /c tasklist /FI "IMAGENAME eq freescribe-client.exe" /NH | find /I "freescribe-client.exe" > nul'
     Pop $0 ; Return value
 
@@ -129,6 +128,14 @@ Function .onInit
         MessageBox MB_OK "FreeScribe is currently running. Please close the application before installing. Once closed please restart the installer."
         Abort
     ${EndIf}
+FunctionEnd
+
+Function Function un.onInit
+    Call CheckIfFreeScribeIsRunning
+FunctionEnd
+; Checks on installer start
+Function .onInit
+    Call CheckIfFreeScribeIsRunning
 
     IfSilent SILENT_MODE NOT_SILENT_MODE
 
