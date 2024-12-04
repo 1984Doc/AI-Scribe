@@ -26,6 +26,7 @@ Var /GLOBAL CPU_RADIO
 Var /GLOBAL NVIDIA_RADIO
 Var /GLOBAL SELECTED_OPTION
 Var /GLOBAL REMOVE_CONFIG_CHECKBOX
+Var /GLOBAL REMOVE_CONFIG
 
 Function Check_For_Old_Version_In_App_Data
     ; Check if the old version exists in AppData
@@ -229,8 +230,6 @@ SectionEnd
 
 ; Define the uninstaller section
 Section "Uninstall"
-    Call un.CreateRemoveConfigFilesPage
-
     ; Remove the installation directory and all its contents
     RMDir /r "$INSTDIR"
 
@@ -242,8 +241,8 @@ Section "Uninstall"
     Delete "$INSTDIR\Uninstall.exe"
 
     ; Remove configuration files if the checkbox is selected
-    ${NSD_GetState} $REMOVE_CONFIG_CHECKBOX $0
-    ${If} $0 == ${BST_CHECKED}
+    MessageBox MB_OK "$REMOVE_CONFIG ${BST_CHECKED}"
+    ${If} $REMOVE_CONFIG == ${BST_CHECKED}
         RMDir /r "$APPDATA\FreeScribe"
     ${EndIf}
     
@@ -314,8 +313,10 @@ FunctionEnd
 
 Function un.CreateRemoveConfigFilesPage
     !insertmacro MUI_HEADER_TEXT "Remove Configuration Files" "Do you want to remove the configuration files (e.g., settings)?"
+    
     nsDialogs::Create 1018
     Pop $0
+
     ${If} $0 == error
         Abort
     ${EndIf}
@@ -325,6 +326,10 @@ Function un.CreateRemoveConfigFilesPage
     ${NSD_SetState} $REMOVE_CONFIG_CHECKBOX ${BST_CHECKED}
 
     nsDialogs::Show
+FunctionEnd
+
+Function un.RemoveConfigFilesPageLeave
+    ${NSD_GetState} $REMOVE_CONFIG_CHECKBOX $REMOVE_CONFIG
 FunctionEnd
 
 ; Define installer pages
@@ -337,6 +342,7 @@ Page Custom CustomizeFinishPage RunApp
 
 ; Define the uninstaller pages
 !insertmacro MUI_UNPAGE_CONFIRM
+UninstPage custom un.CreateRemoveConfigFilesPage un.RemoveConfigFilesPageLeave
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_UNPAGE_FINISH
 
