@@ -9,27 +9,19 @@ import tkinter as tk
 import io
 import sys
 from datetime import datetime
+from collections import deque
 
 class DualOutput:
-    """
-    Captures and manages output to both console and an internal buffer.
-    
-    This class intercepts standard output and error streams, timestamps each message,
-    and stores them in a buffer while still displaying them in the console.
-    
-    :cvar buffer: Class-level StringIO buffer to store captured output
-    :type buffer: io.StringIO
-    """
-
     buffer = None
+    MAX_BUFFER_SIZE = 2500  # Maximum number of lines in the buffer
 
     def __init__(self):
         """
         Initialize the dual output handler.
         
-        Creates a StringIO buffer and stores references to original stdout/stderr streams.
+        Creates a deque buffer with a max length and stores references to original stdout/stderr streams.
         """
-        DualOutput.buffer = io.StringIO()  # Buffer for capturing output
+        DualOutput.buffer = deque(maxlen=DualOutput.MAX_BUFFER_SIZE)  # Buffer with a fixed size
         self.original_stdout = sys.stdout  # Save the original stdout
         self.original_stderr = sys.stderr  # Save the original stderr
 
@@ -46,19 +38,17 @@ class DualOutput:
                 for line in message.splitlines():
                     if line.strip():
                         formatted_message = f"{timestamp} - {line}\n"
-                        DualOutput.buffer.write(formatted_message)
+                        DualOutput.buffer.append(formatted_message)
             else:
                 formatted_message = f"{timestamp} - {message}"
-                DualOutput.buffer.write(formatted_message)
+                DualOutput.buffer.append(formatted_message)
         else:
-            DualOutput.buffer.write("\n")
+            DualOutput.buffer.append("\n")
         self.original_stdout.write(message)
 
     def flush(self):
         """
-        Flush the original stdout stream.
-        
-        Ensures that console output is immediately displayed.
+        Flush the original stdout to ensure output is written immediately.
         """
         self.original_stdout.flush()
 
