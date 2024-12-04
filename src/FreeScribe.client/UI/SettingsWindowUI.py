@@ -28,7 +28,7 @@ from Model import Model, ModelManager
 from utils.file_utils import get_file_path
 from UI.MarkdownWindow import MarkdownWindow
 from UI.Widgets.MicrophoneSelector import MicrophoneSelector
-from UI.SettingsWindow import SettingsKeys
+from UI.SettingsWindow import SettingsKeys, FeatureToggle
 
 
 class SettingsWindowUI:
@@ -102,7 +102,6 @@ class SettingsWindowUI:
         self.notebook.add(self.llm_settings_frame, text="AI Settings")
         self.notebook.add(self.whisper_settings_frame, text="Speech-to-Text Settings")
         self.notebook.add(self.advanced_frame, text="Advanced Settings")
-        self.notebook.add(self.docker_settings_frame, text="Docker Settings")
 
         self.settings_window.protocol("WM_DELETE_WINDOW", self.close_window)
 
@@ -116,7 +115,11 @@ class SettingsWindowUI:
         self.create_llm_settings()
         self.create_whisper_settings()
         self.create_advanced_settings()
-        self.create_docker_settings()
+
+        if FeatureToggle.DOCKER_SETTINGS_TAB is True:
+            self.notebook.add(self.docker_settings_frame, text="Docker Settings")
+            self.create_docker_settings()
+        
         self.create_buttons()
 
 
