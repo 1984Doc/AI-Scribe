@@ -41,10 +41,14 @@ from utils.ip_utils import is_private_ip
 from utils.file_utils import get_file_path, get_resource_path
 import ctypes
 import sys
-from UI.DebugWindow import DualOutput, TerminalApp
+from UI.DebugWindow import DualOutput
+import traceback
 
 dual = DualOutput()
 sys.stdout = dual
+sys.stderr = dual
+
+
 
 # GUI Setup
 root = tk.Tk()
@@ -1268,18 +1272,3 @@ if app_settings.editable_settings["Use Local LLM"]:
 root.mainloop()
 
 p.terminate()
-
-def on_exit():
-    # Create a pop up that says yes or no with tkinter messagebox to option to close the docker containers
-
-    global window
-
-    main_window = window.logic
-
-    if main_window.container_manager is not None and app_settings.editable_settings["Auto Shutdown Containers on Exit"] is True:
-        main_window.container_manager.stop_container(app_settings.editable_settings["LLM Container Name"])
-        main_window.container_manager.stop_container(app_settings.editable_settings["LLM Caddy Container Name"])
-        main_window.container_manager.stop_container(app_settings.editable_settings["Whisper Container Name"])
-        main_window.container_manager.stop_container(app_settings.editable_settings["Whisper Caddy Container Name"])
-
-atexit.register(on_exit)
