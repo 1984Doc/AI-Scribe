@@ -5,6 +5,7 @@ from UI.SettingsWindow import FeatureToggle
 from UI.SettingsWindowUI import SettingsWindowUI
 from UI.MarkdownWindow import MarkdownWindow
 from utils.file_utils import get_file_path
+from UI.DebugWindow import DebugPrintWindow
 
 DOCKER_CONTAINER_CHECK_INTERVAL = 10000  # Interval in milliseconds to check the Docker container status
 DOCKER_DESKTOP_CHECK_INTERVAL = 10000  # Interval in milliseconds to check the Docker Desktop status
@@ -224,6 +225,7 @@ class MainWindowUI:
         # Add Help menu
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="Debug Window", command=lambda: DebugPrintWindow(self.root))
         help_menu.add_command(label="About", command=lambda: self._show_md_content(get_file_path('markdown','help','about.md'), 'About'))
 
     def _destroy_help_menu(self):
