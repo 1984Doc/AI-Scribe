@@ -132,7 +132,7 @@ Function CheckIfFreeScribeIsRunning
     ${EndIf}
 FunctionEnd
 
-Function Function un.onInit
+Function un.onInit
     Call CheckIfFreeScribeIsRunning
 FunctionEnd
 ; Checks on installer start
