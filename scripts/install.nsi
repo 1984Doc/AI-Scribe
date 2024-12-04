@@ -177,7 +177,7 @@ Function CheckForOldConfig
     ; Check if the old version exists in AppData
     IfFileExists "$APPDATA\FreeScribe\settings.txt" 0 End
         ; Open Dialog to ask user if they want to uninstall the old version
-        MessageBox MB_YESNO|MB_ICONQUESTION "An old configuration file has been detected. Would you like to remove it?" IDYES RemoveOldConfig IDNO End
+        MessageBox MB_YESNO|MB_ICONQUESTION "An old configuration file has been detected. We recommend removing it to prevent conflict with new versions. Would you like to remove it?" IDYES RemoveOldConfig IDNO End
         RemoveOldConfig:
             ClearErrors
             ; Remove the old version executable
