@@ -125,41 +125,50 @@ class MainWindowUI:
         """
         Disable the Docker status bar UI elements.
         """
-        if FeatureToggle.DOCKER_STATUS_BAR is True:
-            self.is_status_bar_enabled = False
-            self.docker_status.config(text="(Docker not found)")
-            if self.docker_status_bar is not None:
-                for child in self.docker_status_bar.winfo_children():
-                    child.configure(state='disabled')
+        
+        if FeatureToggle.DOCKER_STATUS_BAR is not True:
+            return
+
+        
+        self.is_status_bar_enabled = False
+        self.docker_status.config(text="(Docker not found)")
+        if self.docker_status_bar is not None:
+            for child in self.docker_status_bar.winfo_children():
+                child.configure(state='disabled')
 
     def enable_docker_ui(self):
         """
         Enable the Docker status bar UI elements.
         """
-        if FeatureToggle.DOCKER_STATUS_BAR is True:
-            self.is_status_bar_enabled = True
-            self.docker_status.config(text="Docker Container Status: ")
-            if self.docker_status_bar is not None:
-                for child in self.docker_status_bar.winfo_children():
-                    child.configure(state='normal')
+
+        if FeatureToggle.DOCKER_STATUS_BAR is not True:
+            return
+        
+        self.is_status_bar_enabled = True
+        self.docker_status.config(text="Docker Container Status: ")
+        if self.docker_status_bar is not None:
+            for child in self.docker_status_bar.winfo_children():
+                child.configure(state='normal')
 
     def destroy_docker_status_bar(self):
         """
         Destroy the Docker status bar if it exists.
         """
-        if FeatureToggle.DOCKER_STATUS_BAR is True:
-            if self.docker_status_bar is not None:
-                self.docker_status_bar.destroy()
-                self.docker_status_bar = None
-
-            # cancel the check loop as the bar no longer exists and it is waster resources.
-            if self.current_docker_status_check_id is not None:
-                self.root.after_cancel(self.current_docker_status_check_id)
-                self.current_docker_status_check_id = None
+        if FeatureToggle.DOCKER_STATUS_BAR is not True:
+            return
             
-            if self.current_container_status_check_id is not None:
-                self.root.after_cancel(self.current_container_status_check_id)
-                self.current_container_status_check_id = None
+        if self.docker_status_bar is not None:
+            self.docker_status_bar.destroy()
+            self.docker_status_bar = None
+
+        # cancel the check loop as the bar no longer exists and it is waster resources.
+        if self.current_docker_status_check_id is not None:
+            self.root.after_cancel(self.current_docker_status_check_id)
+            self.current_docker_status_check_id = None
+        
+        if self.current_container_status_check_id is not None:
+            self.root.after_cancel(self.current_container_status_check_id)
+            self.current_container_status_check_id = None
 
     def toggle_menu_bar(self, enable: bool):
         """
