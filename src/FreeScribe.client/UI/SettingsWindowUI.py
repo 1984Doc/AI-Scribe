@@ -299,6 +299,7 @@ class SettingsWindowUI:
         # right_row += 1
 
         # set the state of the llm settings based on the local llm checkbox once all widgets are created
+        self.settings_opened = True
         self.toggle_remote_llm_settings()
  
     def toggle_remote_llm_settings(self):
@@ -319,8 +320,13 @@ class SettingsWindowUI:
 
         inverted_state = "disabled" if current_state == 0 else "normal"
         self.architecture_dropdown.config(state=inverted_state)
-
-        threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,self.settings.editable_settings_entries["Model Endpoint"].get(),)).start()  
+        
+        #flag used for determining if window was just opened so we dont spam the API.
+        if not self.settings_opened:
+            threading.Thread(target=self.settings.update_models_dropdown, args=(self.models_drop_down,self.settings.editable_settings_entries["Model Endpoint"].get(),)).start()
+        else:
+            self.settings_opened = False
+            
         self.on_model_selection_change(None)
 
             
