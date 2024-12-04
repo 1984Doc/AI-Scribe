@@ -165,8 +165,12 @@ Function CheckForOldConfig
         ; Open Dialog to ask user if they want to uninstall the old version
         MessageBox MB_YESNO|MB_ICONQUESTION "An old configuration file has been detected. Would you like to remove it?" IDYES RemoveOldConfig IDNO OldConfigDoesNotExist
         RemoveOldConfig:
+            ClearErrors
             ; Remove the old version executable
             RMDir /r "$APPDATA\FreeScribe"
+            ${If} ${Errors}
+                MessageBox MB_OK|MB_ICONEXCLAMATION "Unable to remove old configuration. Please close any applications using these files and try again."
+            ${EndIf}
     OldConfigDoesNotExist:
 FunctionEnd
 
@@ -243,7 +247,11 @@ Section "Uninstall"
     ; Remove configuration files if the checkbox is selected
     MessageBox MB_OK "$REMOVE_CONFIG ${BST_CHECKED}"
     ${If} $REMOVE_CONFIG == ${BST_CHECKED}
+        ClearErrors
         RMDir /r "$APPDATA\FreeScribe"
+        ${If} ${Errors}
+            MessageBox MB_OK|MB_ICONEXCLAMATION "Unable to remove old configuration. Please close any applications using these files and try again."
+        ${EndIf}
     ${EndIf}
     
     ; Show message when uninstallation is complete
