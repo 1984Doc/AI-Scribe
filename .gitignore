@@ -10,3 +10,11 @@ recording.wav
 output
 client.spec
 .aider*
+.DS_Store
+
+realtime.wav
+src/FreeScribe.client/models
+freescribe-client.spec
+freescribe-client-cpu.spec
+freescribe-client-nvidia.spec
+scripts/FreeScribeInstaller.exe
