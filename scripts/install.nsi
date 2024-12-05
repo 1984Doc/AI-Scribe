@@ -59,7 +59,6 @@ FunctionEnd
 
 ; Function to create a custom page with CPU/NVIDIA options
 Function ARCHITECHTURE_SELECT
-    Call CheckNvidiaDrivers
     Call Check_For_Old_Version_In_App_Data
     !insertmacro MUI_HEADER_TEXT "Architecture Selection" "Choose your preferred installation architecture based on your hardware"
 
@@ -102,6 +101,12 @@ Function ARCHITECHTURE_SELECT
     ${NSD_OnClick} $NVIDIA_RADIO OnRadioClick
 
     nsDialogs::Show
+FunctionEnd
+
+Function ARCHITECHTURE_SELECT_LEAVE
+    ${If} $SELECTED_OPTION == "NVIDIA"
+        Call CheckNvidiaDrivers 
+    ${EndIf}
 FunctionEnd
 
 ; Callback function for radio button clicks
@@ -462,7 +467,7 @@ FunctionEnd
 
 ; Define installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
-Page Custom ARCHITECHTURE_SELECT
+Page Custom ARCHITECHTURE_SELECT ARCHITECHTURE_SELECT_LEAVE
 !insertmacro MUI_PAGE_DIRECTORY
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE InsfilesPageLeave
 !insertmacro MUI_PAGE_INSTFILES
