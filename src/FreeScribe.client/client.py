@@ -43,11 +43,6 @@ import ctypes
 import sys
 from UI.DebugWindow import DualOutput
 import traceback
-import fcntl
-
-if sys.platform == "win32":
-    import ctypes
-    from ctypes import wintypes
 
 dual = DualOutput()
 sys.stdout = dual
@@ -1305,37 +1300,3 @@ root.bind("<<LoadSttModel>>", load_stt_model)
 root.mainloop()
 
 p.terminate()
-
-def bring_to_front():
-    if sys.platform == "win32":
-        # Bring the existing application instance to the front on Windows
-        hwnd = ctypes.windll.user32.GetForegroundWindow()
-        ctypes.windll.user32.ShowWindow(hwnd, 5)  # SW_SHOW
-        ctypes.windll.user32.SetForegroundWindow(hwnd)
-    elif sys.platform == "darwin":
-        # Bring the existing application instance to the front on macOS
-        # TODO FOR MAC
-        pass
-
-if __name__ == "__main__":
-    lock_file = '/tmp/freescribe-client.lock' if sys.platform == "darwin" else 'freescribe-client.lock'
-    try:
-        # Try to create and lock the lock file
-        with open(lock_file, 'w') as f:
-            if sys.platform == "win32":
-                msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
-            elif sys.platform == "darwin":
-                # TODO FOR MAC
-                pass
-            # If successful, run the application
-            if sys.platform == "win32":
-                root = tk.Tk()
-                user_input = UserInput(root)  # Assuming UserInput is a class you have defined
-                user_input.pack()
-                root.mainloop()
-            elif sys.platform == "darwin":
-                # TODO FOR MAC
-                pass
-    except IOError:
-        # If the lock file is already locked, bring the existing instance to the front
-        bring_to_front()
