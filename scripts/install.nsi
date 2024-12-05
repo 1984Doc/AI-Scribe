@@ -58,7 +58,7 @@ FunctionEnd
 
 
 ; Function to create a custom page with CPU/NVIDIA options
-Function ARCHITECHTURE_SELECT
+Function ARCHITECTURE_SELECT
     Call Check_For_Old_Version_In_App_Data
     !insertmacro MUI_HEADER_TEXT "Architecture Selection" "Choose your preferred installation architecture based on your hardware"
 
@@ -103,7 +103,7 @@ Function ARCHITECHTURE_SELECT
     nsDialogs::Show
 FunctionEnd
 
-Function ARCHITECHTURE_SELECT_LEAVE
+Function ARCHITECTURE_SELECT_LEAVE
     ${If} $SELECTED_OPTION == "NVIDIA"
         Call CheckNvidiaDrivers 
     ${EndIf}
@@ -467,7 +467,7 @@ FunctionEnd
 
 ; Define installer pages
 !insertmacro MUI_PAGE_LICENSE ".\assets\License.txt"
-Page Custom ARCHITECHTURE_SELECT ARCHITECHTURE_SELECT_LEAVE
+Page Custom ARCHITECTURE_SELECT ARCHITECTURE_SELECT_LEAVE
 !insertmacro MUI_PAGE_DIRECTORY
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE InsfilesPageLeave
 !insertmacro MUI_PAGE_INSTFILES
