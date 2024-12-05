@@ -29,13 +29,13 @@
 4. **Push the changes and the tag to the remote repository:**
 
     ```sh
-    git push origin main <tag-version>
+    git push origin <tag-version>
     ```
 
     Example:
 
     ```sh
-    git push origin main v0.0.1
+    git push origin v0.0.1
     ```
 
 ## Tagging Conventions
