@@ -1290,7 +1290,7 @@ root.minsize(900, 400)
 if app_settings.editable_settings["Use Local LLM"]:
     root.after(100, lambda:(ModelManager.setup_model(app_settings=app_settings, root=root)))  
 
-if app_settings.editable_settings["Local Whisper"]:
+if app_settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value]:
     # Inform the user that Local Whisper is being used for transcription
     print("Using Local Whisper for transcription.")
     root.after(100, lambda: (load_stt_model()))

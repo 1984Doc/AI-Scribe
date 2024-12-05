@@ -562,7 +562,7 @@ class SettingsWindowUI:
         )
 
         # if Local Whisper is selected, load the Whisper Model
-        if self.settings.editable_settings["Local Whisper"]:
+        if self.settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value]:
             self.root.event_generate("<<LoadSttModel>>")
 
         if self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is None:
