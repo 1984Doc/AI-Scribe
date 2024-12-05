@@ -20,13 +20,25 @@
     git tag <tag-version>
     ```
 
+    Example:
+
+    ```sh
+    git tag v0.0.1
+    ```
+
 4. **Push the changes and the tag to the remote repository:**
 
     ```sh
     git push origin main <tag-version>
     ```
 
+    Example:
+
+    ```sh
+    git push origin main v0.0.1
+    ```
+
 ## Tagging Conventions
 
-- `vx.x.x` tags a latest release.
-- `vx.x.x.alpha` tags a pre-release.
+- `vx.x.x` tags latest release.
+- `vx.x.x.alpha` tags pre-release.
