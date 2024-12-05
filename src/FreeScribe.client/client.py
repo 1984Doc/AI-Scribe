@@ -1080,7 +1080,8 @@ def set_full_view():
     if last_full_position is not None:
         root.geometry(last_full_position)
 
-    root.attributes('-toolwindow', False)
+    # Disable to make the window an app(show taskbar icon)
+    # root.attributes('-toolwindow', False)
 
 
 def set_minimal_view():
