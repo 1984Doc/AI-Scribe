@@ -1080,7 +1080,8 @@ def set_full_view():
     if last_full_position is not None:
         root.geometry(last_full_position)
 
-    root.attributes('-toolwindow', False)
+    # Disable to make the window an app(show taskbar icon)
+    # root.attributes('-toolwindow', False)
 
 
 def set_minimal_view():
@@ -1157,7 +1158,8 @@ def set_minimal_view():
     if last_minimal_position:
         root.geometry(last_minimal_position)
 
-    root.attributes('-toolwindow', True)
+    # Enable to make the window a tool window (no taskbar icon)
+    # root.attributes('-toolwindow', True)
 
 def copy_text(widget):
     text = widget.get("1.0", tk.END)

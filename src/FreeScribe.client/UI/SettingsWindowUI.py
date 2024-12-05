@@ -552,6 +552,10 @@ class SettingsWindowUI:
         # save architecture
         self.settings.editable_settings["Architecture"] = self.architecture_dropdown.get()
 
+        # save the old whisper model to compare with the new model later
+        old_local_whisper = self.settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value]
+        old_model = self.settings.editable_settings["Whisper Model"]
+
         self.settings.save_settings(
             self.openai_api_key_entry.get(),
             self.aiscribe_text.get("1.0", "end-1c"), # end-1c removes the trailing newline
@@ -560,10 +564,6 @@ class SettingsWindowUI:
             # self.api_dropdown.get(),
             self.cutoff_slider.threshold / 32768,
         )
-
-        # if Local Whisper is selected, load the Whisper Model
-        if self.settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value]:
-            self.root.event_generate("<<LoadSttModel>>")
 
         if self.settings.editable_settings["Use Docker Status Bar"] and self.main_window.docker_status_bar is None:
             self.main_window.create_docker_status_bar()
@@ -577,6 +577,13 @@ class SettingsWindowUI:
 
         if close_window:
             self.close_window()
+
+        # loading the model after the window is closed to prevent the window from freezing
+        # if Local Whisper is selected, compare the old model with the new model and reload the model if it has changed
+        if self.settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value] and (
+                old_local_whisper != self.settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value] or old_model !=
+                self.settings.editable_settings["Whisper Model"]):
+            self.root.event_generate("<<LoadSttModel>>")
 
     def reset_to_default(self):
         """
