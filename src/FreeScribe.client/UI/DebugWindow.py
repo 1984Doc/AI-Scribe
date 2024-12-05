@@ -44,13 +44,15 @@ class DualOutput:
                 DualOutput.buffer.append(formatted_message)
         else:
             DualOutput.buffer.append("\n")
-        self.original_stdout.write(message)
+        if self.original_stdout is not None:
+            self.original_stdout.write(message)
 
     def flush(self):
         """
         Flush the original stdout to ensure output is written immediately.
         """
-        self.original_stdout.flush()
+        if self.original_stdout is not None:
+            self.original_stdout.flush()
 
     @staticmethod
     def get_buffer_content():
