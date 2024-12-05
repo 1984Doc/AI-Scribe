@@ -378,7 +378,7 @@ Function CheckNvidiaDrivers
 
     ${If} $0 == 1
         MessageBox MB_OK "Your NVIDIA driver version ($DriverVersion) is older than the minimum required version (${MIN_CUDA_DRIVER_VERSION}). Please update at https://www.nvidia.com/en-us/drivers/. Then contiune with the installation."
-        Quit
+        Abort
     ${EndIf}
     driver_check_end:
 FunctionEnd
