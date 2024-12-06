@@ -23,6 +23,8 @@ def bring_to_front(app_name: str):
     Parameters:
         app_name (str): The name of the application window to bring to the front
     """
+
+    # TODO - Check platform and handle for different platform
     U32DLL = ctypes.WinDLL('user32')
     SW_SHOW = 5
     hwnd = U32DLL.FindWindowW(None, app_name)
