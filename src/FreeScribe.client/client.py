@@ -43,8 +43,8 @@ import ctypes
 import sys
 from UI.DebugWindow import DualOutput
 import traceback
-from ctypes import WinDLL
 import sys
+from utils.utils import window_has_running_instance
 
 dual = DualOutput()
 sys.stdout = dual
@@ -52,30 +52,11 @@ sys.stderr = dual
 
 APP_NAME = 'AI Medical Scribe'  # Application name
 
-# function to check if another instance of the application is already running
-def has_running_instance() -> bool:
-    """
-    Check if another instance of the application is already running.
-    Returns:
-        bool: True if another instance is running, False otherwise
-    """
-    U32DLL = WinDLL('user32')
-    # get the handle of any window matching 'APP_NAME'
-    hwnd = U32DLL.FindWindowW(None, APP_NAME)
-    print("Running instance check")
-    if hwnd:  # if a matching window exists...
-        print('Another instance of the application is already running.')
-        # focus the existing window
-        U32DLL.ShowWindow(hwnd, 5)
-        U32DLL.SetForegroundWindow(hwnd)
-        # bail
-        return True
-    return False
 
 # check if another instance of the application is already running.
 # if false, create a new instance of the application
 # if true, exit the current instance
-if not has_running_instance():
+if not window_has_running_instance(APP_NAME):
     root = tk.Tk()
     root.title(APP_NAME)
 else:
