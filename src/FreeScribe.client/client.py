@@ -55,7 +55,7 @@ APP_NAME = 'AI Medical Scribe'  # Application name
 # check if another instance of the application is already running.
 # if false, create a new instance of the application
 # if true, exit the current instance
-if not window_has_running_instance(APP_NAME):
+if not window_has_running_instance():
     root = tk.Tk()
     root.title(APP_NAME)
 else:
