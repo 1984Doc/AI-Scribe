@@ -34,6 +34,7 @@ class MainWindowUI:
         self.scribe_template = None
         self.setting_window = SettingsWindowUI(self.app_settings, self, self.root)  # Settings window
         self.root.iconbitmap(get_file_path('assets','logo.ico'))
+        self.debug_window_open = False  # Flag to indicate if the debug window is open
 
         self.current_docker_status_check_id = None  # ID for the current Docker status check
         self.current_container_status_check_id = None  # ID for the current container status check
@@ -225,7 +226,7 @@ class MainWindowUI:
         # Add Help menu
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
         self.menu_bar.add_cascade(label="Help", menu=help_menu)
-        help_menu.add_command(label="Debug Window", command=lambda: DebugPrintWindow(self.root))
+        help_menu.add_command(label="Debug Window", command=lambda: DebugPrintWindow(self))
         help_menu.add_command(label="About", command=lambda: self._show_md_content(get_file_path('markdown','help','about.md'), 'About'))
 
     def _destroy_help_menu(self):

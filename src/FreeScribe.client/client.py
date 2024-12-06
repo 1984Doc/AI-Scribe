@@ -43,16 +43,27 @@ import ctypes
 import sys
 from UI.DebugWindow import DualOutput
 import traceback
+import sys
+from utils.utils import window_has_running_instance, bring_to_front, close_mutex
 
 dual = DualOutput()
 sys.stdout = dual
 sys.stderr = dual
 
+APP_NAME = 'AI Medical Scribe'  # Application name
 
+# check if another instance of the application is already running.
+# if false, create a new instance of the application
+# if true, exit the current instance
+if not window_has_running_instance():
+    root = tk.Tk()
+    root.title(APP_NAME)
+else:
+    bring_to_front(APP_NAME)
+    sys.exit(0)
 
-# GUI Setup
-root = tk.Tk()
-root.title("AI Medical Scribe")
+# Register the close_mutex function to be called on exit
+atexit.register(close_mutex)
 
 # settings logic
 app_settings = SettingsWindow()
