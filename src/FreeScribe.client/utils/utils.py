@@ -1,6 +1,13 @@
 
 import ctypes
 
+# Define the mutex name and error code
+MUTEX_NAME = 'Global\\FreeScribe_Instance'
+ERROR_ALREADY_EXISTS = 183
+
+# Global variable to store the mutex handle
+mutex = None
+
 # function to check if another instance of the application is already running
 def window_has_running_instance() -> bool:
     """
@@ -8,9 +15,7 @@ def window_has_running_instance() -> bool:
     Returns:
         bool: True if another instance is running, False otherwise
     """
-    # Define the mutex name
-    MUTEX_NAME = 'Global\\FreeScribe_Instance'
-    ERROR_ALREADY_EXISTS = 183
+    global mutex
 
     # Create a named mutex
     mutex = ctypes.windll.kernel32.CreateMutexW(None, False, MUTEX_NAME)
@@ -29,3 +34,13 @@ def bring_to_front(app_name: str):
     hwnd = U32DLL.FindWindowW(None, app_name)
     U32DLL.ShowWindow(hwnd, SW_SHOW)
     U32DLL.SetForegroundWindow(hwnd)
+
+def close_mutex():
+    """
+    Close the mutex handle to release the resource.
+    """
+    global mutex
+    if mutex:
+        ctypes.windll.kernel32.ReleaseMutex(mutex)
+        ctypes.windll.kernel32.CloseHandle(mutex)
+        mutex = None
