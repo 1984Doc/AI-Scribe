@@ -1,5 +1,6 @@
 
 from ctypes import WinDLL
+import ctypes
 
 # function to check if another instance of the application is already running
 def window_has_running_instance(app_name: str) -> bool:
@@ -11,15 +12,23 @@ def window_has_running_instance(app_name: str) -> bool:
         bool: True if another instance is running, False otherwise
     """
     U32DLL = WinDLL('user32')
-    # get the handle of any window matching 'app_name'
+    # Define the mutex name
+    MUTEX_NAME = 'Global\\FreeScribe_Instance'
+    ERROR_ALREADY_EXISTS = 183
+
+    # Create a named mutex
+    mutex = ctypes.windll.kernel32.CreateMutexW(None, False, MUTEX_NAME)
+    already_running = ctypes.windll.kernel32.GetLastError() == ERROR_ALREADY_EXISTS
+    return already_running
+
+def bring_to_front(app_name: str):
+    """
+    Bring the window with the given handle to the front.
+    Parameters:
+        hwnd: The handle of the window to bring to the front.
+    """
+    U32DLL = WinDLL('user32')
+    SW_SHOW = 5
     hwnd = U32DLL.FindWindowW(None, app_name)
-    print("Running instance check")
-    if hwnd:  # if a matching window exists...
-        print('Another instance of the application is already running.')
-        # focus the existing window
-        SW_SHOW = 5
-        U32DLL.ShowWindow(hwnd, SW_SHOW)
-        U32DLL.SetForegroundWindow(hwnd)
-        # bail
-        return True
-    return False
+    U32DLL.ShowWindow(hwnd, SW_SHOW)
+    U32DLL.SetForegroundWindow(hwnd)

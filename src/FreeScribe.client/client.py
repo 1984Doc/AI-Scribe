@@ -44,7 +44,7 @@ import sys
 from UI.DebugWindow import DualOutput
 import traceback
 import sys
-from utils.utils import window_has_running_instance
+from utils.utils import window_has_running_instance, bring_to_front
 
 dual = DualOutput()
 sys.stdout = dual
@@ -59,6 +59,7 @@ if not window_has_running_instance(APP_NAME):
     root = tk.Tk()
     root.title(APP_NAME)
 else:
+    bring_to_front(APP_NAME)
     sys.exit(0)
 
 # settings logic
