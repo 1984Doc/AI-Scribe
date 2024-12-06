@@ -10,6 +10,7 @@ import io
 import sys
 from datetime import datetime
 from collections import deque
+from utils.utils import window_has_running_instance
 
 class DualOutput:
     buffer = None
@@ -77,6 +78,8 @@ class DebugPrintWindow:
         :param parent: Parent tkinter window
         :type parent: tk.Tk or tk.Toplevel
         """
+        if window_has_running_instance("Debug Output"):
+            return
         self.window = tk.Toplevel(parent)
         self.window.title("Debug Output")
         self.window.geometry("650x450")

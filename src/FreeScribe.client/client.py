@@ -52,7 +52,6 @@ sys.stderr = dual
 
 APP_NAME = 'AI Medical Scribe'  # Application name
 
-
 # check if another instance of the application is already running.
 # if false, create a new instance of the application
 # if true, exit the current instance
