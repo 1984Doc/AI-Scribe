@@ -14,8 +14,7 @@ def window_has_running_instance() -> bool:
 
     # Create a named mutex
     mutex = ctypes.windll.kernel32.CreateMutexW(None, False, MUTEX_NAME)
-    already_running = ctypes.windll.kernel32.GetLastError() == ERROR_ALREADY_EXISTS
-    return already_running
+    return ctypes.windll.kernel32.GetLastError() == ERROR_ALREADY_EXISTS
 
 def bring_to_front(app_name: str):
     """
