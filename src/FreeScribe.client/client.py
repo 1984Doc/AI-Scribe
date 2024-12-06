@@ -1304,7 +1304,6 @@ if app_settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value]:
 
 root.bind("<<LoadSttModel>>", load_stt_model)
 
-p.terminate()
+root.mainloop()
 
-if __name__ == '__main__':
-    root.mainloop()  # run as usual
+p.terminate()
