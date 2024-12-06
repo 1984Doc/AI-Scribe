@@ -17,7 +17,8 @@ def window_has_running_instance(app_name: str) -> bool:
     if hwnd:  # if a matching window exists...
         print('Another instance of the application is already running.')
         # focus the existing window
-        U32DLL.ShowWindow(hwnd, 5)
+        SW_SHOW = 5
+        U32DLL.ShowWindow(hwnd, SW_SHOW)
         U32DLL.SetForegroundWindow(hwnd)
         # bail
         return True
