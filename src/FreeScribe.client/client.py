@@ -43,16 +43,43 @@ import ctypes
 import sys
 from UI.DebugWindow import DualOutput
 import traceback
+from ctypes import WinDLL
+import sys
 
 dual = DualOutput()
 sys.stdout = dual
 sys.stderr = dual
 
+APP_NAME = 'AI Medical Scribe'  # Application name
 
+# function to check if another instance of the application is already running
+def has_running_instance() -> bool:
+    """
+    Check if another instance of the application is already running.
+    Returns:
+        bool: True if another instance is running, False otherwise
+    """
+    U32DLL = WinDLL('user32')
+    # get the handle of any window matching 'APP_NAME'
+    hwnd = U32DLL.FindWindowW(None, APP_NAME)
+    print("Running instance check")
+    if hwnd:  # if a matching window exists...
+        print('Another instance of the application is already running.')
+        # focus the existing window
+        U32DLL.ShowWindow(hwnd, 5)
+        U32DLL.SetForegroundWindow(hwnd)
+        # bail
+        return True
+    return False
 
-# GUI Setup
-root = tk.Tk()
-root.title("AI Medical Scribe")
+# check if another instance of the application is already running.
+# if false, create a new instance of the application
+# if true, exit the current instance
+if not has_running_instance():
+    root = tk.Tk()
+    root.title(APP_NAME)
+else:
+    sys.exit(0)
 
 # settings logic
 app_settings = SettingsWindow()
@@ -1297,6 +1324,7 @@ if app_settings.editable_settings[SettingsKeys.LOCAL_WHISPER.value]:
 
 root.bind("<<LoadSttModel>>", load_stt_model)
 
-root.mainloop()
-
 p.terminate()
+
+if __name__ == '__main__':
+    root.mainloop()  # run as usual
