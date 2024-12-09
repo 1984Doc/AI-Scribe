@@ -243,7 +243,8 @@ class SettingsWindowUI:
         left_row += 1
 
         #6. GPU OR CPU SELECTION (Right Column)
-        tk.Label(left_frame, text="Local Architecture").grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
+        self.local_architecture_label = tk.Label(left_frame, text="Local Architecture")
+        self.local_architecture_label.grid(row=left_row, column=0, padx=0, pady=5, sticky="w")
         architecture_options = self.settings.get_available_architectures()
         self.architecture_dropdown = ttk.Combobox(left_frame, values=architecture_options, width=15, state="readonly")
         if self.settings.editable_settings["Architecture"] in architecture_options:
@@ -253,6 +254,12 @@ class SettingsWindowUI:
             self.architecture_dropdown.set("CPU")
 
         self.architecture_dropdown.grid(row=left_row, column=1, padx=0, pady=5, sticky="w")
+
+        # hide architecture dropdown if architecture only has one option
+        if len(architecture_options) == 1:
+            self.local_architecture_label.grid_forget()
+            self.architecture_dropdown.grid_forget()
+
 
         left_row += 1
 
