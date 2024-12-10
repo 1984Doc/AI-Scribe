@@ -420,6 +420,7 @@ def disable_recording_ui_elements():
     upload_button.config(state='disabled')
     response_display.scrolled_text.configure(state='disabled')
     timestamp_listbox.config(state='disabled')
+    clear_button.config(state='disabled')
 
 def enable_recording_ui_elements():
     window.enable_settings_menu()
@@ -428,6 +429,7 @@ def enable_recording_ui_elements():
     toggle_button.config(state='normal')
     upload_button.config(state='normal')
     timestamp_listbox.config(state='normal')
+    clear_button.config(state='normal')
     
 
 def cancel_processing():
