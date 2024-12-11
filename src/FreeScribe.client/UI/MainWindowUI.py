@@ -36,6 +36,8 @@ class MainWindowUI:
         self.root.iconbitmap(get_file_path('assets','logo.ico'))
         self.debug_window_open = False  # Flag to indicate if the debug window is open
 
+        self.warning_bar = None # Warning bar
+
         self.current_docker_status_check_id = None  # ID for the current Docker status check
         self.current_container_status_check_id = None  # ID for the current container status check
 
@@ -122,6 +124,36 @@ class MainWindowUI:
         self.is_status_bar_enabled = True
         self._background_availbility_docker_check()
         self._background_check_container_status(llm_dot, whisper_dot)
+
+    def create_warning_bar(self, text, row=3, column=0, columnspan=14, pady=10, padx=10, sticky='nsew'):
+        # Add a yellow footer that says check microphone settings
+        # Create the frame for the Docker status bar, placed at the bottom of the window
+        self.warning_bar = tk.Frame(self.root, bd=1, relief=tk.SUNKEN, background="gold")
+        self.warning_bar.grid(row=4, column=0, columnspan=14, sticky='nsew')
+
+        # Add LLM container status label
+        text_label = tk.Label(
+            self.warning_bar, 
+            text="No audio input detected for 10 seconds. Please check your microphone input device in whisper settings. Also, adjust your microphone cutoff level in advanced settings.", 
+            padx=5, 
+            foreground="black", # Text color set to yellow
+            background="gold"  # Matches the frame's background
+        )
+        text_label.pack(side=tk.LEFT)
+
+        # Add a close button to the left of the warning bar
+        close_button = tk.Button(
+            self.warning_bar,
+            text="X",
+            command=self.destroy_warning_bar,
+            foreground="black",
+        )
+        close_button.pack(side=tk.LEFT)
+
+    def destroy_warning_bar(self):
+        if self.warning_bar is not None:
+            self.warning_bar.destroy()
+            self.warning_bar = None
 
     def disable_docker_ui(self):
         """
