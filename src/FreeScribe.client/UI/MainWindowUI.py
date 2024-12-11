@@ -126,32 +126,46 @@ class MainWindowUI:
         self._background_check_container_status(llm_dot, whisper_dot)
 
     def create_warning_bar(self, text, row=3, column=0, columnspan=14, pady=10, padx=10, sticky='nsew'):
-        # Add a yellow footer that says check microphone settings
-        # Create the frame for the Docker status bar, placed at the bottom of the window
+        """
+        Create a warning bar at the bottom of the window to notify the user about microphone issues.
+        
+        :param text: Placeholder for text input (unused).
+        :param row: The row in the grid layout where the bar is placed.
+        :param column: The starting column for the grid layout.
+        :param columnspan: The number of columns spanned by the warning bar.
+        :param pady: Padding for the vertical edges.
+        :param padx: Padding for the horizontal edges.
+        :param sticky: Defines how the widget expands in the grid cell.
+        """
+        # Create a frame for the warning bar with a sunken border and gold background
         self.warning_bar = tk.Frame(self.root, bd=1, relief=tk.SUNKEN, background="gold")
         self.warning_bar.grid(row=4, column=0, columnspan=14, sticky='nsew')
 
-        # Add LLM container status label
+        # Add a label to display the warning message in the warning bar
         text_label = tk.Label(
-            self.warning_bar, 
-            text="No audio input detected for 10 seconds. Please check your microphone input device in whisper settings. Also, adjust your microphone cutoff level in advanced settings.", 
-            padx=5, 
-            foreground="black", # Text color set to yellow
-            background="gold"  # Matches the frame's background
+            self.warning_bar,
+            text="No audio input detected for 10 seconds. Please check your microphone input device in whisper settings. Also, adjust your microphone cutoff level in advanced settings.",
+            padx=5,
+            foreground="black",  # Text color
+            background="gold"    # Matches the frame's background
         )
         text_label.pack(side=tk.LEFT)
 
-        # Add a close button to the left of the warning bar
+        # Add a button to allow users to close the warning bar
         close_button = tk.Button(
             self.warning_bar,
             text="X",
-            command=self.destroy_warning_bar,
-            foreground="black",
+            command=self.destroy_warning_bar,  # Call the destroy method when clicked
+            foreground="black"
         )
         close_button.pack(side=tk.LEFT)
 
     def destroy_warning_bar(self):
+        """
+        Destroy the warning bar if it exists to remove it from the UI.
+        """
         if self.warning_bar is not None:
+            # Destroy the warning bar frame and set the reference to None
             self.warning_bar.destroy()
             self.warning_bar = None
 
