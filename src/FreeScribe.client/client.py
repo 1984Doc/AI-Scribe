@@ -178,6 +178,7 @@ def toggle_pause():
         elif current_view == "minimal":
             pause_button.config(text="⏸️", bg=DEFAULT_BUTTON_COLOUR)
     
+SILENCE_WARNING_LENGTH = 10 # seconds, warn the user after 10s of no input something might be wrong
 
 def record_audio():
     global is_paused, frames, audio_queue
@@ -197,6 +198,7 @@ def record_audio():
     
     current_chunk = []
     silent_duration = 0
+    silent_warning_duration = 0
     record_duration = 0
     minimum_silent_duration = int(app_settings.editable_settings["Real Time Silence Length"])
     minimum_audio_duration = int(app_settings.editable_settings["Real Time Audio Length"])
@@ -209,12 +211,25 @@ def record_audio():
             audio_buffer = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768
             if is_silent(audio_buffer, app_settings.editable_settings["Silence cut-off"]):
                 silent_duration += CHUNK / RATE
+                silent_warning_duration += CHUNK / RATE
             else:
                 current_chunk.append(data)
                 silent_duration = 0
+                silent_warning_duration = 0
             
             record_duration += CHUNK / RATE
-            
+
+            # Check if we need to warn if silence is long than warn time
+            if silent_warning_duration >= SILENCE_WARNING_LENGTH:
+                
+                # If the warning bar is not already displayed, create it
+                if window.warning_bar is None:
+                    window.create_warning_bar("No audio input detected for 10 seconds. Please check your microphone input device in whisper settings. Also, adjust your microphone cutoff level in advanced settings.")
+            else:
+                # If the warning bar is displayed, remove it
+                if window.warning_bar is not None:
+                    window.destroy_warning_bar()
+
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
             if record_duration >= minimum_audio_duration and silent_duration >= minimum_silent_duration:
                 if app_settings.editable_settings["Real Time"] and current_chunk:
@@ -231,6 +246,9 @@ def record_audio():
     stream.close()
     audio_queue.put(None)
 
+    # If the warning bar is displayed, remove it
+    if window.warning_bar is not None:
+        window.destroy_warning_bar()
 
 def is_silent(data, threshold=0.01):
     """Check if audio chunk is silent"""
