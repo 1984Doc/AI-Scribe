@@ -125,7 +125,7 @@ class MainWindowUI:
         self._background_availbility_docker_check()
         self._background_check_container_status(llm_dot, whisper_dot)
 
-    def create_warning_bar(self, text, row=3, column=0, columnspan=14, pady=10, padx=10, sticky='nsew'):
+    def create_warning_bar(self, text, row=3, column=0, columnspan=11, pady=10, padx=10, sticky='nsew'):
         """
         Create a warning bar at the bottom of the window to notify the user about microphone issues.
         
@@ -139,7 +139,7 @@ class MainWindowUI:
         """
         # Create a frame for the warning bar with a sunken border and gold background
         self.warning_bar = tk.Frame(self.root, bd=1, relief=tk.SUNKEN, background="gold")
-        self.warning_bar.grid(row=4, column=0, columnspan=14, sticky='nsew')
+        self.warning_bar.grid(row=4, column=0, columnspan=11, sticky='nsew')
 
         # Add a label to display the warning message in the warning bar
         text_label = tk.Label(
@@ -158,7 +158,8 @@ class MainWindowUI:
             command=self.destroy_warning_bar,  # Call the destroy method when clicked
             foreground="black"
         )
-        close_button.pack(side=tk.LEFT)
+        
+        close_button.pack(side=tk.RIGHT)
 
     def destroy_warning_bar(self):
         """
