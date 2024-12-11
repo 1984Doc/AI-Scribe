@@ -220,15 +220,7 @@ def record_audio():
             record_duration += CHUNK / RATE
 
             # Check if we need to warn if silence is long than warn time
-            if silent_warning_duration >= SILENCE_WARNING_LENGTH:
-                
-                # If the warning bar is not already displayed, create it
-                if window.warning_bar is None:
-                    window.create_warning_bar("No audio input detected for 10 seconds. Please check your microphone input device in whisper settings and adjust your microphone cutoff level in advanced settings.")
-            else:
-                # If the warning bar is displayed, remove it
-                if window.warning_bar is not None:
-                    window.destroy_warning_bar()
+            check_silence_warning(silent_warning_duration)
 
             # If the current_chunk has at least 5 seconds of audio and 1 second of silence at the end
             if record_duration >= minimum_audio_duration and silent_duration >= minimum_silent_duration:
@@ -249,6 +241,20 @@ def record_audio():
     # If the warning bar is displayed, remove it
     if window.warning_bar is not None:
         window.destroy_warning_bar()
+
+def check_silence_warning(silence_duration):
+    """Check if silence warning should be displayed."""
+
+    # Check if we need to warn if silence is long than warn time
+    if silence_duration >= SILENCE_WARNING_LENGTH:
+        
+        # If the warning bar is not already displayed, create it
+        if window.warning_bar is None:
+            window.create_warning_bar("No audio input detected for 10 seconds. Please check your microphone input device in whisper settings and adjust your microphone cutoff level in advanced settings.")
+    else:
+        # If the warning bar is displayed, remove it
+        if window.warning_bar is not None:
+            window.destroy_warning_bar()
 
 def is_silent(data, threshold=0.01):
     """Check if audio chunk is silent"""
