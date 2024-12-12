@@ -36,6 +36,8 @@ class MainWindowUI:
         self.root.iconbitmap(get_file_path('assets','logo.ico'))
         self.debug_window_open = False  # Flag to indicate if the debug window is open
 
+        self.warning_bar = None # Warning bar
+
         self.current_docker_status_check_id = None  # ID for the current Docker status check
         self.current_container_status_check_id = None  # ID for the current container status check
 
@@ -122,6 +124,50 @@ class MainWindowUI:
         self.is_status_bar_enabled = True
         self._background_availbility_docker_check()
         self._background_check_container_status(llm_dot, whisper_dot)
+
+    def create_warning_bar(self, text):
+        """
+        Create a warning bar at the bottom of the window to notify the user about microphone issues.
+        
+        :param text: Placeholder for text input (unused).
+        :param row: The row in the grid layout where the bar is placed.
+        :param column: The starting column for the grid layout.
+        :param columnspan: The number of columns spanned by the warning bar.
+        :param pady: Padding for the vertical edges.
+        :param padx: Padding for the horizontal edges.
+        :param sticky: Defines how the widget expands in the grid cell.
+        """
+        # Create a frame for the warning bar with a sunken border and gold background
+        self.warning_bar = tk.Frame(self.root, bd=1, relief=tk.SUNKEN, background="gold")
+        self.warning_bar.grid(row=4, column=0, columnspan=14, sticky='nsew')
+
+        # Add a label to display the warning message in the warning bar
+        text_label = tk.Label(
+            self.warning_bar,
+            text=text,
+            foreground="black",  # Text color
+            background="gold"    # Matches the frame's background
+        )
+        text_label.pack(side=tk.LEFT)
+
+        # Add a button to allow users to close the warning bar
+        close_button = tk.Button(
+            self.warning_bar,
+            text="X",
+            command=self.destroy_warning_bar,  # Call the destroy method when clicked
+            foreground="black"
+        )
+
+        close_button.pack(side=tk.RIGHT)
+
+    def destroy_warning_bar(self):
+        """
+        Destroy the warning bar if it exists to remove it from the UI.
+        """
+        if self.warning_bar is not None:
+            # Destroy the warning bar frame and set the reference to None
+            self.warning_bar.destroy()
+            self.warning_bar = None
 
     def disable_docker_ui(self):
         """
