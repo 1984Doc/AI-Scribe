@@ -139,13 +139,12 @@ class MainWindowUI:
         """
         # Create a frame for the warning bar with a sunken border and gold background
         self.warning_bar = tk.Frame(self.root, bd=1, relief=tk.SUNKEN, background="gold")
-        self.warning_bar.grid(row=4, column=0, columnspan=11, sticky='nsew')
+        self.warning_bar.grid(row=4, column=0, columnspan=14, sticky='nsew')
 
         # Add a label to display the warning message in the warning bar
         text_label = tk.Label(
             self.warning_bar,
             text=text,
-            padx=5,
             foreground="black",  # Text color
             background="gold"    # Matches the frame's background
         )
