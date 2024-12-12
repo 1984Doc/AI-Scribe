@@ -105,7 +105,7 @@ FunctionEnd
 
 Function ARCHITECTURE_SELECT_LEAVE
     ${If} $SELECTED_OPTION == "NVIDIA"
-        Call CheckNvidiaDrivers 
+        Call CheckNvidiaDrivers
     ${EndIf}
 FunctionEnd
 
@@ -161,7 +161,7 @@ Function .onInit
         ${If} $R1 != ""
             StrCpy $SELECTED_OPTION $R1
         ${EndIf}
-        
+
     NOT_SILENT_MODE:
 FunctionEnd
 
@@ -217,7 +217,7 @@ Section "MainSection" SEC01
         ; Add files to the installer
         File /r "..\dist\freescribe-client-nvidia\freescribe-client-nvidia.exe"
         Rename "$INSTDIR\freescribe-client-nvidia.exe" "$INSTDIR\freescribe-client.exe"
-        File /r "..\dist\freescribe-client-nvidia\_internal"  
+        File /r "..\dist\freescribe-client-nvidia\_internal"
     ${EndIf}
 
 
@@ -278,7 +278,7 @@ Section "Uninstall"
                 MessageBox MB_RETRYCANCEL "Unable to remove old configuration. Please close any applications using these files and try again." IDRETRY RemoveConfigFiles IDCANCEL ConfigFilesFailed
             ${EndIf}
         ${EndIf}
-    
+
     ; Show message when uninstallation is complete
     MessageBox MB_OK "FreeScribe has been successfully uninstalled."
     Goto EndUninstall
@@ -298,7 +298,7 @@ Function CustomizeFinishPage
 
     nsDialogs::Create 1018
     Pop $0
-    
+
     ${If} $0 == error
         Abort
     ${EndIf}
@@ -349,6 +349,16 @@ Function InsfilesPageLeave
     SetAutoClose true
 FunctionEnd
 
+Function CheckCudaAvailability
+    nsExec::ExecToStack 'nvcc --version'
+    Pop $0 ; Return value
+
+    ${If} $0 != 0
+        MessageBox MB_OK "CUDA is not available. Please ensure 'nvcc' is installed and added to the PATH and restart the installer. Download it from: https://developer.nvidia.com/cuda-downloads"
+        Quit
+    ${EndIf}
+FunctionEnd
+
 Function CheckNvidiaDrivers
     Var /GLOBAL DriverVersion
 
@@ -362,24 +372,29 @@ Function CheckNvidiaDrivers
         ReadRegStr $DriverVersion HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{B2FE1952-0186-46C3-BAEC-A80AA35AC5B8}_Display.Driver" "DisplayVersion"
     ${EndIf}
 
-    ; No nvidia drivers detected - show error message
+    ; No NVIDIA drivers detected - show error message
     ${If} $DriverVersion == ""
-        MessageBox MB_OK "No valid Nvidia device deteced (Drivers Missing). This program relys on a Nvidia GPU to run. Functionality is not guaranteed without a Nvidia GPU."
+        MessageBox MB_OK "No valid NVIDIA device detected (Drivers Missing). This program relies on an NVIDIA GPU to run. Functionality is not guaranteed without an NVIDIA GPU."
         Goto driver_check_end
     ${EndIf}
+
     ; Push the version number to the stack
     Push $DriverVersion
     ; Push min driver version
     Push ${MIN_CUDA_DRIVER_VERSION}
-    
+
     Call CompareVersions
 
     Pop $0 ; Get the return value
 
     ${If} $0 == 1
-        MessageBox MB_OK "Your NVIDIA driver version ($DriverVersion) is older than the minimum required version (${MIN_CUDA_DRIVER_VERSION}). Please update at https://www.nvidia.com/en-us/drivers/. Then contiune with the installation."
+        MessageBox MB_OK "Your NVIDIA driver version ($DriverVersion) is older than the minimum required version (${MIN_CUDA_DRIVER_VERSION}). Please update at https://www.nvidia.com/en-us/drivers/. Then continue with the installation."
         Abort
     ${EndIf}
+
+    ; Check for CUDA availability
+    Call CheckCudaAvailability
+
     driver_check_end:
 FunctionEnd
 
