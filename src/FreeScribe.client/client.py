@@ -256,7 +256,7 @@ def check_silence_warning(silence_duration):
         
         # If the warning bar is not already displayed, create it
         if window.warning_bar is None:
-            window.create_warning_bar("No audio input detected for 10 seconds. Please check your microphone input device in whisper settings and adjust your microphone cutoff level in advanced settings.")
+            window.create_warning_bar(f"No audio input detected for {SILENCE_WARNING_LENGTH} seconds. Please check your microphone input device in whisper settings and adjust your microphone cutoff level in advanced settings.")
     else:
         # If the warning bar is displayed, remove it
         if window.warning_bar is not None:
